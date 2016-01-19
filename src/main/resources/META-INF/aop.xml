@@ -1,0 +1,10 @@
+<aspectj>
+    <aspects>
+        <aspect name="akka.viz.aspects.ActorCellInstrumentation"/>
+    </aspects>
+    <weaver options="">
+        <include within="akka..*"/>
+        <!-- Weaving with ByteString included throws a VerifyError -->
+        <exclude within="akka.util.ByteString"/>
+    </weaver>
+</aspectj>
