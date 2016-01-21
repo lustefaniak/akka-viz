@@ -23,6 +23,16 @@
     // As in previous steps, we create a basic structure of a graph:
 
     var graph = Viva.Graph.graph();
+
+    var idealLength = 180;
+    var layout = Viva.Graph.Layout.forceDirected(graph, {
+        springLength: idealLength,
+        springCoeff : 0.0008,
+        dragCoeff : 0.02,
+        gravity : -1.2
+    });
+
+
     var graphics = Viva.Graph.View.svgGraphics();
     var nodeSize = 32;
     var highlightRelatedNodes = function (nodeId, isOn) {
@@ -125,7 +135,8 @@
 
     // Finally render the graph with our customized graphics object:
     var renderer = Viva.Graph.View.renderer(graph, {
-        graphics: graphics
+        graphics: graphics,
+        layout: layout
     });
     renderer.run();
 
