@@ -1,7 +1,9 @@
 package akka.viz
 
 import akka.actor._
-
+import akka.pattern._
+import akka.util.Timeout
+import akka.viz.server.Server
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
@@ -27,7 +29,10 @@ class Pong extends Actor {
 
 object Demo extends App {
 
-  val system = ActorSystem()
+  Server.start()
+
+  val system = ActorSystem("demo")
+  import system.dispatcher
 
   val pongRef = system.actorOf(Props(classOf[Pong]), "ponger")
   val pingRef = system.actorOf(Props(classOf[Ping], pongRef), "pinger")
