@@ -38,9 +38,15 @@ object Demo extends App {
   val pingRef = system.actorOf(Props(classOf[Ping], pongRef), "pinger")
   pingRef ! "ping"
 
-  Thread.sleep(5000)
+  implicit val timeout:Timeout = 10.seconds
+  (pongRef ? "pong").mapTo[String].onComplete {
+    d =>
+      println(d)
+  }
 
-  Await.result(system.terminate(), 5.minutes)
-  sys.exit(0)
-
+  (pongRef ? 123).mapTo[String].onComplete {
+    d =>
+      println(d)
+  }
+  
 }
