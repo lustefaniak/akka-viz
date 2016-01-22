@@ -20,8 +20,9 @@ lazy val frontend =
         "org.scala-js" %%% "scalajs-dom" % "0.8.2",
         "com.lihaoyi" %%% "upickle" % Dependencies.Versions.upickle,
         "org.querki" %%% "jquery-facade" % "0.11",
-        "org.scalatest" %% "scalatest" % Dependencies.Versions.scalatest % "test"
-      )
+        "org.scalatest" %%% "scalatest" % Dependencies.Versions.scalatest % "test"
+      ),
+      jsDependencies += RuntimeDOM
     )
     .dependsOn(sharedJs)
 
