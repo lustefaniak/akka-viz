@@ -4,7 +4,7 @@ object Dependencies {
   object Versions {
     val akka = "2.4.1"
     val akkaStream = "2.0.2"
-    val scalatest = "3.0.0-M10"
+    val scalatest = "3.0.0-M15"
     val upickle = "0.3.6"
   }
 
