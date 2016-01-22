@@ -1,26 +1,14 @@
 package akka.viz
 
 import upickle.Js
-import upickle.default.writeJs
+
+import scala.pickling.Defaults._
+import scala.pickling.json._
 
 object MessageSerialization {
 
-  def serialize(message: Any): Js.Value = {
-    message match {
-      case s: String =>
-        writeJs(s)
-      case n: Long =>
-        writeJs(n)
-      case n: Int =>
-        writeJs(n)
-
-      case msg => {
-        Js.Obj(
-          "$tpe" -> Js.Str(msg.getClass.getCanonicalName)
-        )
-      }
-
-    }
+  def serialize(message: Any):Js.Value = {
+    Js.Str(message.pickle.value)
   }
 
 }
