@@ -27,9 +27,9 @@
     var idealLength = 180;
     var layout = Viva.Graph.Layout.forceDirected(graph, {
         springLength: idealLength,
-        springCoeff : 0.0008,
-        dragCoeff : 0.02,
-        gravity : -1.2
+        springCoeff: 0.0008,
+        dragCoeff: 0.02,
+        gravity: -1.2
     });
 
 
@@ -140,34 +140,10 @@
     });
     renderer.run();
 
-    function wsurl(s) {
-        var l = window.location;
-        return ((l.protocol === "https:") ? "wss://" : "ws://") + l.hostname + (((l.port != 80) && (l.port != 443)) ? ":" + l.port : "") + l.pathname + s;
-    }
-
-    function actorName(actorRef) {
-        return actorRef.split("/").slice(3, actorRef.split("/").size).join("/").split("#")[0]
-    }
-
-    var createdLinks = {}
-    var ws = new WebSocket(wsurl("stream"));
-    ws.onmessage = function (messageEvent) {
-        var message = JSON.parse(messageEvent.data);
-
-        var sender = actorName(message.sender);
-        var receiver = actorName(message.receiver);
-
-        var linkId = sender + "->" + receiver;
-        if (!createdLinks[linkId]) {
-            createdLinks[linkId] = true;
-            graph.beginUpdate();
-            graph.addLink(sender, receiver, linkId);
-            graph.endUpdate();
-        }
-    }
-
-
 </script>
+<script type="text/javascript" src="frontend-fastopt.js"></script>
+<script type="text/javascript" src="frontend-launcher.js"></script>
+
 </body>
 
 </html>
