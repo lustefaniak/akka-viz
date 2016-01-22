@@ -2,23 +2,27 @@ package akka.viz.events
 
 import akka.actor._
 
-object EventFiltering {
+object FilteringRule {
+  val Default = IsUserActor
+}
 
-  private def isUserActor(actorRef: ActorRef): Boolean = {
-    actorRef.path.elements.headOption.map(_ == "user").getOrElse(false)
+sealed trait FilteringRule {
+  def apply(received: Received): Boolean
+}
+
+case object IsUserActor extends FilteringRule {
+  private def isUserActor(actorRef: ActorRef): Boolean = actorRef.path.elements.headOption.contains("user")
+
+  override def apply(event: Received) = {
+    isUserActor(event.sender) || isUserActor(event.receiver)
   }
+}
 
-  def isAllowed(event: Event): Boolean = {
-    event match {
-      case Received(sender, receiver, message) =>
-        (isUserActor(sender) || isUserActor(receiver)) && isMessageAllowed(message)
-    }
+case object AllowAll extends FilteringRule { override def apply(event: Received) = true }
+
+case class AllowedClasses(names: List[String]) extends FilteringRule {
+  @transient private val allowedClasses = names.map(name => getClass.getClassLoader.loadClass(name)).toSet
+  override def apply(event: Received): Boolean = {
+    allowedClasses.exists(c => c.isAssignableFrom(event.message.getClass))
   }
-
-  private def isMessageAllowed(msg: Any): Boolean = {
-
-    true
-
-  }
-
 }

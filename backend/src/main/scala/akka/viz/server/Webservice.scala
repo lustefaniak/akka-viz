@@ -3,7 +3,7 @@ package akka.viz.server
 
 import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.model._
-import akka.http.scaladsl.model.ws.{Message, TextMessage}
+import akka.http.scaladsl.model.ws.{TextMessage, Message}
 import akka.http.scaladsl.server.Directives
 import akka.stream.scaladsl._
 import akka.stream.stage._
@@ -11,8 +11,10 @@ import akka.stream.{Materializer, OverflowStrategy}
 import akka.viz.MessageSerialization
 import akka.viz.config.Config
 import akka.viz.events.EventSystem.Subscribe
-import akka.viz.events.{Received, Event, EventSystem}
+import akka.viz.events._
 import upickle.Js
+
+import scala.util.parsing.json.JSON
 
 
 class Webservice(implicit fm: Materializer, system: ActorSystem) {
@@ -40,7 +42,19 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) {
   }
 
   def tracingEventsFlow: Flow[Message, Message, Any] = {
-    val in = Flow[Message].to(Sink.ignore)
+    val in = Flow[Message].to(Sink.foreach {
+      case TextMessage.Strict(msg) =>
+        // todo after sjs migration: use pickler or something
+        JSON.parseFull(msg) match {
+          case Some(jsObj: Map[String, Any]) if jsObj.contains("allowedClasses") =>
+            val clsNames = jsObj("allowedClasses").asInstanceOf[List[String]]
+            EventSystem.updateFilter(AllowedClasses(clsNames))
+        }
+
+      case other =>
+        println(other)
+    })
+
     val out = Source.actorRef[Event](Config.bufferSize, OverflowStrategy.dropNew)
       .via(eventSerialization)
       .via(jsonPrinter)
@@ -56,6 +70,10 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) {
         "sender" -> Js.Str(sender.path.toSerializationFormat),
         "receiver" -> Js.Str(receiver.path.toSerializationFormat),
         "message" -> MessageSerialization.serialize(message)
+      )
+    case AvailableMessageTypes(classes) =>
+      Js.Obj(
+        "availableClasses" -> Js.Arr(classes.map(cls => Js.Str(cls.getName)) :_* )
       )
   }
 
