@@ -4,9 +4,7 @@ import akka.actor._
 
 object EventFiltering {
 
-  private def isUserActor(actorRef: ActorRef): Boolean = {
-    actorRef.path.elements.headOption.map(_ == "user").getOrElse(false)
-  }
+  private def isUserActor(actorRef: ActorRef): Boolean = actorRef.path.elements.headOption.contains("user")
 
   def isAllowed(event: Event): Boolean = {
     event match {
