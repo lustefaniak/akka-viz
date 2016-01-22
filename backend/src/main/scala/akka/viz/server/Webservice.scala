@@ -1,21 +1,29 @@
 package akka.viz.server
 
 
-import akka.actor.{ActorRef, ActorSystem}
+import akka.actor.ActorSystem
 import akka.http.scaladsl.model._
-import akka.http.scaladsl.model.ws.{TextMessage, Message}
+import akka.http.scaladsl.model.ws.{Message, TextMessage}
 import akka.http.scaladsl.server.Directives
 import akka.stream.scaladsl._
-import akka.stream.stage._
 import akka.stream.{Materializer, OverflowStrategy}
-import akka.viz.MessageSerialization
 import akka.viz.config.Config
-import akka.viz.events.EventSystem.Subscribe
 import akka.viz.events._
-import upickle.Js
+import akka.viz.{MessageSerialization, protocol}
 
-import scala.util.parsing.json.JSON
+object ApiMessages {
 
+  import upickle.default._
+
+  def read(str: String): protocol.ApiClientMessage = {
+    upickle.default.read[protocol.ApiClientMessage](str)
+  }
+
+  def write(msg: protocol.ApiServerMessage): String = {
+    upickle.default.write(msg)
+  }
+
+}
 
 class Webservice(implicit fm: Materializer, system: ActorSystem) {
 
@@ -37,49 +45,37 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) {
       getFromResourceDirectory("web")
   }
 
-  private implicit val actorRefWriter = upickle.default.Writer[ActorRef] {
-    case actorRef => Js.Str(actorRef.path.toSerializationFormat)
-  }
-
   def tracingEventsFlow: Flow[Message, Message, Any] = {
     val in = Flow[Message].to(Sink.foreach {
       case TextMessage.Strict(msg) =>
-        // todo after sjs migration: use pickler or something
-        JSON.parseFull(msg) match {
-          case Some(jsObj: Map[String, Any]) if jsObj.contains("allowedClasses") =>
-            val clsNames = jsObj("allowedClasses").asInstanceOf[List[String]]
-            EventSystem.updateFilter(AllowedClasses(clsNames))
+        val command = ApiMessages.read(msg)
+        command match {
+          case protocol.SetAllowedMessages(classNames) =>
+            EventSystem.updateFilter(AllowedClasses(classNames))
         }
-
       case other =>
-        println(other)
+        system.log.error(s"Received unsupported Message in WS: ${other}")
     })
 
     val out = Source.actorRef[Event](Config.bufferSize, OverflowStrategy.dropNew)
+      .via(internalToApi)
       .via(eventSerialization)
-      .via(jsonPrinter)
       .map(TextMessage(_))
       .mapMaterializedValue(EventSystem.subscribe(_))
 
     Flow.fromSinkAndSource(in, out)
   }
 
-  def eventSerialization: Flow[Event, Js.Value, Any] = Flow[Event].map {
+  def internalToApi: Flow[Event, protocol.ApiServerMessage, Any] = Flow[Event].map {
     case Received(sender, receiver, message) =>
-      Js.Obj(
-        "sender" -> Js.Str(sender.path.toSerializationFormat),
-        "receiver" -> Js.Str(receiver.path.toSerializationFormat),
-        "message" -> MessageSerialization.serialize(message)
-      )
-    case AvailableMessageTypes(classes) =>
-      Js.Obj(
-        "availableClasses" -> Js.Arr(classes.map(cls => Js.Str(cls.getName)) :_* )
-      )
+      protocol.Received(sender.path.toSerializationFormat, receiver.path.toSerializationFormat, MessageSerialization.serialize(message))
+    case AvailableMessageTypes(types) =>
+      protocol.AvailableClasses(types.map(_.getCanonicalName))
+
   }
 
-  def jsonPrinter: Flow[Js.Value, String, Any] = Flow[Js.Value].map {
-    case json =>
-      upickle.json.write(json)
+  def eventSerialization: Flow[protocol.ApiServerMessage, String, Any] = Flow[protocol.ApiServerMessage].map {
+    msg => ApiMessages.write(msg)
   }
 
 }

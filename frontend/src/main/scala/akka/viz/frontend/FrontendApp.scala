@@ -1,12 +1,12 @@
+package akka.viz.frontend
+
+import akka.viz.protocol._
+import org.querki.jquery.{JQueryStatic => jQ}
+import org.scalajs.dom._
+
 import scala.scalajs.js
 import scala.scalajs.js._
-import org.scalajs.dom._
-import org.querki.jquery.{JQueryStatic => jQ}
 
-@js.native
-object DOMGlobalScope extends js.GlobalScope {
-  val graph: js.Dynamic = js.native
-}
 
 object FrontendApp extends JSApp {
 
@@ -22,27 +22,14 @@ object FrontendApp extends JSApp {
     actorRef.split("/").drop(3).mkString("/").split("#").head
   }
 
-  trait Received extends js.Any {
-    def sender: String
-
-    def receiver: String
-
-    def message: Any
-  }
-
-  trait AvailableClasses extends js.Any {
-    def availableClasses: Array[String]
-  }
-
   val createdLinks = scala.collection.mutable.Set[String]()
   val graph = DOMGlobalScope.graph
 
   private def handleDownstream(messageEvent: MessageEvent): Unit = {
-    val message: Dynamic = JSON.parse(messageEvent.data.asInstanceOf[String])
-    // todo figure out pickling instead of checking if fields are defined
+    val message: ApiServerMessage = ApiMessages.read(messageEvent.data.asInstanceOf[String])
+
     message match {
-      case _ if !isUndefined(message.sender) && !isUndefined(message.receiver) =>
-        val rcv = message.asInstanceOf[Received]
+      case rcv: Received =>
 
         val sender = actorName(rcv.sender)
         val recevier = actorName(rcv.receiver)
@@ -54,8 +41,8 @@ object FrontendApp extends JSApp {
           graph.addLink(sender, recevier, linkId)
           graph.endUpdate()
         }
-      case _ if !isUndefined(message.availableClasses) =>
-        val ac = message.asInstanceOf[AvailableClasses]
+
+      case ac: AvailableClasses =>
 
         ac.availableClasses
           .foreach { clsName =>
