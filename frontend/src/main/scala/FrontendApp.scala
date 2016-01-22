@@ -22,7 +22,7 @@ object FrontendApp extends JSApp {
     actorRef.split("/").drop(3).mkString("/").split("#").head
   }
 
-  trait Message extends js.Any {
+  trait Received extends js.Any {
     def sender: String
 
     def receiver: String
@@ -30,26 +30,50 @@ object FrontendApp extends JSApp {
     def message: Any
   }
 
+  trait AvailableClasses extends js.Any {
+    def availableClasses: Array[String]
+  }
+
   val createdLinks = scala.collection.mutable.Set[String]()
   val graph = DOMGlobalScope.graph
 
   def main(): Unit = {
 
+    import org.querki.jquery.{JQueryStatic => jQ}
+
     val webSocket = new WebSocket(webSocketUrl("stream"))
     webSocket.onmessage = (messageEvent: MessageEvent) => {
-      val message = JSON.parse(messageEvent.data.asInstanceOf[String]).asInstanceOf[Message]
+      val message: Dynamic = JSON.parse(messageEvent.data.asInstanceOf[String])
+      // todo figure out pickling instead of checking if fields are defined
+      message match {
+        case _ if !isUndefined(message.sender) && !isUndefined(message.receiver) =>
+          val rcv = message.asInstanceOf[Received]
 
-      val sender = actorName(message.sender)
-      val recevier = actorName(message.receiver)
+          val sender = actorName(rcv.sender)
+          val recevier = actorName(rcv.receiver)
 
-      val linkId = s"${sender}->${recevier}"
-      if (!createdLinks(linkId)) {
-        createdLinks.add(linkId)
-        graph.beginUpdate()
-        graph.addLink(sender, recevier, linkId)
-        graph.endUpdate()
+          val linkId = s"${sender}->${recevier}"
+          if (!createdLinks(linkId)) {
+            createdLinks.add(linkId)
+            graph.beginUpdate()
+            graph.addLink(sender, recevier, linkId)
+            graph.endUpdate()
+          }
+        case _ if !isUndefined(message.availableClasses) =>
+          val ac = message.asInstanceOf[AvailableClasses]
+
+          ac.availableClasses
+            .foreach{ clsName =>
+              val elem = jQ(s"""<input type="checkbox" value="$clsName" id="$clsName" /><label for="$clsName">$clsName</label><br>""")
+              if (jQ(s"form input").filter((e: Element) => e.id == clsName).length == 0) { jQ("form").append(elem) }
+            }
+
       }
     }
 
+    jQ("form").click({e: Element =>
+      val checked = jQ("form :checked").mapElems(elem => jQ(elem).valueString)
+      webSocket.send(JSON.stringify(Dictionary("allowedClasses" -> js.Array(checked :_*))))
+    })
   }
 }
