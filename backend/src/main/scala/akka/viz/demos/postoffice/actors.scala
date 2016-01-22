@@ -61,14 +61,14 @@ class PostOfficeClientActor extends Actor with ActorLogging {
 
   def packageReply: Actor.Receive = {
     case Pickup(_, p) =>
-      log.info(s"Sent parcel $p")
+      log.debug(s"Sent parcel $p")
 
     case Rejected(_, p) =>
-      log.warning(s"$p rejected, trying again")
+      log.debug(s"$p rejected, trying again")
       sender() ! p.copy(weight = p.weight - 0.02)
 
     case d : Delivery =>
-      log.info(s"received $d")
+      log.debug(s"received $d")
       sendPackage
   }
 
