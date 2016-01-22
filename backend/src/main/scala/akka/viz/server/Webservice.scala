@@ -26,6 +26,7 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) {
       } ~
         path("frontend-launcher.js")(getFromResource("frontend-launcher.js")) ~
         path("frontend-fastopt.js")(getFromResource("frontend-fastopt.js")) ~
+        path("frontend-jsdeps.js")(getFromResource("frontend-jsdeps.js")) ~
         path("stream") {
           handleWebsocketMessages(tracingEventsFlow)
 
