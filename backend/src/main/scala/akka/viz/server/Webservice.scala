@@ -42,11 +42,6 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) {
     val in = Flow[Message].to(Sink.ignore)
     val out = Source.actorRef[Event](Config.bufferSize, OverflowStrategy.dropNew)
       .via(eventSerialization)
-      .via(Flow[Js.Value].map {
-        i =>
-          println(i)
-          i
-      })
       .via(jsonPrinter)
       .map(TextMessage(_))
       .mapMaterializedValue(EventSystem.subscribe(_))
