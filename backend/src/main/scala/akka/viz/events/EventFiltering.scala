@@ -6,7 +6,9 @@ object FilteringRule {
   val Default = IsUserActor
 }
 
-sealed trait FilteringRule extends (Received => Boolean)
+sealed trait FilteringRule {
+  def apply(received: Received): Boolean
+}
 
 case object IsUserActor extends FilteringRule {
   private def isUserActor(actorRef: ActorRef): Boolean = actorRef.path.elements.headOption.contains("user")

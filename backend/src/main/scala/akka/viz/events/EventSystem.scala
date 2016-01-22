@@ -34,9 +34,13 @@ object EventSystem {
     publisher.tell(Subscribe, subscriber)
   }
 
+  def updateFilter(filter: FilteringRule): Unit = {
+    publisher.tell(filter, ActorRef.noSender) // todo add sender for communication with web client
+  }
+
 }
 
-class EventPublisherActor extends Actor {
+class EventPublisherActor extends Actor with ActorLogging {
   val maxElementsInQueue = Config.eventsToReply
   var queue = immutable.Queue[Event]()
   var subscribers = immutable.Set[ActorRef]()
@@ -45,6 +49,10 @@ class EventPublisherActor extends Actor {
   var allowed: FilteringRule = FilteringRule.Default
 
   override def receive: Receive = {
+    case rule: FilteringRule =>
+      log.info(s"updated FilteringRule: $rule")
+      allowed = rule
+
     case r @ Received(_, _, msg) =>
       trackMsgType(msg)
 

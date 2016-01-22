@@ -3,7 +3,7 @@ package akka.viz.server
 
 import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.model._
-import akka.http.scaladsl.model.ws.{Message, TextMessage}
+import akka.http.scaladsl.model.ws.{TextMessage, Message}
 import akka.http.scaladsl.server.Directives
 import akka.stream.scaladsl._
 import akka.stream.stage._
@@ -11,7 +11,8 @@ import akka.stream.{Materializer, OverflowStrategy}
 import akka.viz.MessageSerialization
 import akka.viz.config.Config
 import akka.viz.events.EventSystem.Subscribe
-import akka.viz.events.{AvailableMessageTypes, Received, Event, EventSystem}
+import akka.viz.events._
+import spray.json.JsonReader
 import upickle.Js
 
 
@@ -39,7 +40,20 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) {
   }
 
   def tracingEventsFlow: Flow[Message, Message, Any] = {
-    val in = Flow[Message].to(Sink.ignore)
+    val in = Flow[Message].to(Sink.foreach {
+      case TextMessage.Strict(msg) =>
+        import spray.json._
+        import DefaultJsonProtocol._
+        val jsObj = msg.parseJson.asJsObject // todo after sjs migration: use pickler or something
+        val filter = jsObj.fields.get("allowedClasses").map(_.convertTo[List[String]]).map(AllowedClasses)
+
+        filter.foreach { f =>
+          EventSystem.updateFilter(f)
+        }
+      case other =>
+        println(other)
+    })
+
     val out = Source.actorRef[Event](Config.bufferSize, OverflowStrategy.dropNew)
       .via(eventSerialization)
       .via(Flow[Js.Value].map {
