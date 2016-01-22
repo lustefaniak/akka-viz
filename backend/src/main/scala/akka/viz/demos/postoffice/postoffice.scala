@@ -54,7 +54,7 @@ object PostOffice {
 
   val WeightLimit = 5.00
 
-  val DelayRange = 150 to 1500
+  val DelayRange = 1150 to 5500
 
   def randomDelay = Random.nextInt(DelayRange.max - DelayRange.min) + DelayRange.min
 

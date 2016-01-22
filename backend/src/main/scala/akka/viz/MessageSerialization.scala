@@ -1,6 +1,5 @@
 package akka.viz
 
-import spray.json.JsObject
 import upickle.Js
 import upickle.default.writeJs
 
