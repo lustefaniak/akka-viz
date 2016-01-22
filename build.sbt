@@ -42,8 +42,8 @@ lazy val backend =
       products in Compile <<= products in Aspectj,
       products in Runtime <<= products in Compile,
       (resourceGenerators in Compile) <+=
-        (fastOptJS in Compile in frontend, packageScalaJSLauncher in Compile in frontend)
-          .map((f1, f2) => Seq(f1.data, f2.data)),
+        (fastOptJS in Compile in frontend, packageScalaJSLauncher in Compile in frontend, packageJSDependencies in Compile in frontend)
+          .map((f1, f2, f3) => {println(f3);Seq(f1.data, f2.data, f3)}),
       watchSources <++= (watchSources in frontend)
     )
     .dependsOn(sharedJvm)
