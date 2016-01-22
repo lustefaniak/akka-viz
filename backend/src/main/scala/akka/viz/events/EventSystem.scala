@@ -16,7 +16,7 @@ import akka.viz.util.FiniteQueue._
 sealed trait Event
 
 case class Received(sender: ActorRef, receiver: ActorRef, message: Any) extends Event
-
+case class AvailableMessageTypes(classes: List[Class[_ <: Any]]) extends Event
 
 object EventSystem {
 
@@ -41,17 +41,31 @@ class EventPublisherActor extends Actor {
   var queue = immutable.Queue[Event]()
   var subscribers = immutable.Set[ActorRef]()
 
+  var availableTypes = immutable.Set[Class[_ <: Any]]()
+  var allowed: FilteringRule = FilteringRule.Default
+
   override def receive: Receive = {
-    case event: Event =>
-      if (EventFiltering.isAllowed(event)) {
-        queue = queue.enqueueFinite(event, maxElementsInQueue)
-        subscribers.foreach(_ ! event)
+    case r @ Received(_, _, msg) =>
+      trackMsgType(msg)
+
+      if (allowed(r)) {
+        queue = queue.enqueueFinite(r, maxElementsInQueue)
+        subscribers.foreach(_ ! r)
       }
+
     case Subscribe =>
       val s = sender()
       subscribers += s
+      s ! AvailableMessageTypes(availableTypes.toList)
       queue.foreach(s ! _)
     case Unsubscribe =>
       subscribers -= sender()
+  }
+
+  def trackMsgType(msg: Any): Unit = {
+    if (!availableTypes.contains(msg.getClass)) {
+      availableTypes += msg.getClass
+      subscribers.foreach(_ ! AvailableMessageTypes(availableTypes.toList))
+    }
   }
 }

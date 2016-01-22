@@ -11,7 +11,7 @@ import akka.stream.{Materializer, OverflowStrategy}
 import akka.viz.MessageSerialization
 import akka.viz.config.Config
 import akka.viz.events.EventSystem.Subscribe
-import akka.viz.events.{Received, Event, EventSystem}
+import akka.viz.events.{AvailableMessageTypes, Received, Event, EventSystem}
 import upickle.Js
 
 
@@ -60,6 +60,10 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) {
         "sender" -> Js.Str(sender.path.toSerializationFormat),
         "receiver" -> Js.Str(receiver.path.toSerializationFormat),
         "message" -> MessageSerialization.serialize(message)
+      )
+    case AvailableMessageTypes(classes) =>
+      Js.Obj(
+        "availableClasses" -> Js.Arr(classes.map(cls => Js.Str(cls.getName)) :_* )
       )
   }
 
