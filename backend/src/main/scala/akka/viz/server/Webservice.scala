@@ -68,7 +68,8 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) {
 
   def internalToApi: Flow[Event, protocol.ApiServerMessage, Any] = Flow[Event].map {
     case Received(sender, receiver, message) =>
-      protocol.Received(sender.path.toSerializationFormat, receiver.path.toSerializationFormat, MessageSerialization.serialize(message))
+      //FIXME: decide if content of payload should be added to message
+      protocol.Received(sender.path.toSerializationFormat, receiver.path.toSerializationFormat, message.getClass.getCanonicalName, Some(MessageSerialization.serialize(message)))
     case AvailableMessageTypes(types) =>
       protocol.AvailableClasses(types.map(_.getCanonicalName))
 

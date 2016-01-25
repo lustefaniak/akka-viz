@@ -5,7 +5,7 @@ html {
 #graphview {
     display: block;
     position: fixed;
-    left: 300px;
+    left: 380px;
     top: 0;
     overflow: hidden;
     height: 100%;
@@ -21,6 +21,6 @@ html {
     top: 5px;
     display: block;
     position: absolute;
-    width: 300px;
+    width: 380px;
     bottom: 0px;
 }
