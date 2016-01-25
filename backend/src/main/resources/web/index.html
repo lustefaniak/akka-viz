@@ -14,7 +14,8 @@
 
     <!-- Bootstrap -->
     <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">
-    <link href="//cdnjs.cloudflare.com/ajax/libs/bootstrap-material-design/0.5.7/css/bootstrap-material-design.min.css" rel="stylesheet">
+    <link href="//cdnjs.cloudflare.com/ajax/libs/bootstrap-material-design/0.5.7/css/bootstrap-material-design.min.css"
+          rel="stylesheet">
 </head>
 <body>
 <div id="graphview"></div>
@@ -26,11 +27,36 @@
             <div id="actortree"></div>
         </div>
     </div>
+    <div class="panel panel-default">
+        <div class="panel-heading" id="messagespaneltitle">Messages</div>
+        <div class="panel-body" id="messagespanelbody">
+            <table class="table table-striped table-hover ">
+                <thead>
+                <tr>
+                    <th></th>
+                    <th>Actor</th>
+                    <th>Class</th>
+                </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+    </div>
 
     <div class="panel panel-default">
-        <div class="panel-heading">Messages</div>
-        <div class="panel-body">
-            <div id="messages"></div>
+        <div class="panel-heading">Message filter</div>
+        <div class="panel-body" id="messagefilter">
+            <table class="table table-striped table-hover ">
+                <thead>
+                <tr>
+                    <th></th>
+                    <th>Class</th>
+                </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
@@ -45,7 +71,8 @@
 
     var graph = Viva.Graph.graph();
 
-    var idealLength = 180;
+    var nodeSize = 40;
+    var idealLength = 5 * nodeSize;
     var layout = Viva.Graph.Layout.forceDirected(graph, {
         springLength: idealLength,
         springCoeff: 0.0008,
@@ -55,7 +82,6 @@
 
 
     var graphics = Viva.Graph.View.svgGraphics();
-    var nodeSize = 32;
     var highlightRelatedNodes = function (nodeId, isOn) {
         graph.forEachLinkedNode(nodeId, function (node, link) {
             var linkUI = graphics.getLinkUI(link.id);
@@ -68,13 +94,12 @@
     };
 
     graphics.node(function (node) {
-        var ui = Viva.Graph.svg('g'),
-        // Create SVG text element with user id as content
-                svgText = Viva.Graph.svg('text').attr('y', '-4px').text(node.id),
-                img = Viva.Graph.svg('image')
-                        .attr('width', nodeSize)
-                        .attr('height', nodeSize)
-                        .link('https://secure.gravatar.com/avatar/' + node.data);
+        var ui = Viva.Graph.svg('g');
+        var svgText = Viva.Graph.svg('text').attr('y', '-4px').text(node.id);
+        var img = Viva.Graph.svg('image')
+                .attr('width', nodeSize)
+                .attr('height', nodeSize)
+                .link('/img/actor.png');
 
         ui.append(svgText);
         ui.append(img);
@@ -173,11 +198,10 @@
     renderer.run();
 
 
-
 </script>
-<script type="text/javascript" src="frontend-fastopt.js"></script>
 <script type="text/javascript" src="frontend-launcher.js"></script>
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-material-design/0.5.7/js/material.min.js"/>
+<script type="text/javascript"
+        src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-material-design/0.5.7/js/material.min.js"/>
 <script type="text/javascript">
     $.material.init()
 </script>
