@@ -145,7 +145,8 @@ object FrontendApp extends JSApp {
       messages.appendChild(content.render)
 
       console.log(s"Will send allowedClasses: ${selected.mkString("[", ",", "]")}")
-      upstream.send(JSON.stringify(Dictionary("allowedClasses" -> js.Array(selected.toSeq: _*))))
+      import upickle.default._
+      upstream.send(write(SetAllowedMessages(selected.toList)))
 
       selectedActor.trigger {
         if (selectedActor.now == "") {
