@@ -2,11 +2,13 @@ package akka.viz.frontend
 
 import akka.viz.protocol._
 import org.querki.jquery.{JQueryStatic => jQ}
-import org.scalajs.dom._
+import org.scalajs.dom.{onclick => oc, _}
+import rx._
 
 import scala.scalajs.js
-import scala.scalajs.js._
-
+import scala.scalajs.js.annotation.JSExport
+import scala.scalajs.js.{Dictionary, JSApp, JSON}
+import scalatags.JsDom.all._
 
 object FrontendApp extends JSApp {
 
@@ -32,35 +34,95 @@ object FrontendApp extends JSApp {
       case rcv: Received =>
 
         val sender = actorName(rcv.sender)
-        val recevier = actorName(rcv.receiver)
+        val receiver = actorName(rcv.receiver)
+        addActorsToSeen(sender, receiver)
 
-        val linkId = s"${sender}->${recevier}"
+        val linkId = s"${sender}->${receiver}"
         if (!createdLinks(linkId)) {
           createdLinks.add(linkId)
           graph.beginUpdate()
-          graph.addLink(sender, recevier, linkId)
+          graph.addLink(sender, receiver, linkId)
           graph.endUpdate()
         }
 
       case ac: AvailableClasses =>
-
-        ac.availableClasses
-          .foreach { clsName =>
-            val elem = jQ(s"""<input type="checkbox" value="$clsName" id="$clsName" /><label for="$clsName">$clsName</label><br>""")
-            if (jQ(s"form input").filter((e: Element) => e.id == clsName).length == 0) {
-              jQ("form").append(elem)
-            }
-          }
+        seenMessages() = ac.availableClasses.toSet
     }
 
+  }
+
+  val seenActors = Var[Set[String]](Set())
+  val selectedActor = Var("")
+  val seenMessages = Var[Set[String]](Set())
+  val selectedMessages = Var[Set[String]](Set())
+
+  private def addActorsToSeen(actorName: String*): Unit = {
+    val previouslySeen = seenActors.now
+    val newSeen = previouslySeen ++ actorName.filterNot(previouslySeen(_))
+    seenActors() = newSeen
+  }
+
+  @JSExport("pickActor")
+  def pickActor(actorPath: String): Unit = {
+    if (selectedActor.now == actorPath) {
+      console.log(s"Unselected '$actorPath' actor")
+      selectedActor() = ""
+    } else {
+      console.log(s"Selected '$actorPath' actor")
+      selectedActor() = actorPath
+    }
   }
 
   def main(): Unit = {
     val upstream = ApiConnection(webSocketUrl("stream"), handleDownstream)
 
-    jQ("form").click({ e: Element =>
-      val checked = jQ("form :checked").mapElems(elem => jQ(elem).valueString)
-      upstream.send(JSON.stringify(Dictionary("allowedClasses" -> js.Array(checked: _*))))
-    })
+    val actorsObs = Rx.unsafe {
+      (seenActors(), selectedActor())
+    }.triggerLater {
+      val seen = seenActors.now.toList.sorted
+      val selected = selectedActor.now
+
+      val content = div(`class` := "collection", ul(seen.map {
+        actorName =>
+          li(`class` := "collection-item", if (selected == actorName) b(actorName) else actorName, onclick := {
+            () => pickActor(actorName)
+          })
+      }))
+
+      val actorTree = document.getElementById("actortree")
+      actorTree.innerHTML = ""
+      actorTree.appendChild(content.render)
+    }
+
+    val messagesObs = Rx.unsafe {
+      (seenMessages(), selectedMessages())
+    }.triggerLater {
+
+      val seen = seenMessages.now.toList.sorted
+      val selected = selectedMessages.now
+
+      val content = div(`class` := "collection", ul(seen.map {
+        clazz =>
+          val contains = selected(clazz)
+          li(`class` := "collection-item",
+            if (contains) input(`type` := "checkbox", checked := true) else input(`type` := "checkbox"),
+            if (contains) b(clazz) else clazz,
+            onclick := {
+              () =>
+                console.log(s"Toggling ${clazz} now it will be ${!contains}")
+                selectedMessages() = if (contains) selected - clazz else selected + clazz
+            })
+      }))
+
+      val messages = document.getElementById("messages")
+      messages.innerHTML = ""
+      messages.appendChild(content.render)
+
+      console.log(s"Will send allowedClasses: ${selected.mkString("[", ",", "]")}")
+      upstream.send(JSON.stringify(Dictionary("allowedClasses" -> js.Array(selected.toSeq: _*))))
+    }
+
+    window.setTimeout(() => selectedMessages() = Set("akka.viz.demos.postoffice.Lodz$"), 2000)
+
   }
 }
