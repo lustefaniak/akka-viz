@@ -86,24 +86,30 @@
                 ')');
     });
 
-    var createMarker = function (id) {
+    var createMarker = function (id, color) {
         return Viva.Graph.svg('marker')
                 .attr('id', id)
                 .attr('viewBox', "0 0 10 10")
                 .attr('refX', "10")
                 .attr('refY', "5")
+                .attr('stroke', 'light-gray')
+                .attr('fill', color)
                 .attr('markerUnits', "strokeWidth")
                 .attr('markerWidth', "10")
                 .attr('markerHeight', "5")
                 .attr('orient', "auto");
     };
 
-    var marker = createMarker('Triangle');
+    var marker = createMarker('Triangle', 'gray');
     marker.append('path').attr('d', 'M 0 0 L 10 5 L 0 10 z');
+    var markerRed = createMarker('TriangleRed', 'red');
+    markerRed.append('path').attr('d', 'M 0 0 L 10 5 L 0 10 z');
+
 
     // Marker should be defined only once in <defs> child element of root <svg> element:
     var defs = graphics.getSvgRoot().append('defs');
     defs.append(marker);
+    defs.append(markerRed);
 
     var geom = Viva.Graph.geom();
 
