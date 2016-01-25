@@ -106,14 +106,15 @@ object FrontendApp extends JSApp {
       val seen = seenActors.now.toList.sorted
       val selected = selectedActor.now
 
-      val content = div(`class` := "collection", ul(seen.map {
+      val content = seen.map {
         actorName =>
-          li(`class` := "collection-item", if (selected == actorName) b(actorName) else actorName, onclick := {
+          val isSelected= selected == actorName
+          tr(td(if(isSelected) input(`type`:="radio", checked:=true) else input(`type`:="radio")), td(if (isSelected) b(actorName) else actorName), onclick := {
             () => pickActor(actorName)
           })
-      }))
+      }
 
-      val actorTree = document.getElementById("actortree")
+      val actorTree = document.getElementById("actortree").getElementsByTagName("tbody")(0).asInstanceOf[Element]
       actorTree.innerHTML = ""
       actorTree.appendChild(content.render)
     }
