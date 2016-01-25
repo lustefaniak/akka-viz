@@ -36,19 +36,22 @@ object FrontendApp extends JSApp {
         val sender = actorName(rcv.sender)
         val receiver = actorName(rcv.receiver)
         addActorsToSeen(sender, receiver)
-
-        val linkId = s"${sender}->${receiver}"
-        if (!createdLinks(linkId)) {
-          createdLinks.add(linkId)
-          graph.beginUpdate()
-          graph.addLink(sender, receiver, linkId)
-          graph.endUpdate()
-        }
+        messageReceived(rcv)
+        ensureGraphLink(sender, receiver)
 
       case ac: AvailableClasses =>
         seenMessages() = ac.availableClasses.toSet
     }
+  }
 
+  private def ensureGraphLink(sender: String, receiver: String): Unit = {
+    val linkId = s"${sender}->${receiver}"
+    if (!createdLinks(linkId)) {
+      createdLinks.add(linkId)
+      graph.beginUpdate()
+      graph.addLink(sender, receiver, linkId)
+      graph.endUpdate()
+    }
   }
 
   val seenActors = Var[Set[String]](Set())
@@ -60,6 +63,27 @@ object FrontendApp extends JSApp {
     val previouslySeen = seenActors.now
     val newSeen = previouslySeen ++ actorName.filterNot(previouslySeen(_))
     seenActors() = newSeen
+  }
+
+  lazy val messagesContent = document.getElementById("messagespanelbody").getElementsByTagName("tbody")(0).asInstanceOf[Element]
+  private def messageReceived(rcv: Received): Unit = {
+    def insert(e: Element): Unit = {
+      messagesContent.insertBefore(e, messagesContent.firstChild)
+    }
+    val sender = actorName(rcv.sender)
+    val receiver = actorName(rcv.receiver)
+    val selected = selectedActor.now
+    val fn = () =>{
+      if(rcv.payload.isDefined){
+        alert(JSON.stringify(JSON.parse(rcv.payload.get)))
+      }
+    }
+    selected match {
+      case s if s == sender => insert(tr(td(i(`class` := "material-icons", "chevron_right")), td(receiver), td(rcv.payloadClass), onclick := fn).render)
+      case s if s == receiver => insert(tr(td(i(`class` := "material-icons", "chevron_left")), td(receiver), td(rcv.payloadClass), onclick := fn).render)
+      case _ =>
+    }
+
   }
 
   @JSExport("pickActor")
@@ -101,25 +125,34 @@ object FrontendApp extends JSApp {
       val seen = seenMessages.now.toList.sorted
       val selected = selectedMessages.now
 
-      val content = div(`class` := "collection", ul(seen.map {
+      val content = seen.map {
         clazz =>
           val contains = selected(clazz)
-          li(`class` := "collection-item",
-            if (contains) input(`type` := "checkbox", checked := true) else input(`type` := "checkbox"),
-            if (contains) b(clazz) else clazz,
+          tr(
+            td(if (contains) input(`type` := "checkbox", checked := true) else input(`type` := "checkbox")),
+            td(if (contains) b(clazz) else clazz),
             onclick := {
               () =>
                 console.log(s"Toggling ${clazz} now it will be ${!contains}")
                 selectedMessages() = if (contains) selected - clazz else selected + clazz
             })
-      }))
+      }
 
-      val messages = document.getElementById("messages")
+      val messages = document.getElementById("messagefilter").getElementsByTagName("tbody")(0).asInstanceOf[Element]
       messages.innerHTML = ""
       messages.appendChild(content.render)
 
       console.log(s"Will send allowedClasses: ${selected.mkString("[", ",", "]")}")
       upstream.send(JSON.stringify(Dictionary("allowedClasses" -> js.Array(selected.toSeq: _*))))
+    }
+
+    selectedActor.trigger{
+      if(selectedActor.now == "") {
+        document.getElementById("messagespaneltitle").innerHTML = s"Select actor to show its messages"
+      } else {
+        document.getElementById("messagespaneltitle").innerHTML = s"Messages for ${selectedActor.now}"
+      }
+      messagesContent.innerHTML = ""
     }
 
   }
