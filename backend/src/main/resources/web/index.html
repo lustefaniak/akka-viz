@@ -35,7 +35,13 @@
     </div>
 </div>
 
+<script type="text/javascript" src="frontend-fastopt.js"></script>
+
 <script type="text/javascript">
+
+    function frontendApp() {
+        return akka.viz.frontend.FrontendApp()
+    }
 
     var graph = Viva.Graph.graph();
 
@@ -51,12 +57,12 @@
     var graphics = Viva.Graph.View.svgGraphics();
     var nodeSize = 32;
     var highlightRelatedNodes = function (nodeId, isOn) {
-        // just enumerate all realted nodes and update link color:
         graph.forEachLinkedNode(nodeId, function (node, link) {
             var linkUI = graphics.getLinkUI(link.id);
             if (linkUI) {
-                // linkUI is a UI object created by graphics below
-                linkUI.attr('stroke', isOn ? 'red' : 'gray');
+                linkUI
+                        .attr('stroke', isOn ? 'red' : 'gray')
+                        .attr('marker-end', isOn ? 'url(#TriangleRed)' : 'url(#Triangle)');
             }
         });
     };
@@ -78,6 +84,10 @@
         }, function () { // mouse out
             highlightRelatedNodes(node.id, false);
         });
+        $(ui).click(function () {
+            frontendApp().pickActor(node.id)
+        });
+
         return ui;
     }).placeNode(function (nodeUI, pos) {
         nodeUI.attr('transform',
