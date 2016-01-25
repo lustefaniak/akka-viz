@@ -3,7 +3,7 @@ package akka.viz.events
 import akka.actor._
 
 object FilteringRule {
-  val Default = IsUserActor
+  val Default: FilteringRule = IsUserActor
 }
 
 sealed trait FilteringRule {
