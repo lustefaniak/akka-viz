@@ -19,6 +19,8 @@ lazy val frontend =
       libraryDependencies ++= Seq(
         "org.scala-js" %%% "scalajs-dom" % "0.8.2",
         "com.lihaoyi" %%% "upickle" % Dependencies.Versions.upickle,
+        "com.lihaoyi" %%% "scalarx" % "0.3.0",
+        "com.lihaoyi" %%% "scalatags" % "0.5.4",
         "org.querki" %%% "jquery-facade" % "0.11",
         "org.scalatest" %%% "scalatest" % Dependencies.Versions.scalatest % "test"
       ),
