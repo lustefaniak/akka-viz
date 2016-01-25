@@ -66,6 +66,7 @@ object FrontendApp extends JSApp {
   }
 
   lazy val messagesContent = document.getElementById("messagespanelbody").getElementsByTagName("tbody")(0).asInstanceOf[Element]
+
   private def messageReceived(rcv: Received): Unit = {
     def insert(e: Element): Unit = {
       messagesContent.insertBefore(e, messagesContent.firstChild)
@@ -73,8 +74,8 @@ object FrontendApp extends JSApp {
     val sender = actorName(rcv.sender)
     val receiver = actorName(rcv.receiver)
     val selected = selectedActor.now
-    val fn = () =>{
-      if(rcv.payload.isDefined){
+    val fn = () => {
+      if (rcv.payload.isDefined) {
         alert(JSON.stringify(JSON.parse(rcv.payload.get)))
       }
     }
@@ -108,8 +109,8 @@ object FrontendApp extends JSApp {
 
       val content = seen.map {
         actorName =>
-          val isSelected= selected == actorName
-          tr(td(if(isSelected) input(`type`:="radio", checked:=true) else input(`type`:="radio")), td(if (isSelected) b(actorName) else actorName), onclick := {
+          val isSelected = selected == actorName
+          tr(td(if (isSelected) input(`type` := "radio", checked := true) else input(`type` := "radio")), td(if (isSelected) b(actorName) else actorName), onclick := {
             () => pickActor(actorName)
           })
       }
@@ -145,16 +146,16 @@ object FrontendApp extends JSApp {
 
       console.log(s"Will send allowedClasses: ${selected.mkString("[", ",", "]")}")
       upstream.send(JSON.stringify(Dictionary("allowedClasses" -> js.Array(selected.toSeq: _*))))
-    }
 
-    selectedActor.trigger{
-      if(selectedActor.now == "") {
-        document.getElementById("messagespaneltitle").innerHTML = s"Select actor to show its messages"
-      } else {
-        document.getElementById("messagespaneltitle").innerHTML = s"Messages for ${selectedActor.now}"
+      selectedActor.trigger {
+        if (selectedActor.now == "") {
+          document.getElementById("messagespaneltitle").innerHTML = s"Select actor to show its messages"
+        } else {
+          document.getElementById("messagespaneltitle").innerHTML = s"Messages for ${selectedActor.now}"
+        }
+        messagesContent.innerHTML = ""
       }
-      messagesContent.innerHTML = ""
-    }
 
+    }
   }
 }

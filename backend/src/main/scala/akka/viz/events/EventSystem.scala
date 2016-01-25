@@ -34,9 +34,9 @@ object EventSystem {
     publisher.tell(Subscribe, subscriber)
   }
 
-  def updateFilter(filter: FilteringRule): Unit = {
-    publisher.tell(filter, ActorRef.noSender) // todo add sender for communication with web client
-  }
+//  def updateFilter(filter: FilteringRule): Unit = {
+//    publisher.tell(filter, ActorRef.noSender) // todo add sender for communication with web client
+//  }
 
 }
 

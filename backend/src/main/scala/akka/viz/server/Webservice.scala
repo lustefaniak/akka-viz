@@ -1,12 +1,12 @@
 package akka.viz.server
 
 
-import akka.actor.ActorSystem
+import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.ws.{Message, TextMessage}
 import akka.http.scaladsl.server.Directives
 import akka.stream.scaladsl._
-import akka.stream.{Materializer, OverflowStrategy}
+import akka.stream.{FlowShape, Materializer, OverflowStrategy}
 import akka.viz.config.Config
 import akka.viz.events._
 import akka.viz.{MessageSerialization, protocol}
@@ -29,42 +29,51 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) {
 
   import Directives._
 
-  def route: Flow[HttpRequest, HttpResponse, Any] = {
-    get {
-      pathSingleSlash {
-        getFromResource("web/index.html")
-      } ~
-        path("frontend-launcher.js")(getFromResource("frontend-launcher.js")) ~
-        path("frontend-fastopt.js")(getFromResource("frontend-fastopt.js")) ~
-        path("frontend-jsdeps.js")(getFromResource("frontend-jsdeps.js")) ~
-        path("stream") {
-          handleWebsocketMessages(tracingEventsFlow)
-
-        }
+  def route: Flow[HttpRequest, HttpResponse, Any] = get {
+    pathSingleSlash {
+      getFromResource("web/index.html")
     } ~
-      getFromResourceDirectory("web")
-  }
+      path("frontend-launcher.js")(getFromResource("frontend-launcher.js")) ~
+      path("frontend-fastopt.js")(getFromResource("frontend-fastopt.js")) ~
+      path("frontend-jsdeps.js")(getFromResource("frontend-jsdeps.js")) ~
+      path("stream") {
+        handleWebsocketMessages(tracingEventsFlow.mapMaterializedValue(EventSystem.subscribe))
 
-  def tracingEventsFlow: Flow[Message, Message, Any] = {
-    val in = Flow[Message].to(Sink.foreach {
-      case TextMessage.Strict(msg) =>
-        val command = ApiMessages.read(msg)
-        command match {
-          case protocol.SetAllowedMessages(classNames) =>
-            EventSystem.updateFilter(AllowedClasses(classNames))
-        }
-      case other =>
-        system.log.error(s"Received unsupported Message in WS: ${other}")
-    })
+      }
+  } ~
+    getFromResourceDirectory("web")
 
-    val out = Source.actorRef[Event](Config.bufferSize, OverflowStrategy.dropNew)
-      .via(internalToApi)
-      .via(eventSerialization)
-      .map(TextMessage(_))
-      .mapMaterializedValue(EventSystem.subscribe(_))
+  def tracingEventsFlow: Flow[Message, Message, ActorRef] = {
+      val eventSrc = Source.actorRef[Event](Config.bufferSize, OverflowStrategy.dropNew)
 
-    Flow.fromSinkAndSource(in, out)
-  }
+      val wsIn = Flow[Message].mapConcat[FilteringRule] {
+        case TextMessage.Strict(msg) =>
+          val command = ApiMessages.read(msg)
+          command match {
+            case protocol.SetAllowedMessages(classNames) =>
+              List(AllowedClasses(classNames))
+            case other =>
+              system.log.error(s"Received unsupported unpickle object via WS: ${other}")
+              Nil
+          }
+        case other =>
+          system.log.error(s"Received unsupported Message in WS: ${other}")
+          Nil
+      }.prepend(Source.single(FilteringRule.Default))
+        .expand(identity)(r => (r,r))
+
+      val out = wsIn.zipMat(eventSrc)((_, m) => m)
+        .collect {
+          case (allowed, r @ Received(_,_,_)) if allowed(r) => r
+          case (_, other) if !other.isInstanceOf[Received] => other
+        }.via(internalToApi)
+          .via(eventSerialization)
+          .map(TextMessage(_))
+
+
+      out
+    }
+
 
   def internalToApi: Flow[Event, protocol.ApiServerMessage, Any] = Flow[Event].map {
     case Received(sender, receiver, message) =>
