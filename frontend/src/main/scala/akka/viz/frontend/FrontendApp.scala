@@ -122,7 +122,5 @@ object FrontendApp extends JSApp {
       upstream.send(JSON.stringify(Dictionary("allowedClasses" -> js.Array(selected.toSeq: _*))))
     }
 
-    window.setTimeout(() => selectedMessages() = Set("akka.viz.demos.postoffice.Lodz$"), 2000)
-
   }
 }
