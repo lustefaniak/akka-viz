@@ -24,3 +24,13 @@ html {
     width: 380px;
     bottom: 0px;
 }
+
+#thebox .nav-tabs .active {
+background-color: tomato;
+
+}
+
+#thebox .tab-content {
+    max-height: 300px;
+    overflow: scroll;
+}
