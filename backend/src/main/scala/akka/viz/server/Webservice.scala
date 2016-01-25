@@ -51,9 +51,10 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) {
           val command = ApiMessages.read(msg)
           command match {
             case protocol.SetAllowedMessages(classNames) =>
+              system.log.debug(s"Set allowed messages to $classNames")
               List(AllowedClasses(classNames))
             case other =>
-              system.log.error(s"Received unsupported unpickle object via WS: ${other}")
+              system.log.error(s"Received unsupported unpickled object via WS: ${other}")
               Nil
           }
         case other =>

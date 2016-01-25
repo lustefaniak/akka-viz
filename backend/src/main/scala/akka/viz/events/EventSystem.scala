@@ -34,10 +34,6 @@ object EventSystem {
     publisher.tell(Subscribe, subscriber)
   }
 
-//  def updateFilter(filter: FilteringRule): Unit = {
-//    publisher.tell(filter, ActorRef.noSender) // todo add sender for communication with web client
-//  }
-
 }
 
 class EventPublisherActor extends Actor with ActorLogging {
@@ -64,10 +60,17 @@ class EventPublisherActor extends Actor with ActorLogging {
     case Subscribe =>
       val s = sender()
       subscribers += s
+      context.watch(s)
       s ! AvailableMessageTypes(availableTypes.toList)
       queue.foreach(s ! _)
     case Unsubscribe =>
-      subscribers -= sender()
+      unsubscribe(sender())
+    case Terminated(s) =>
+      unsubscribe(s)
+  }
+
+  def unsubscribe(s: ActorRef): Unit = {
+    subscribers -= s
   }
 
   def trackMsgType(msg: Any): Unit = {
