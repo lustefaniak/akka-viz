@@ -1,28 +1,14 @@
 package akka.viz.frontend
 
 import akka.viz.protocol._
-import org.querki.jquery.{JQueryStatic => jQ}
 import org.scalajs.dom.{onclick => oc, _}
 import rx._
-
-import scala.scalajs.js
 import scala.scalajs.js.annotation.JSExport
-import scala.scalajs.js.{Dictionary, JSApp, JSON}
+import scala.scalajs.js.{JSApp, JSON}
 import scalatags.JsDom.all._
+import upickle.default._
 
-object FrontendApp extends JSApp {
-
-  def webSocketUrl(path: String) = {
-    val l = window.location
-    (if (l.protocol == "https:") "wss://" else "ws://") +
-      l.hostname +
-      (if ((l.port != 80) && (l.port != 443)) ":" + l.port else "") +
-      l.pathname + path
-  }
-
-  def actorName(actorRef: String): String = {
-    actorRef.split("/").drop(3).mkString("/").split("#").head
-  }
+object FrontendApp extends JSApp with FrontendUtil with Persistence {
 
   val createdLinks = scala.collection.mutable.Set[String]()
   val graph = DOMGlobalScope.graph
@@ -57,7 +43,7 @@ object FrontendApp extends JSApp {
   val seenActors = Var[Set[String]](Set())
   val selectedActor = Var("")
   val seenMessages = Var[Set[String]](Set())
-  val selectedMessages = Var[Set[String]](Set())
+  val selectedMessages = persistedVar[Set[String]](Set(), "selectedMessages")
 
   private def addActorsToSeen(actorName: String*): Unit = {
     val previouslySeen = seenActors.now
