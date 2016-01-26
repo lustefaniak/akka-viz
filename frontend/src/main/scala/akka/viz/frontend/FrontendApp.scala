@@ -83,8 +83,8 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence {
           tbody(
           tr(td(b("From")), td(sender)),
           tr(td(b("To")), td(receiver)),
-          tr(td(b("PayloadClass")), td(rcv.payloadClass)),
-          tr(td(b("payload")), td(payload))
+          tr(td(b("Class")), td(rcv.payloadClass)),
+          tr(td(b("Payload")), td(pre(payload)))
           )
         )
       )
