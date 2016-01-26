@@ -70,7 +70,7 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence {
         "data-toggle".attr := "collapse",
         "data-target".attr := s"#detail$uid",
         td(i(`class` := "material-icons", iconName)),
-        td(receiver),
+        td(if (selected == sender) receiver else sender),
         td(rcv.payloadClass)
       )
 
@@ -177,7 +177,7 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence {
       selectedMessages() = seenMessages.now
     }
 
-    document.querySelector("a#messagefilter-select-none").addEventListener("click", {(e: Event) => clearFilters()}, true)
-    document.querySelector("a#messagefilter-select-all").addEventListener("click", {(e: Event) => selectAllFilters()}, true)
+    document.querySelector("a#messagefilter-select-none").addEventListener("click", { (e: Event) => clearFilters() }, true)
+    document.querySelector("a#messagefilter-select-all").addEventListener("click", { (e: Event) => selectAllFilters() }, true)
   }
 }
