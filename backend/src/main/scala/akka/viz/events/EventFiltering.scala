@@ -6,22 +6,17 @@ import akka.actor._
 import scala.util.{Failure, Try}
 
 object FilteringRule {
-  val Default: FilteringRule = IsUserActor
+
+  def isUserActor(actorRef: ActorRef): Boolean = actorRef.path.elements.headOption.contains("user")
+
+  val Default: FilteringRule = AllowAll
 }
 
-sealed trait FilteringRule {
-  def apply(received: Received): Boolean
+trait FilteringRule extends Function1[backend.Received, Boolean]
+
+case object AllowAll extends FilteringRule {
+  override def apply(event: backend.Received) = true
 }
-
-case object IsUserActor extends FilteringRule {
-  private def isUserActor(actorRef: ActorRef): Boolean = actorRef.path.elements.headOption.contains("user")
-
-  override def apply(event: Received) = {
-    isUserActor(event.sender) || isUserActor(event.receiver)
-  }
-}
-
-case object AllowAll extends FilteringRule { override def apply(event: Received) = true }
 
 case class AllowedClasses(names: List[String]) extends FilteringRule {
   @transient private val allowedClasses = names.flatMap { name =>
@@ -30,8 +25,7 @@ case class AllowedClasses(names: List[String]) extends FilteringRule {
     loaded.toOption.toIterable
   }
 
-
-  override def apply(event: Received): Boolean = {
+  override def apply(event: backend.Received): Boolean = {
     allowedClasses.exists(c => c.isAssignableFrom(event.message.getClass))
   }
 }
