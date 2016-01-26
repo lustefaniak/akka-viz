@@ -42,7 +42,7 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence {
   }
 
   val seenActors = Var[Set[String]](Set())
-  val selectedActor = Var("")
+  val selectedActor = persistedVar[String]("", "selectedActor")
   val seenMessages = Var[Set[String]](Set())
   val selectedMessages = persistedVar[Set[String]](Set(), "selectedMessages")
 
@@ -113,7 +113,7 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence {
 
     val actorsObs = Rx.unsafe {
       (seenActors(), selectedActor())
-    }.triggerLater {
+    }.trigger {
       val seen = seenActors.now.toList.sorted
       val selected = selectedActor.now
 
