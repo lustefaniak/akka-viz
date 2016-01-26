@@ -1,82 +1,80 @@
 package akka.viz.events
 
-import akka.actor.Actor.Receive
 import akka.actor._
-import akka.event.{ActorEventBus, EventBus}
-import akka.stream.Materializer
-import akka.stream.actor.ActorPublisher
-import akka.stream.scaladsl._
 import akka.viz.config.Config
-import akka.viz.events.EventSystem.{Subscribe, Unsubscribe}
-import org.reactivestreams.Publisher
-import scala.collection.immutable
 import akka.viz.util.FiniteQueue._
 
-
-sealed trait Event
-
-case class Received(sender: ActorRef, receiver: ActorRef, message: Any) extends Event
-case class AvailableMessageTypes(classes: List[Class[_ <: Any]]) extends Event
+import scala.collection.immutable
 
 object EventSystem {
-
-  case object Subscribe
-  case object Unsubscribe
 
   private implicit val system = ActorSystem(Config.internalSystemName)
   private val publisher = system.actorOf(Props(classOf[EventPublisherActor]))
 
-  private[akka] def publish(event: Event): Unit = {
+  private[akka] def publish(event: internal.Event): Unit = {
     publisher ! event
   }
 
   def subscribe(subscriber: ActorRef): Unit = {
-    publisher.tell(Subscribe, subscriber)
+    publisher.tell(EventPublisherActor.Subscribe, subscriber)
   }
 
 }
 
 class EventPublisherActor extends Actor with ActorLogging {
+
   val maxElementsInQueue = Config.eventsToReply
-  var queue = immutable.Queue[Event]()
+  var queue = immutable.Queue[backend.Event]()
   var subscribers = immutable.Set[ActorRef]()
 
   var availableTypes = immutable.Set[Class[_ <: Any]]()
-  var allowed: FilteringRule = FilteringRule.Default
+
+  var eventCounter = 0L
 
   override def receive: Receive = {
-    case rule: FilteringRule =>
-      log.info(s"updated FilteringRule: $rule")
-      allowed = rule
+    case r: internal.Received =>
+      trackMsgType(r.message)
 
-    case r @ Received(_, _, msg) =>
-      trackMsgType(msg)
+      val backendEvent = backend.Received(nextEventNumber(), r.sender, r.receiver, r.message)
+      queue = queue.enqueueFinite(backendEvent, maxElementsInQueue)
+      subscribers.foreach(_ ! backendEvent)
 
-      if (allowed(r)) {
-        queue = queue.enqueueFinite(r, maxElementsInQueue)
-        subscribers.foreach(_ ! r)
-      }
-
-    case Subscribe =>
+    case EventPublisherActor.Subscribe =>
       val s = sender()
       subscribers += s
       context.watch(s)
-      s ! AvailableMessageTypes(availableTypes.toList)
+      s ! backend.AvailableMessageTypes(availableTypes.toList)
       queue.foreach(s ! _)
-    case Unsubscribe =>
+
+    case EventPublisherActor.Unsubscribe =>
       unsubscribe(sender())
+
     case Terminated(s) =>
       unsubscribe(s)
   }
 
-  def unsubscribe(s: ActorRef): Unit = {
+  @inline
+  private def nextEventNumber(): Long = {
+    eventCounter += 1
+    eventCounter
+  }
+
+  private def unsubscribe(s: ActorRef): Unit = {
     subscribers -= s
   }
 
-  def trackMsgType(msg: Any): Unit = {
+  private def trackMsgType(msg: Any): Unit = {
     if (!availableTypes.contains(msg.getClass)) {
       availableTypes += msg.getClass
-      subscribers.foreach(_ ! AvailableMessageTypes(availableTypes.toList))
+      subscribers.foreach(_ ! backend.AvailableMessageTypes(availableTypes.toList))
     }
   }
+}
+
+object EventPublisherActor {
+
+  case object Subscribe
+
+  case object Unsubscribe
+
 }
