@@ -5,6 +5,7 @@ import org.scalajs.dom.{onclick => oc, _}
 import rx._
 import scala.scalajs.js.annotation.JSExport
 import scala.scalajs.js.{JSApp, JSON}
+import scala.util.Random
 import scalatags.JsDom.all._
 import upickle.default._
 
@@ -57,20 +58,42 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence {
     def insert(e: Element): Unit = {
       messagesContent.insertBefore(e, messagesContent.firstChild)
     }
+    val uid = Random.nextLong()
     val sender = actorName(rcv.sender)
     val receiver = actorName(rcv.receiver)
     val selected = selectedActor.now
-    val fn = () => {
-      if (rcv.payload.isDefined) {
-        alert(JSON.stringify(JSON.parse(rcv.payload.get)))
-      }
-    }
-    selected match {
-      case s if s == sender => insert(tr(td(i(`class` := "material-icons", "chevron_right")), td(receiver), td(rcv.payloadClass), onclick := fn).render)
-      case s if s == receiver => insert(tr(td(i(`class` := "material-icons", "chevron_left")), td(receiver), td(rcv.payloadClass), onclick := fn).render)
-      case _ =>
-    }
 
+    val iconName = if(selected == sender) "chevron_right" else "chevron_left"
+    val mainRow = tr(
+      "data-toggle".attr := "collapse",
+      "data-target".attr := s"#detail$uid",
+      td(i(`class` := "material-icons", iconName)),
+      td(receiver),
+      td(rcv.payloadClass)
+    )
+
+    val payload: String = rcv.payload.getOrElse("")
+    val detailsRow = tr(
+      id := s"detail$uid",
+      `class` := "collapse",
+      td(
+        colspan := 3,
+        table(
+          `class` := "table",
+          tbody(
+          tr(td(b("From")), td(sender)),
+          tr(td(b("To")), td(receiver)),
+          tr(td(b("PayloadClass")), td(rcv.payloadClass)),
+          tr(td(b("payload")), td(payload))
+          )
+        )
+      )
+    )
+
+    if(selected == sender || selected == receiver) {
+      insert(detailsRow.render)
+      insert(mainRow.render)
+    }
   }
 
   @JSExport("pickActor")
