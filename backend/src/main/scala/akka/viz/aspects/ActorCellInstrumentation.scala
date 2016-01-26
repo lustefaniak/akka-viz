@@ -1,8 +1,8 @@
 package akka.viz.aspects
 
-import akka.actor.{ActorCell, ActorRef, DeadLetterActorRef}
+import akka.actor.ActorCell
 import akka.viz.config.Config
-import akka.viz.events.{Received, EventSystem}
+import akka.viz.events.{EventSystem, internal}
 import org.aspectj.lang.JoinPoint
 import org.aspectj.lang.annotation._
 
@@ -17,7 +17,7 @@ class ActorCellInstrumentation {
   @Before(value = "receiveMessagePointcut(msg) && this(me)", argNames = "jp,msg,me")
   def message(jp: JoinPoint, msg: Any, me: ActorCell) {
     if (me.system.name != internalSystemName)
-      EventSystem.publish(Received(me.sender(), me.self, msg))
+      EventSystem.publish(internal.Received(me.sender(), me.self, msg))
   }
 
 }
