@@ -63,34 +63,35 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence {
     val receiver = actorName(rcv.receiver)
     val selected = selectedActor.now
 
-    val iconName = if(selected == sender) "chevron_right" else "chevron_left"
-    val mainRow = tr(
-      "data-toggle".attr := "collapse",
-      "data-target".attr := s"#detail$uid",
-      td(i(`class` := "material-icons", iconName)),
-      td(receiver),
-      td(rcv.payloadClass)
-    )
+    if (selected == sender || selected == receiver) {
 
-    val payload: String = rcv.payload.getOrElse("")
-    val detailsRow = tr(
-      id := s"detail$uid",
-      `class` := "collapse",
-      td(
-        colspan := 3,
-        table(
-          `class` := "table",
-          tbody(
-          tr(td(b("From")), td(sender)),
-          tr(td(b("To")), td(receiver)),
-          tr(td(b("Class")), td(rcv.payloadClass)),
-          tr(td(b("Payload")), td(pre(payload)))
+      val iconName = if (selected == sender) "chevron_right" else "chevron_left"
+      val mainRow = tr(
+        "data-toggle".attr := "collapse",
+        "data-target".attr := s"#detail$uid",
+        td(i(`class` := "material-icons", iconName)),
+        td(receiver),
+        td(rcv.payloadClass)
+      )
+
+      val payload: String = rcv.payload.getOrElse("")
+      val detailsRow = tr(
+        id := s"detail$uid",
+        `class` := "collapse",
+        td(
+          colspan := 3,
+          table(
+            `class` := "table",
+            tbody(
+              tr(td(b("From")), td(sender)),
+              tr(td(b("To")), td(receiver)),
+              tr(td(b("Class")), td(rcv.payloadClass)),
+              tr(td(b("Payload")), td(pre(payload)))
+            )
           )
         )
       )
-    )
 
-    if(selected == sender || selected == receiver) {
       insert(detailsRow.render)
       insert(mainRow.render)
     }
