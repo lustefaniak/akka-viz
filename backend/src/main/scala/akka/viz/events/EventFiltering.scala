@@ -1,6 +1,9 @@
 package akka.viz.events
 
+import akka.actor.Status.Success
 import akka.actor._
+
+import scala.util.{Failure, Try}
 
 object FilteringRule {
   val Default: FilteringRule = IsUserActor
@@ -21,7 +24,13 @@ case object IsUserActor extends FilteringRule {
 case object AllowAll extends FilteringRule { override def apply(event: Received) = true }
 
 case class AllowedClasses(names: List[String]) extends FilteringRule {
-  @transient private val allowedClasses = names.map(name => getClass.getClassLoader.loadClass(name)).toSet
+  @transient private val allowedClasses = names.flatMap { name =>
+    val loaded: Try[Class[_]] = Try(getClass.getClassLoader.loadClass(name))
+    loaded.failed.foreach(thr => println(s"class loading failed: $thr"))
+    loaded.toOption.toIterable
+  }
+
+
   override def apply(event: Received): Boolean = {
     allowedClasses.exists(c => c.isAssignableFrom(event.message.getClass))
   }

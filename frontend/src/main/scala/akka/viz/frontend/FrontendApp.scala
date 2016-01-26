@@ -144,5 +144,16 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence {
       }
 
     }
+
+    def clearFilters() = {
+      selectedMessages() = Set.empty
+    }
+
+    def selectAllFilters() = {
+      selectedMessages() = seenMessages.now
+    }
+
+    document.querySelector("a#messagefilter-select-none").addEventListener("click", {(e: Event) => clearFilters()}, true)
+    document.querySelector("a#messagefilter-select-all").addEventListener("click", {(e: Event) => selectAllFilters()}, true)
   }
 }
