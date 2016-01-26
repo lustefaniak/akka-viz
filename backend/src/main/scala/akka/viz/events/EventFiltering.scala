@@ -1,9 +1,8 @@
 package akka.viz.events
 
-import akka.actor.Status.Success
 import akka.actor._
 
-import scala.util.{Failure, Try}
+import scala.util.Try
 
 object FilteringRule {
 
@@ -22,7 +21,7 @@ case class AllowedClasses(names: List[String]) extends FilteringRule {
   @transient private val allowedClasses = names.flatMap { name =>
     val loaded: Try[Class[_]] = Try(getClass.getClassLoader.loadClass(name))
     loaded.failed.foreach(thr => println(s"class loading failed: $thr"))
-    loaded.toOption.toIterable
+    loaded.toOption
   }
 
   override def apply(event: backend.Received): Boolean = {

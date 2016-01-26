@@ -5,6 +5,7 @@ import org.scalajs.dom.{onclick => oc, _}
 import rx._
 import scala.scalajs.js.annotation.JSExport
 import scala.scalajs.js.{JSApp, JSON}
+import scala.util.Random
 import scalatags.JsDom.all._
 import upickle.default._
 
@@ -41,7 +42,7 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence {
   }
 
   val seenActors = Var[Set[String]](Set())
-  val selectedActor = Var("")
+  val selectedActor = persistedVar[String]("", "selectedActor")
   val seenMessages = Var[Set[String]](Set())
   val selectedMessages = persistedVar[Set[String]](Set(), "selectedMessages")
 
@@ -57,20 +58,43 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence {
     def insert(e: Element): Unit = {
       messagesContent.insertBefore(e, messagesContent.firstChild)
     }
+    val uid = rcv.eventId
     val sender = actorName(rcv.sender)
     val receiver = actorName(rcv.receiver)
     val selected = selectedActor.now
-    val fn = () => {
-      if (rcv.payload.isDefined) {
-        alert(JSON.stringify(JSON.parse(rcv.payload.get)))
-      }
-    }
-    selected match {
-      case s if s == sender => insert(tr(td(i(`class` := "material-icons", "chevron_right")), td(receiver), td(rcv.payloadClass), onclick := fn).render)
-      case s if s == receiver => insert(tr(td(i(`class` := "material-icons", "chevron_left")), td(receiver), td(rcv.payloadClass), onclick := fn).render)
-      case _ =>
-    }
 
+    if (selected == sender || selected == receiver) {
+
+      val iconName = if (selected == sender) "chevron_right" else "chevron_left"
+      val mainRow = tr(
+        "data-toggle".attr := "collapse",
+        "data-target".attr := s"#detail$uid",
+        td(i(`class` := "material-icons", iconName)),
+        td(if (selected == sender) receiver else sender),
+        td(rcv.payloadClass)
+      )
+
+      val payload: String = rcv.payload.getOrElse("")
+      val detailsRow = tr(
+        id := s"detail$uid",
+        `class` := "collapse",
+        td(
+          colspan := 3,
+          table(
+            `class` := "table",
+            tbody(
+              tr(td(b("From")), td(sender)),
+              tr(td(b("To")), td(receiver)),
+              tr(td(b("Class")), td(rcv.payloadClass)),
+              tr(td(b("Payload")), td(pre(payload)))
+            )
+          )
+        )
+      )
+
+      insert(detailsRow.render)
+      insert(mainRow.render)
+    }
   }
 
   @JSExport("pickActor")
@@ -89,7 +113,7 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence {
 
     val actorsObs = Rx.unsafe {
       (seenActors(), selectedActor())
-    }.triggerLater {
+    }.trigger {
       val seen = seenActors.now.toList.sorted
       val selected = selectedActor.now
 
@@ -153,7 +177,7 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence {
       selectedMessages() = seenMessages.now
     }
 
-    document.querySelector("a#messagefilter-select-none").addEventListener("click", {(e: Event) => clearFilters()}, true)
-    document.querySelector("a#messagefilter-select-all").addEventListener("click", {(e: Event) => selectAllFilters()}, true)
+    document.querySelector("a#messagefilter-select-none").addEventListener("click", { (e: Event) => clearFilters() }, true)
+    document.querySelector("a#messagefilter-select-all").addEventListener("click", { (e: Event) => selectAllFilters() }, true)
   }
 }
