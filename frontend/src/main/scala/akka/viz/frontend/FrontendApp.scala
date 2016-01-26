@@ -58,7 +58,7 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence {
     def insert(e: Element): Unit = {
       messagesContent.insertBefore(e, messagesContent.firstChild)
     }
-    val uid = Random.nextLong()
+    val uid = rcv.eventId
     val sender = actorName(rcv.sender)
     val receiver = actorName(rcv.receiver)
     val selected = selectedActor.now
