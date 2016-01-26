@@ -1,9 +1,8 @@
-package akka.viz.demos.postoffice
+package postoffice
 
 import java.time.LocalDateTime
 
 import akka.actor.{ActorSystem, Props}
-import akka.viz.postoffice.Weight
 import akka.viz.server.Server
 
 import scala.util.Random

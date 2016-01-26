@@ -1,4 +1,4 @@
-package akka.viz.demos.postoffice
+package postoffice
 
 import java.time.LocalDateTime
 
