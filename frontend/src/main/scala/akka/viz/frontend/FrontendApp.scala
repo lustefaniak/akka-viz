@@ -45,7 +45,7 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence {
   }
 
   val seenActors = Var[Set[String]](Set())
-  val selectedActor = persistedVar[String]("", "selectedActor")
+  val selectedActors = persistedVar[Set[String]](Set(), "selectedActors")
   val seenMessages = Var[Set[String]](Set())
   val selectedMessages = persistedVar[Set[String]](Set(), "selectedMessages")
 
@@ -68,16 +68,15 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence {
     val uid = rcv.eventId
     val sender = actorName(rcv.sender)
     val receiver = actorName(rcv.receiver)
-    val selected = selectedActor.now
+    val selected = selectedActors.now
 
-    if (selected == sender || selected == receiver) {
+    if (selected.contains(sender) || selected.contains(receiver)) {
 
-      val iconName = if (selected == sender) "chevron_right" else "chevron_left"
       val mainRow = tr(
         "data-toggle".attr := "collapse",
         "data-target".attr := s"#detail$uid",
-        td(i(`class` := "material-icons", iconName)),
-        td(if (selected == sender) receiver else sender),
+        td(receiver),
+        td(sender),
         td(rcv.payloadClass)
       )
 
@@ -87,15 +86,7 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence {
         `class` := "collapse",
         td(
           colspan := 3,
-          table(
-            `class` := "table",
-            tbody(
-              tr(td(b("From")), td(sender)),
-              tr(td(b("To")), td(receiver)),
-              tr(td(b("Class")), td(rcv.payloadClass)),
-              tr(td(b("Payload")), td(pre(payload)))
-            )
-          )
+          div(b("Payload")), div(pre(payload))
         )
       )
 
@@ -106,12 +97,12 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence {
 
   @JSExport("pickActor")
   def pickActor(actorPath: String): Unit = {
-    if (selectedActor.now == actorPath) {
+    if (selectedActors.now contains actorPath) {
       console.log(s"Unselected '$actorPath' actor")
-      selectedActor() = ""
+      selectedActors() = selectedActors.now - actorPath
     } else {
       console.log(s"Selected '$actorPath' actor")
-      selectedActor() = actorPath
+      selectedActors() = selectedActors.now + actorPath
     }
   }
 
@@ -119,15 +110,17 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence {
     val upstream = ApiConnection(webSocketUrl("stream"), handleDownstream)
 
     val actorsObs = Rx.unsafe {
-      (seenActors(), selectedActor())
+      (seenActors(), selectedActors())
     }.trigger {
       val seen = seenActors.now.toList.sorted
-      val selected = selectedActor.now
+      val selected = selectedActors.now
 
       val content = seen.map {
         actorName =>
-          val isSelected = selected == actorName
-          tr(td(if (isSelected) input(`type` := "radio", checked := true) else input(`type` := "radio")), td(if (isSelected) b(actorName) else actorName), onclick := {
+          val isSelected = selected.contains(actorName)
+          tr(
+            td(input(`type` := "checkbox", if(isSelected) checked else ())),
+            td(if (isSelected) b(actorName) else actorName), onclick := {
             () => pickActor(actorName)
           })
       }
@@ -148,13 +141,14 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence {
         clazz =>
           val contains = selected(clazz)
           tr(
-            td(if (contains) input(`type` := "checkbox", checked := true) else input(`type` := "checkbox")),
+            td(input(`type` := "checkbox", if(contains) checked else ()),
             td(if (contains) b(clazz) else clazz),
             onclick := {
               () =>
                 console.log(s"Toggling ${clazz} now it will be ${!contains}")
                 selectedMessages() = if (contains) selected - clazz else selected + clazz
             })
+          )
       }
 
       val messages = document.getElementById("messagefilter").getElementsByTagName("tbody")(0).asInstanceOf[Element]
@@ -165,38 +159,64 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence {
       import upickle.default._
       upstream.send(write(SetAllowedMessages(selected.toList)))
 
-      selectedActor.trigger {
-        if (selectedActor.now == "") {
+      selectedActors.trigger {
+        if (selectedActors.now.isEmpty) {
           document.getElementById("messagespaneltitle").innerHTML = s"Select actor to show its messages"
         } else {
-          document.getElementById("messagespaneltitle").innerHTML = s"Messages for ${selectedActor.now}"
+          document.getElementById("messagespaneltitle").innerHTML = s"Messages"
         }
         messagesContent.innerHTML = ""
       }
 
     }
 
-    def clearFilters() = {
+    def clearMessageFilters() = {
       selectedMessages() = Set.empty
     }
 
-    def selectAllFilters() = {
+    def selectAllMessageFilters() = {
       selectedMessages() = seenMessages.now
     }
 
-    def regexFilter() = {
+    def regexMessageFilter() = {
       val input = document.getElementById("messagefilter-regex").asInstanceOf[Input].value
       Try(input.r).foreach { r =>
         selectedMessages() = seenMessages.now.filter(_.matches(r.regex))
       }
     }
 
-    document.querySelector("a#messagefilter-select-none").addEventListener("click", { (e: Event) => clearFilters() }, true)
-    document.querySelector("a#messagefilter-select-all").addEventListener("click", { (e: Event) => selectAllFilters() }, true)
+
+
+    document.querySelector("a#messagefilter-select-none").addEventListener("click", { (e: Event) => clearMessageFilters() }, true)
+    document.querySelector("a#messagefilter-select-all").addEventListener("click", { (e: Event) => selectAllMessageFilters() }, true)
     document.getElementById("messagefilter-regex").addEventListener("keydown", { (e: KeyboardEvent) =>
       val enterKeyCode = 13
       if (e.keyCode == enterKeyCode)
-        regexFilter()
+        regexMessageFilter()
+    }, true)
+
+
+    def clearActorFilters() = {
+      selectedActors() = Set.empty
+    }
+
+    def selectAllActorFilters() = {
+      selectedActors() = seenActors.now
+    }
+
+    def regexActorFilter() = {
+      val input = document.getElementById("actorfilter-regex").asInstanceOf[Input].value
+      Try(input.r).foreach { r =>
+        selectedActors() = seenActors.now.filter(_.matches(r.regex))
+      }
+    }
+
+    document.querySelector("a#actorfilter-select-none").addEventListener("click", { (e: Event) => clearActorFilters() }, true)
+    document.querySelector("a#actorfilter-select-all").addEventListener("click", { (e: Event) => selectAllActorFilters() }, true)
+    document.getElementById("actorfilter-regex").addEventListener("keydown", { (e: KeyboardEvent) =>
+      val enterKeyCode = 13
+      if (e.keyCode == enterKeyCode)
+        regexActorFilter()
     }, true)
   }
 }
