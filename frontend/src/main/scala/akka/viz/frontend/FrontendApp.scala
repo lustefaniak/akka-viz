@@ -95,8 +95,8 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence {
     }
   }
 
-  @JSExport("pickActor")
-  def pickActor(actorPath: String): Unit = {
+  @JSExport("toggleActor")
+  def toggleActor(actorPath: String): Unit = {
     if (selectedActors.now contains actorPath) {
       console.log(s"Unselected '$actorPath' actor")
       selectedActors() = selectedActors.now - actorPath
@@ -121,7 +121,7 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence {
           tr(
             td(input(`type` := "checkbox", if(isSelected) checked else ())),
             td(if (isSelected) b(actorName) else actorName), onclick := {
-            () => pickActor(actorName)
+            () => toggleActor(actorName)
           })
       }
 
@@ -183,8 +183,6 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence {
         selectedMessages() = seenMessages.now.filter(_.matches(r.regex))
       }
     }
-
-
 
     document.querySelector("a#messagefilter-select-none").addEventListener("click", { (e: Event) => clearMessageFilters() }, true)
     document.querySelector("a#messagefilter-select-all").addEventListener("click", { (e: Event) => selectAllMessageFilters() }, true)
