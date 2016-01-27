@@ -38,7 +38,18 @@ class ActorCellInstrumentation {
   @AfterReturning(pointcut = "actorCreation(cell)", returning = "actor")
   def captureActorCreation(cell: ActorCell, actor: Actor): Unit = {
     if (cell.system.name != internalSystemName) {
-      EventSystem.publish(internal.Instantiated(cell.self, actor))
+      val self = cell.self
+      EventSystem.publish(internal.Instantiated(self, actor))
+      actor match {
+        case fsm: akka.actor.FSM[_, _] =>
+          fsm.onTransition {
+            case (x, y) =>
+              EventSystem.publish(internal.FSMTransition(self, x, fsm.stateData, y, fsm.nextStateData))
+          }
+        case _ => {}
+      }
+
+
     }
   }
 
