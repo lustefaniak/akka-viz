@@ -2,14 +2,27 @@ package postoffice
 
 import java.time.LocalDateTime
 
-import akka.actor.{ActorSystem, Props}
-import akka.viz.server.Server
+import akka.actor.{Actor, ActorSystem, Props}
 
 import scala.util.Random
 
 object PostOfficeExample extends App {
 
   val system = ActorSystem("post-office")
+
+  val lazyActorProps = Props(new Actor {
+    override def receive: Receive = {
+      case msg =>
+        Thread.sleep(Random.nextInt(2000))
+        sender() ! msg
+    }
+  })
+
+  val lazyActor1 = system.actorOf(lazyActorProps, "lazy1")
+  val lazyActor2 = system.actorOf(lazyActorProps, "lazy2")
+  for (i <- 0 to 1000) {
+    lazyActor1.tell("doit", lazyActor2)
+  }
 
   for (city <- PostOffice.Cities) {
     system.actorOf(Props(classOf[PostOfficeActor], PostOffice(city)), city.toString)
