@@ -8,6 +8,8 @@ package object backend {
 
   case class Received(eventId: Long, sender: ActorRef, receiver: ActorRef, message: Any) extends Event
 
+  case class Spawned(eventId: Long, ref: ActorRef, parent: ActorRef) extends Event
+
   case class AvailableMessageTypes(classes: List[Class[_ <: Any]]) extends Event
 
 }
