@@ -2,6 +2,7 @@ package akka.viz.events
 
 import akka.actor._
 import akka.viz.config.Config
+import akka.viz.events.internal.Spawned
 import akka.viz.util.FiniteQueue._
 
 import scala.collection.immutable
@@ -10,6 +11,8 @@ object EventSystem {
 
   private implicit val system = ActorSystem(Config.internalSystemName)
   private val publisher = system.actorOf(Props(classOf[EventPublisherActor]))
+
+
 
   private[akka] def publish(event: internal.Event): Unit = {
     publisher ! event
@@ -38,6 +41,9 @@ class EventPublisherActor extends Actor with ActorLogging {
       val backendEvent = backend.Received(nextEventNumber(), r.sender, r.receiver, r.message)
       queue = queue.enqueueFinite(backendEvent, maxElementsInQueue)
       subscribers.foreach(_ ! backendEvent)
+
+    case s: Spawned =>
+      log.info(s.toString)
 
     case EventPublisherActor.Subscribe =>
       val s = sender()
