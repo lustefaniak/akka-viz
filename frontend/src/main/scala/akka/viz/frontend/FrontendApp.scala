@@ -141,14 +141,13 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence {
         clazz =>
           val contains = selected(clazz)
           tr(
-            td(input(`type` := "checkbox", if(contains) checked else ()),
+            td(input(`type` := "checkbox", if (contains) checked else ())),
             td(if (contains) b(clazz) else clazz),
             onclick := {
               () =>
                 console.log(s"Toggling ${clazz} now it will be ${!contains}")
                 selectedMessages() = if (contains) selected - clazz else selected + clazz
             })
-          )
       }
 
       val messages = document.getElementById("messagefilter").getElementsByTagName("tbody")(0).asInstanceOf[Element]
