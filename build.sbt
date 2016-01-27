@@ -41,6 +41,8 @@ lazy val backend =
       scalacOptions += "-Xmacro-settings:conf.output.dir=" + baseDirectory.value / "src/main/resources/",
       libraryDependencies ++= Dependencies.backend,
       AspectjKeys.inputs in Aspectj <+= compiledClasses,
+      AspectjKeys.showWeaveInfo := true,
+      AspectjKeys.verbose := true,
       products in Compile <<= products in Aspectj,
       products in Runtime <<= products in Compile,
       (resourceGenerators in Compile) <+=

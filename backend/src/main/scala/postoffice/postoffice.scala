@@ -9,8 +9,6 @@ import scala.util.Random
 
 object PostOfficeExample extends App {
 
-  Server.start()
-
   val system = ActorSystem("post-office")
 
   for (city <- PostOffice.Cities) {
