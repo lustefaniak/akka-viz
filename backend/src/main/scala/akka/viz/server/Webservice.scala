@@ -83,6 +83,8 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) {
       protocol.AvailableClasses(types.map(_.getCanonicalName))
     case Spawned(id, ref, parent) =>
       protocol.Spawned(id, ref.path.toSerializationFormat, parent.path.toSerializationFormat)
+    case Instantiated(id, ref, clazz) =>
+      protocol.Instantiated(id, ref.path.toSerializationFormat, clazz.getCanonicalName)
     case MailboxStatus(id, owner, size) =>
       protocol.MailboxStatus(id, owner.path.toSerializationFormat, size)
   }

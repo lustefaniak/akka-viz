@@ -14,4 +14,6 @@ package object backend {
 
   case class AvailableMessageTypes(classes: List[Class[_ <: Any]]) extends Event
 
+  case class Instantiated(eventId: Long, actorRef: ActorRef, clazz: Class[_ <: Any]) extends Event
+
 }

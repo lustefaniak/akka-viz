@@ -13,8 +13,6 @@ object EventSystem {
   private implicit val system = ActorSystem(Config.internalSystemName)
   private val publisher = system.actorOf(Props(classOf[EventPublisherActor]))
 
-
-
   private[akka] def publish(event: internal.Event): Unit = {
     publisher ! event
   }
@@ -45,6 +43,9 @@ class EventPublisherActor extends Actor with ActorLogging {
 
     case mb: internal.MailBoxStatus =>
       enqueueAndPublish(backend.MailboxStatus(nextEventNumber(), mb.owner, mb.size))
+
+    case i: internal.Instantiated =>
+      enqueueAndPublish(backend.Instantiated(nextEventNumber(), i.actorRef, i.actor.getClass))
 
     case EventPublisherActor.Subscribe =>
       val s = sender()

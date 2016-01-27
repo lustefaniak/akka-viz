@@ -27,9 +27,19 @@ class ActorCellInstrumentation {
   def actorCellCreation(cell: ActorCell, system: ActorSystemImpl, self: InternalActorRef, props: Props, dispatcher: MessageDispatcher, parent: InternalActorRef): Unit = {}
 
   @After("actorCellCreation(cell, system, self, props, dispatcher, parent)")
-  def captureCreation(cell: ActorCell, system: ActorSystemImpl, self: InternalActorRef, props: Props, dispatcher: MessageDispatcher, parent: InternalActorRef): Unit = {
+  def captureCellCreation(cell: ActorCell, system: ActorSystemImpl, self: InternalActorRef, props: Props, dispatcher: MessageDispatcher, parent: InternalActorRef): Unit = {
     if (cell.system.name != internalSystemName)
       EventSystem.publish(internal.Spawned(self, parent))
+  }
+
+  @Pointcut("execution(* akka.actor.ActorCell.newActor()) && this(cell)")
+  def actorCreation(cell: ActorCell): Unit = {}
+
+  @AfterReturning(pointcut = "actorCreation(cell)", returning = "actor")
+  def captureActorCreation(cell: ActorCell, actor: Actor): Unit = {
+    if (cell.system.name != internalSystemName) {
+      EventSystem.publish(internal.Instantiated(cell.self, actor))
+    }
   }
 
 }

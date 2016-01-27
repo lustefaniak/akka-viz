@@ -1,6 +1,6 @@
 package akka.viz.events
 
-import akka.actor.{ActorPath, ActorRef}
+import akka.actor.{Actor, ActorRef}
 
 package object internal {
 
@@ -11,4 +11,7 @@ package object internal {
   case class Spawned(ref: ActorRef, parent: ActorRef) extends Event
 
   case class MailBoxStatus(owner: ActorRef, size: Int) extends Event
+
+  case class Instantiated(actorRef: ActorRef, actor: Actor) extends Event
+
 }
