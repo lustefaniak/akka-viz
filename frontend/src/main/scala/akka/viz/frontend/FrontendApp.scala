@@ -119,10 +119,10 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence {
         actorName =>
           val isSelected = selected.contains(actorName)
           tr(
-            td(input(`type` := "checkbox", if(isSelected) checked else ())),
+            td(input(`type` := "checkbox", if (isSelected) checked else ())),
             td(if (isSelected) b(actorName) else actorName), onclick := {
-            () => toggleActor(actorName)
-          })
+              () => toggleActor(actorName)
+            })
       }
 
       val actorTree = document.getElementById("actortree").getElementsByTagName("tbody")(0).asInstanceOf[Element]
@@ -166,7 +166,6 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence {
         }
         messagesContent.innerHTML = ""
       }
-
     }
 
     def clearMessageFilters() = {
@@ -184,14 +183,9 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence {
       }
     }
 
-    document.querySelector("a#messagefilter-select-none").addEventListener("click", { (e: Event) => clearMessageFilters() }, true)
-    document.querySelector("a#messagefilter-select-all").addEventListener("click", { (e: Event) => selectAllMessageFilters() }, true)
-    document.getElementById("messagefilter-regex").addEventListener("keydown", { (e: KeyboardEvent) =>
-      val enterKeyCode = 13
-      if (e.keyCode == enterKeyCode)
-        regexMessageFilter()
-    }, true)
-
+    document.querySelector("a#messagefilter-select-none").onClick(() => clearMessageFilters())
+    document.querySelector("a#messagefilter-select-all").onClick(() => selectAllMessageFilters())
+    document.getElementById("messagefilter-regex").onEnter(() => regexMessageFilter())
 
     def clearActorFilters() = {
       selectedActors() = Set.empty
@@ -208,12 +202,8 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence {
       }
     }
 
-    document.querySelector("a#actorfilter-select-none").addEventListener("click", { (e: Event) => clearActorFilters() }, true)
-    document.querySelector("a#actorfilter-select-all").addEventListener("click", { (e: Event) => selectAllActorFilters() }, true)
-    document.getElementById("actorfilter-regex").addEventListener("keydown", { (e: KeyboardEvent) =>
-      val enterKeyCode = 13
-      if (e.keyCode == enterKeyCode)
-        regexActorFilter()
-    }, true)
+    document.querySelector("a#actorfilter-select-none").onClick(() => clearActorFilters())
+    document.querySelector("a#actorfilter-select-all").onClick(() => selectAllActorFilters())
+    document.getElementById("actorfilter-regex").onEnter(() => regexActorFilter())
   }
 }
