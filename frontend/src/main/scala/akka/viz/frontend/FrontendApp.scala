@@ -2,14 +2,17 @@ package akka.viz.frontend
 
 import akka.viz.protocol._
 import org.scalajs.dom.html.Input
-import org.scalajs.dom.{onclick => oc, _}
+import org.scalajs.dom.{onclick => _, raw => _, _}
 import rx._
+import scala.collection.mutable
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSExport
-import scala.scalajs.js.{JSApp, JSON}
+import scala.scalajs.js.{ThisFunction0, JSApp, JSON}
 import scala.util.Try
 import scalatags.JsDom.all._
 import upickle.default._
+
+case class FsmTransition(fromStateClass: String, toStateClass: String)
 
 object FrontendApp extends JSApp with FrontendUtil with Persistence
   with MailboxDisplay {
@@ -17,12 +20,17 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence
   val createdLinks = scala.collection.mutable.Set[String]()
   val graph = DOMGlobalScope.graph
 
+  val _actorClasses: mutable.Map[String, Var[js.UndefOr[String]]] = mutable.Map()
+
+  def actorClasses(actor: String) = _actorClasses.getOrElseUpdate(actor, Var(js.undefined))
+
+  val fsmTransitions = mutable.Map[String, mutable.Set[FsmTransition]]()
+
   private def handleDownstream(messageEvent: MessageEvent): Unit = {
     val message: ApiServerMessage = ApiMessages.read(messageEvent.data.asInstanceOf[String])
 
     message match {
       case rcv: Received =>
-
         val sender = actorName(rcv.sender)
         val receiver = actorName(rcv.receiver)
         addActorsToSeen(sender, receiver)
@@ -31,8 +39,19 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence
 
       case ac: AvailableClasses =>
         seenMessages() = ac.availableClasses.toSet
+
       case Spawned(n, child, parent) =>
         addActorsToSeen(actorName(child), actorName(parent))
+
+      case fsm: FSMTransition =>
+        val actor = actorName(fsm.ref)
+        //FIXME: subscribe for data
+        fsmTransitions.getOrElseUpdate(actor, mutable.Set()) += FsmTransition(fsm.currentStateClass, fsm.nextStateClass)
+
+      case i: Instantiated =>
+        val actor = actorName(i.ref)
+        actorClasses(actor)() = i.clazz
+
       case mb: MailboxStatus =>
         handleMailboxStatus(mb)
     }
@@ -79,8 +98,8 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence
       val mainRow = tr(
         "data-toggle".attr := "collapse",
         "data-target".attr := s"#detail$uid",
-        td(receiver),
         td(sender),
+        td(receiver),
         td(rcv.payloadClass)
       )
 
@@ -113,6 +132,28 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence
   def main(): Unit = {
     val upstream = ApiConnection(webSocketUrl("stream"), handleDownstream)
 
+    val popoverContent: ThisFunction0[Element, Node] = (that: Element) => {
+      val actor = that.getAttribute("data-actor")
+
+      val popover = Seq(
+        h5(actor),
+        h6("Class: " + actorClasses(actor).now.getOrElse("")),
+        p(raw(fsmTransitions.getOrElse(actor, Set()).map {
+          case FsmTransition(from, to) =>
+            from + "&rarr;" + to
+        }.mkString("<br/>")))
+      )
+
+      popover.render
+    }
+
+    val popoverOptions = js.Dictionary(
+      "content" -> popoverContent,
+      "trigger" -> "hover",
+      "placement" -> "right",
+      "html" -> true
+    )
+
     val actorsObs = Rx.unsafe {
       (seenActors(), selectedActors())
     }.trigger {
@@ -122,11 +163,14 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence
       val content = seen.map {
         actorName =>
           val isSelected = selected.contains(actorName)
-          tr(
+          val element = tr(
             td(input(`type` := "checkbox", if (isSelected) checked else ())),
             td(if (isSelected) b(actorName) else actorName), onclick := {
               () => toggleActor(actorName)
-            })
+            })(data("actor") := actorName).render
+
+          DOMGlobalScope.$(element).popover(popoverOptions)
+          element
       }
 
       val actorTree = document.getElementById("actortree").getElementsByTagName("tbody")(0).asInstanceOf[Element]
