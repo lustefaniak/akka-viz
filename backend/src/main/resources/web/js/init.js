@@ -52,7 +52,7 @@
             highlightRelatedNodes(node.id, false);
         });
         $(ui).click(function () {
-            frontendApp().pickActor(node.id)
+            frontendApp().toggleActor(node.id)
         });
 
         return ui;
