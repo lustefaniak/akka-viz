@@ -14,4 +14,8 @@ package object backend {
 
   case class AvailableMessageTypes(classes: List[Class[_ <: Any]]) extends Event
 
+  case class Instantiated(eventId: Long, actorRef: ActorRef, clazz: Class[_ <: Any]) extends Event
+
+  case class FSMTransition(eventId: Long, actorRef: ActorRef, currentState: Any, currentData: Any, nextState: Any, nextData: Any) extends Event
+
 }

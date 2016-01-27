@@ -2,8 +2,6 @@ package akka.viz.events
 
 import akka.actor._
 import akka.viz.config.Config
-import akka.viz.events.backend.{Event, Received}
-import akka.viz.events.internal.Spawned
 import akka.viz.util.FiniteQueue._
 
 import scala.collection.immutable
@@ -12,8 +10,6 @@ object EventSystem {
 
   private implicit val system = ActorSystem(Config.internalSystemName)
   private val publisher = system.actorOf(Props(classOf[EventPublisherActor]))
-
-
 
   private[akka] def publish(event: internal.Event): Unit = {
     publisher ! event
@@ -46,6 +42,12 @@ class EventPublisherActor extends Actor with ActorLogging {
     case mb: internal.MailBoxStatus =>
       enqueueAndPublish(backend.MailboxStatus(nextEventNumber(), mb.owner, mb.size))
 
+    case i: internal.Instantiated =>
+      enqueueAndPublish(backend.Instantiated(nextEventNumber(), i.actorRef, i.actor.getClass))
+
+    case t: internal.FSMTransition =>
+      enqueueAndPublish(backend.FSMTransition(nextEventNumber(), t.actorRef, t.currentState, t.currentData, t.nextState, t.nextData))
+
     case EventPublisherActor.Subscribe =>
       val s = sender()
       subscribers += s
@@ -60,7 +62,7 @@ class EventPublisherActor extends Actor with ActorLogging {
       unsubscribe(s)
   }
 
-  def enqueueAndPublish(backendEvent: Event): Unit = {
+  def enqueueAndPublish(backendEvent: backend.Event): Unit = {
     queue = queue.enqueueFinite(backendEvent, maxElementsInQueue)
     subscribers.foreach(_ ! backendEvent)
   }
