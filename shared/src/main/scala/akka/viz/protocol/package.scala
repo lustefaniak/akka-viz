@@ -10,6 +10,8 @@ package object protocol {
 
   case class Spawned(eventId: Long, ref: String, parent: String) extends ApiServerMessage
 
+  case class MailboxStatus(eventId: Long, owner: String, size: Int) extends ApiServerMessage
+
   sealed trait ApiClientMessage
 
   case class SetAllowedMessages(allowedClasses: List[String]) extends ApiClientMessage

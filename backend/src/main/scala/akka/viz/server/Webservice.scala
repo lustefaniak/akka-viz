@@ -83,6 +83,8 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) {
       protocol.AvailableClasses(types.map(_.getCanonicalName))
     case Spawned(id, ref, parent) =>
       protocol.Spawned(id, ref.path.toSerializationFormat, parent.path.toSerializationFormat)
+    case MailboxStatus(id, owner, size) =>
+      protocol.MailboxStatus(id, owner.path.toSerializationFormat, size)
   }
 
   def eventSerialization: Flow[protocol.ApiServerMessage, String, Any] = Flow[protocol.ApiServerMessage].map {

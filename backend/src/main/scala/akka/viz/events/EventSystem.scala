@@ -38,13 +38,13 @@ class EventPublisherActor extends Actor with ActorLogging {
   override def receive: Receive = {
     case r: internal.Received =>
       trackMsgType(r.message)
-
-      val backendEvent = backend.Received(nextEventNumber(), r.sender, r.receiver, r.message)
-      enqueueAndPublish(backendEvent)
+      enqueueAndPublish(backend.Received(nextEventNumber(), r.sender, r.receiver, r.message))
 
     case s: internal.Spawned =>
-      val backendEv = backend.Spawned(nextEventNumber(), s.ref, s.parent)
-      enqueueAndPublish(backendEv)
+      enqueueAndPublish(backend.Spawned(nextEventNumber(), s.ref, s.parent))
+
+    case mb: internal.MailBoxStatus =>
+      enqueueAndPublish(backend.MailboxStatus(nextEventNumber(), mb.owner, mb.size))
 
     case EventPublisherActor.Subscribe =>
       val s = sender()

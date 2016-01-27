@@ -17,8 +17,10 @@ class ActorCellInstrumentation {
 
   @Before(value = "receiveMessagePointcut(msg) && this(me)", argNames = "jp,msg,me")
   def message(jp: JoinPoint, msg: Any, me: ActorCell) {
-    if (me.system.name != internalSystemName)
+    if (me.system.name != internalSystemName) {
       EventSystem.publish(internal.Received(me.sender(), me.self, msg))
+      EventSystem.publish(internal.MailBoxStatus(me.self, me.mailbox.numberOfMessages))
+    }
   }
 
   @Pointcut("execution(akka.actor.ActorCell.new(..)) && this(cell) && args(system, self, props, dispatcher, parent)")

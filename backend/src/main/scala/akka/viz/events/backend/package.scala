@@ -10,6 +10,8 @@ package object backend {
 
   case class Spawned(eventId: Long, ref: ActorRef, parent: ActorRef) extends Event
 
+  case class MailboxStatus(eventId: Long, owner: ActorRef, size: Int) extends Event
+
   case class AvailableMessageTypes(classes: List[Class[_ <: Any]]) extends Event
 
 }
