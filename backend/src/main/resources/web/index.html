@@ -25,7 +25,7 @@
 <div id="graphview"></div>
 <div id="thebox">
     <ul class="nav nav-tabs">
-        <li class="active"><a href="#actorselection" data-toggle="tab">Actor selection</a></li>
+        <li class="active"><a href="#actorselection" data-toggle="tab">Actor filter</a></li>
         <li><a href="#messagefiltering" data-toggle="tab">Message filter</a></li>
     </ul>
     <div class="tab-content">
@@ -35,7 +35,12 @@
                     <thead>
                     <tr>
                         <th></th>
-                        <th>Actor</th>
+                        <th>Actor
+                            <p style="float:right;">
+                                <input id="actorfilter-regex" size="12" type="text" placeholder="Filter..."/>
+                                <a href="#" id="actorfilter-select-all">all</a> | <a href="#" id="actorfilter-select-none">none</a>
+                            </p>
+                        </th>
                     </tr>
                     </thead>
                     <tbody>
@@ -49,7 +54,11 @@
                     <thead>
                     <tr>
                         <th></th>
-                        <th>Class <p style="float:right;"><a href="#" id="messagefilter-select-all">all</a> | <a href="#" id="messagefilter-select-none">none</a></p>
+                        <th>Class
+                            <p style="float:right;">
+                                <input id="messagefilter-regex" size="12" type="text" placeholder="Filter..."/>
+                                <a href="#" id="messagefilter-select-all">all</a> | <a href="#" id="messagefilter-select-none">none</a>
+                            </p>
                         </th>
                     </tr>
                     </thead>
@@ -66,8 +75,8 @@
             <table class="table table-striped table-hover ">
                 <thead>
                 <tr>
-                    <th></th>
-                    <th>Actor</th>
+                    <th>From</th>
+                    <th>To</th>
                     <th>Class</th>
                 </tr>
                 </thead>
