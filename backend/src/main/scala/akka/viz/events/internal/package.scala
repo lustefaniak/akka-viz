@@ -8,5 +8,5 @@ package object internal {
 
   case class Received(sender: ActorRef, receiver: ActorRef, message: Any) extends Event
 
-  case class Spawned(path: ActorRef, parent: ActorRef) extends Event
+  case class Spawned(ref: ActorRef, parent: ActorRef) extends Event
 }
