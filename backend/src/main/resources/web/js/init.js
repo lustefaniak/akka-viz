@@ -30,12 +30,20 @@
     graphics.node(function (node) {
         var ui = Viva.Graph.svg('g');
         var svgText = Viva.Graph.svg('text').attr('y', '-4px').text(node.id);
+
         var img = Viva.Graph.svg('image')
                 .attr('width', nodeSize)
                 .attr('height', nodeSize)
                 .link('/img/actor.png');
 
         ui.append(svgText);
+        if(node.data.mailboxSize > -1){ // because js
+        var mailboxSizeText = Viva.Graph.svg('text')
+                    .attr('y', '-20px')
+                    .text('\u2709 ' + node.data.mailboxSize);
+
+         ui.append(mailboxSizeText);
+        }
         ui.append(img);
 
         $(ui).hover(function () { // mouse over

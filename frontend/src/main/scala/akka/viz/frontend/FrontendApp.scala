@@ -4,13 +4,15 @@ import akka.viz.protocol._
 import org.scalajs.dom.html.Input
 import org.scalajs.dom.{onclick => oc, _}
 import rx._
+import scala.scalajs.js
 import scala.scalajs.js.annotation.JSExport
 import scala.scalajs.js.{JSApp, JSON}
 import scala.util.Try
 import scalatags.JsDom.all._
 import upickle.default._
 
-object FrontendApp extends JSApp with FrontendUtil with Persistence {
+object FrontendApp extends JSApp with FrontendUtil with Persistence
+  with MailboxDisplay {
 
   val createdLinks = scala.collection.mutable.Set[String]()
   val graph = DOMGlobalScope.graph
@@ -31,6 +33,8 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence {
         seenMessages() = ac.availableClasses.toSet
       case Spawned(n, child, parent) =>
         addActorsToSeen(actorName(child), actorName(parent))
+      case mb: MailboxStatus =>
+        handleMailboxStatus(mb)
     }
   }
 
@@ -50,7 +54,7 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence {
   val selectedMessages = persistedVar[Set[String]](Set(), "selectedMessages")
 
   val addNodesObs = seenActors.trigger {
-    seenActors.now.foreach(graph.addNode(_, ""))
+    seenActors.now.foreach(graph.addNode(_, js.Dictionary.empty[js.Any]))
   }
 
   private def addActorsToSeen(actorName: String*): Unit = {
