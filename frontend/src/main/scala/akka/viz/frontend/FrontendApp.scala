@@ -1,11 +1,12 @@
 package akka.viz.frontend
 
 import akka.viz.protocol._
+import org.scalajs.dom.html.Input
 import org.scalajs.dom.{onclick => oc, _}
 import rx._
 import scala.scalajs.js.annotation.JSExport
 import scala.scalajs.js.{JSApp, JSON}
-import scala.util.Random
+import scala.util.Try
 import scalatags.JsDom.all._
 import upickle.default._
 
@@ -183,7 +184,19 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence {
       selectedMessages() = seenMessages.now
     }
 
+    def regexFilter() = {
+      val input = document.getElementById("messagefilter-regex").asInstanceOf[Input].value
+      Try(input.r).foreach { r =>
+        selectedMessages() = seenMessages.now.filter(_.matches(r.regex))
+      }
+    }
+
     document.querySelector("a#messagefilter-select-none").addEventListener("click", { (e: Event) => clearFilters() }, true)
     document.querySelector("a#messagefilter-select-all").addEventListener("click", { (e: Event) => selectAllFilters() }, true)
+    document.getElementById("messagefilter-regex").addEventListener("keydown", { (e: KeyboardEvent) =>
+      val enterKeyCode = 13
+      if (e.keyCode == enterKeyCode)
+        regexFilter()
+    }, true)
   }
 }
