@@ -14,6 +14,19 @@ package object protocol {
 
   case class MailboxStatus(eventId: Long, owner: String, size: Int) extends ApiServerMessage
 
+  case class FSMTransition(
+                            eventId: Long,
+                            ref:String,
+                            currentState:String,
+                            currentStateClass:String,
+                            currentData:String,
+                            currentDataClass:String,
+                            nextState:String,
+                            nextStateClass:String,
+                            nextData:String,
+                            nextDataClass:String
+                          ) extends ApiServerMessage
+
   sealed trait ApiClientMessage
 
   case class SetAllowedMessages(allowedClasses: List[String]) extends ApiClientMessage

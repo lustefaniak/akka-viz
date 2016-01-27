@@ -85,6 +85,19 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) {
       protocol.Spawned(id, ref.path.toSerializationFormat, parent.path.toSerializationFormat)
     case Instantiated(id, ref, clazz) =>
       protocol.Instantiated(id, ref.path.toSerializationFormat, clazz.getCanonicalName)
+    case FSMTransition(id, ref, currentState, currentData, nextState, nextData) =>
+      protocol.FSMTransition(
+        id,
+        ref.path.toSerializationFormat,
+        currentState = MessageSerialization.serialize(currentState),
+        currentStateClass = currentState.getClass.getCanonicalName,
+        currentData = MessageSerialization.serialize(currentData),
+        currentDataClass = currentData.getClass.getCanonicalName,
+        nextState = MessageSerialization.serialize(nextState),
+        nextStateClass = nextState.getClass.getCanonicalName,
+        nextData = MessageSerialization.serialize(nextData),
+        nextDataClass = nextData.getClass.getCanonicalName
+      )
     case MailboxStatus(id, owner, size) =>
       protocol.MailboxStatus(id, owner.path.toSerializationFormat, size)
   }
