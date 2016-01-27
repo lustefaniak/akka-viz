@@ -28,6 +28,8 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence {
 
       case ac: AvailableClasses =>
         seenMessages() = ac.availableClasses.toSet
+      case Spawned(n, child, parent) =>
+        addActorsToSeen(actorName(child), actorName(parent))
     }
   }
 
@@ -45,6 +47,10 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence {
   val selectedActor = persistedVar[String]("", "selectedActor")
   val seenMessages = Var[Set[String]](Set())
   val selectedMessages = persistedVar[Set[String]](Set(), "selectedMessages")
+
+  val addNodesObs = seenActors.trigger {
+    seenActors.now.foreach(graph.addNode(_, ""))
+  }
 
   private def addActorsToSeen(actorName: String*): Unit = {
     val previouslySeen = seenActors.now
