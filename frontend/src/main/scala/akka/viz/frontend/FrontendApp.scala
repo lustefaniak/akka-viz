@@ -86,7 +86,7 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence {
         `class` := "collapse",
         td(
           colspan := 3,
-          div(b("Payload")), div(pre(payload))
+          div(pre(payload))
         )
       )
 
