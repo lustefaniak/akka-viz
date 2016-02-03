@@ -114,7 +114,7 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence
         `class` := "collapse",
         td(
           colspan := 3,
-          div(pre(payload))
+          div(pre(prettyPrintJson(payload))) // FIXME: display formated lazily
         )
       )
 
