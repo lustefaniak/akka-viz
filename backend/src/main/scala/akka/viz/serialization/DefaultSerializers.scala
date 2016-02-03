@@ -8,13 +8,13 @@ import scala.reflect.ClassTag
 
 object DefaultSerializers {
 
-  private implicit def fnToAkkaVizSerializer[T: ClassTag](fn: (T) => Js.Value) = {
+  private implicit def fnToAkkaVizSerializer[T](fn: (T) => Js.Value) = {
     new AkkaVizSerializer {
       override def serialize(obj: Any): Value = fn(obj.asInstanceOf[T])
 
-      override def canSerialize(obj: Any): Boolean = obj match {
-        case t: T => true
-        case _ => false
+      override def canSerialize(obj: Any): Boolean = {
+        //They are already registered, so no need to try them at all
+        false
       }
     }
   }
