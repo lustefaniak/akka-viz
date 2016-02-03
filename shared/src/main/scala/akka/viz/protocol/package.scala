@@ -27,6 +27,8 @@ package object protocol {
                             nextDataClass:String
                           ) extends ApiServerMessage
 
+  case class CurrentActorState(eventId: Long, ref: String, state: String) extends ApiServerMessage
+
   sealed trait ApiClientMessage
 
   case class SetAllowedMessages(allowedClasses: List[String]) extends ApiClientMessage
