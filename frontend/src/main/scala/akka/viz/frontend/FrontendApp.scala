@@ -25,6 +25,7 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence
   def actorClasses(actor: String) = _actorClasses.getOrElseUpdate(actor, Var(js.undefined))
 
   val fsmTransitions = mutable.Map[String, mutable.Set[FsmTransition]]()
+  val currentActorState = mutable.Map[String, String]()
 
   private def handleDownstream(messageEvent: MessageEvent): Unit = {
     val message: ApiServerMessage = ApiMessages.read(messageEvent.data.asInstanceOf[String])
@@ -47,10 +48,14 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence
         val actor = actorName(fsm.ref)
         //FIXME: subscribe for data
         fsmTransitions.getOrElseUpdate(actor, mutable.Set()) += FsmTransition(fsm.currentStateClass, fsm.nextStateClass)
+        currentActorState.update(actor, """{"state": ${fsm.nextState}, "data":${fsm.nextData}}""")
 
       case i: Instantiated =>
         val actor = actorName(i.ref)
         actorClasses(actor)() = i.clazz
+
+      case CurrentActorState(eventId, ref, state) =>
+        currentActorState.update(actorName(ref), state)
 
       case mb: MailboxStatus =>
         handleMailboxStatus(mb)
@@ -129,22 +134,42 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence
     }
   }
 
+  private def prettyPrintJson(json:String):String = {
+    val parsed = JSON.parse(json)
+    val formated = JSON.stringify(parsed, null.asInstanceOf[js.Array[js.Any]], 2)
+    formated
+  }
+
   def main(): Unit = {
     val upstream = ApiConnection(webSocketUrl("stream"), handleDownstream)
 
     val popoverContent: ThisFunction0[Element, Node] = (that: Element) => {
-      val actor = that.getAttribute("data-actor")
 
+      def fsmGraphImage(transitions: Option[mutable.Set[FsmTransition]]): Modifier = {
+        def cleanName(name: String): String = {
+          name.replaceAll("\\$", "").split('.').last
+        }
+        transitions.fold[Modifier](()) {
+          case transitions =>
+            val graphEncoded = js.URIUtils.encodeURI(transitions.map {
+              case FsmTransition(from, to) => s"${cleanName(from)}->${cleanName(to)}"
+            }.mkString(";"))
+            val url = s"https://chart.googleapis.com/chart?cht=gv:neato&chl=digraph{${graphEncoded}}&chs=300x300"
+            img(src := url)
+        }
+      }
+
+      val actor: String = that.getAttribute("data-actor")
+      val actorState: String = currentActorState.get(actor).map(prettyPrintJson).getOrElse("Internal state unknown")
       val popover = Seq(
         h5(actor),
         h6("Class: " + actorClasses(actor).now.getOrElse("")),
-        p(raw(fsmTransitions.getOrElse(actor, Set()).map {
-          case FsmTransition(from, to) =>
-            from + "&rarr;" + to
-        }.mkString("<br/>")))
+        pre(actorState),
+        p(fsmGraphImage(fsmTransitions.get(actor)))
       )
 
-      popover.render
+      val elem = popover.render
+      elem
     }
 
     val popoverOptions = js.Dictionary(
