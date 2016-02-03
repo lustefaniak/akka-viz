@@ -2,7 +2,7 @@ package akka.viz.events
 
 import akka.actor._
 import akka.viz.config.Config
-import akka.viz.util.FiniteQueue._
+import akka.viz.events.types._
 
 import scala.collection.immutable
 
@@ -11,7 +11,7 @@ object EventSystem {
   private implicit val system = ActorSystem(Config.internalSystemName)
   private val publisher = system.actorOf(Props(classOf[EventPublisherActor]))
 
-  private[akka] def publish(event: internal.Event): Unit = {
+  private[akka] def publish(event: InternalEvent): Unit = {
     publisher ! event
   }
 
@@ -23,40 +23,23 @@ object EventSystem {
 
 class EventPublisherActor extends Actor with ActorLogging {
 
-  val maxElementsInQueue = Config.eventsToReply
-  var queue = immutable.Queue[backend.Event]()
   var subscribers = immutable.Set[ActorRef]()
-
   var availableTypes = immutable.Set[Class[_ <: Any]]()
-
   var eventCounter = 0L
 
   override def receive: Receive = {
-    case r: internal.Received =>
+    case r: Received =>
       trackMsgType(r.message)
-      enqueueAndPublish(backend.Received(nextEventNumber(), r.sender, r.receiver, r.message))
+      broadcast(ReceivedWithId(nextEventNumber(), r.sender, r.receiver, r.message))
 
-    case s: internal.Spawned =>
-      enqueueAndPublish(backend.Spawned(nextEventNumber(), s.ref, s.parent))
-
-    case mb: internal.MailBoxStatus =>
-      enqueueAndPublish(backend.MailboxStatus(nextEventNumber(), mb.owner, mb.size))
-
-    case i: internal.Instantiated =>
-      enqueueAndPublish(backend.Instantiated(nextEventNumber(), i.actorRef, i.actor.getClass))
-
-    case t: internal.FSMTransition =>
-      enqueueAndPublish(backend.FSMTransition(nextEventNumber(), t.actorRef, t.currentState, t.currentData, t.nextState, t.nextData))
-
-    case s: internal.CurrentActorState =>
-      enqueueAndPublish(backend.CurrentActorState(nextEventNumber(), s.actorRef, s.actor))
+    case be: BackendEvent =>
+      broadcast(be)
 
     case EventPublisherActor.Subscribe =>
       val s = sender()
       subscribers += s
       context.watch(s)
-      s ! backend.AvailableMessageTypes(availableTypes.toList)
-      queue.foreach(s ! _)
+      s ! AvailableMessageTypes(availableTypes.toList)
 
     case EventPublisherActor.Unsubscribe =>
       unsubscribe(sender())
@@ -65,8 +48,7 @@ class EventPublisherActor extends Actor with ActorLogging {
       unsubscribe(s)
   }
 
-  def enqueueAndPublish(backendEvent: backend.Event): Unit = {
-    queue = queue.enqueueFinite(backendEvent, maxElementsInQueue)
+  def broadcast(backendEvent: BackendEvent): Unit = {
     subscribers.foreach(_ ! backendEvent)
   }
 
@@ -83,7 +65,7 @@ class EventPublisherActor extends Actor with ActorLogging {
   private def trackMsgType(msg: Any): Unit = {
     if (!availableTypes.contains(msg.getClass)) {
       availableTypes += msg.getClass
-      subscribers.foreach(_ ! backend.AvailableMessageTypes(availableTypes.toList))
+      subscribers.foreach(_ ! AvailableMessageTypes(availableTypes.toList))
     }
   }
 }

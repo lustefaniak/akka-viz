@@ -3,7 +3,8 @@ package akka.viz.aspects
 import akka.actor._
 import akka.dispatch.MessageDispatcher
 import akka.viz.config.Config
-import akka.viz.events.{EventSystem, internal}
+import akka.viz.events.types._
+import akka.viz.events.{EventSystem}
 import org.aspectj.lang.JoinPoint
 import org.aspectj.lang.annotation._
 
@@ -18,8 +19,8 @@ class ActorCellInstrumentation {
   @Before(value = "receiveMessagePointcut(msg) && this(me)", argNames = "jp,msg,me")
   def message(jp: JoinPoint, msg: Any, me: ActorCell) {
     if (me.system.name != internalSystemName) {
-      EventSystem.publish(internal.Received(me.sender(), me.self, msg))
-      EventSystem.publish(internal.MailBoxStatus(me.self, me.mailbox.numberOfMessages))
+      EventSystem.publish(Received(me.sender(), me.self, msg))
+      EventSystem.publish(MailboxStatus(me.self, me.mailbox.numberOfMessages))
     }
   }
 
@@ -27,7 +28,7 @@ class ActorCellInstrumentation {
   def afterMessage(jp: JoinPoint, msg: Any, me: ActorCell) {
     if (me.system.name != internalSystemName) {
       //FIXME: only if me.self is registered for tracking internal state
-      EventSystem.publish(internal.CurrentActorState(me.self, me.actor))
+      EventSystem.publish(CurrentActorState(me.self, me.actor))
     }
   }
 
@@ -37,7 +38,7 @@ class ActorCellInstrumentation {
   @After("actorCellCreation(cell, system, self, props, dispatcher, parent)")
   def captureCellCreation(cell: ActorCell, system: ActorSystemImpl, self: InternalActorRef, props: Props, dispatcher: MessageDispatcher, parent: InternalActorRef): Unit = {
     if (cell.system.name != internalSystemName)
-      EventSystem.publish(internal.Spawned(self, parent))
+      EventSystem.publish(Spawned(self, parent))
   }
 
   @Pointcut("execution(* akka.actor.ActorCell.newActor()) && this(cell)")
@@ -47,12 +48,12 @@ class ActorCellInstrumentation {
   def captureActorCreation(cell: ActorCell, actor: Actor): Unit = {
     if (cell.system.name != internalSystemName) {
       val self = cell.self
-      EventSystem.publish(internal.Instantiated(self, actor))
+      EventSystem.publish(Instantiated(self, actor))
       actor match {
         case fsm: akka.actor.FSM[_, _] =>
           fsm.onTransition {
             case (x, y) =>
-              EventSystem.publish(internal.FSMTransition(self, x, fsm.stateData, y, fsm.nextStateData))
+              EventSystem.publish(FSMTransition(self, x, fsm.stateData, y, fsm.nextStateData))
           }
         case _ => {}
       }

@@ -89,7 +89,7 @@ class FSMHakker(name: String, left: ActorRef, right: ActorRef) extends Actor wit
 
   when(Waiting) {
     case Event(Think, _) =>
-      println("%s starts to think".format(name))
+      //println("%s starts to think".format(name))
       startThinking(5.seconds)
   }
 
@@ -128,7 +128,7 @@ class FSMHakker(name: String, left: ActorRef, right: ActorRef) extends Actor wit
   }
 
   private def startEating(left: ActorRef, right: ActorRef): State = {
-    println("%s has picked up %s and %s and starts to eat".format(name, left.path.name, right.path.name))
+    //println("%s has picked up %s and %s and starts to eat".format(name, left.path.name, right.path.name))
     goto(Eating) using TakenChopsticks(Some(left), Some(right)) forMax (5.seconds)
   }
 
@@ -147,7 +147,7 @@ class FSMHakker(name: String, left: ActorRef, right: ActorRef) extends Actor wit
   // then he puts down his chopsticks and starts to think
   when(Eating) {
     case Event(StateTimeout, _) =>
-      println("%s puts down his chopsticks and starts to think".format(name))
+      //println("%s puts down his chopsticks and starts to think".format(name))
       left ! Put
       right ! Put
       startThinking(5.seconds)

@@ -14,8 +14,6 @@ object MessageSerialization extends SerializerFinder with ReflectiveSerializatio
 
   def serialize(message: Any): Js.Value = {
     def unableToSerialize(t: Throwable): Js.Value = {
-      println(s"Unable to serialize '${message}'")
-      println(t.getMessage)
       Js.Obj("error" -> Js.Str("Failed to serialize: " + t.getMessage))
     }
     try {
@@ -31,7 +29,10 @@ object MessageSerialization extends SerializerFinder with ReflectiveSerializatio
 
   private def getSerializerFor(obj: Any): AkkaVizSerializer = {
     def findSerializerForObject: AkkaVizSerializer = {
-      serializers.find(_.canSerialize(obj)).getOrElse(reflectiveSerializer)
+      serializers.find(_.canSerialize(obj)).getOrElse {
+        println(s"WARNING: There is no serializer for ${obj.getClass.getName}, consider implementing AkkaVizSerializer")
+        reflectiveSerializer
+      }
     }
     mappers.getOrElseUpdate(obj.getClass, findSerializerForObject)
   }

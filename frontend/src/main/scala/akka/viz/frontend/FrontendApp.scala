@@ -41,7 +41,7 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence
       case ac: AvailableClasses =>
         seenMessages() = ac.availableClasses.toSet
 
-      case Spawned(n, child, parent) =>
+      case Spawned(child, parent) =>
         addActorsToSeen(actorName(child), actorName(parent))
 
       case fsm: FSMTransition =>
@@ -54,7 +54,7 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence
         val actor = actorName(i.ref)
         actorClasses(actor)() = i.clazz
 
-      case CurrentActorState(eventId, ref, state) =>
+      case CurrentActorState(ref, state) =>
         currentActorState.update(actorName(ref), state)
 
       case mb: MailboxStatus =>
@@ -91,7 +91,7 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence
 
   private def messageReceived(rcv: Received): Unit = {
     def insert(e: Element): Unit = {
-      messagesContent.insertBefore(e, messagesContent.firstChild)
+      messagesContent.appendChild(e)
     }
     val uid = rcv.eventId
     val sender = actorName(rcv.sender)
@@ -114,12 +114,12 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence
         `class` := "collapse",
         td(
           colspan := 3,
-          div(pre(payload))
+          div(pre(prettyPrintJson(payload))) // FIXME: display formated lazily
         )
       )
 
-      insert(detailsRow.render)
       insert(mainRow.render)
+      insert(detailsRow.render)
     }
   }
 
