@@ -99,6 +99,8 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) {
         nextData = MessageSerialization.render(nextData),
         nextDataClass = nextData.getClass.getName
       )
+    case CurrentActorState(id, ref, actor)=>
+      protocol.CurrentActorState(id, ref.path.toSerializationFormat, MessageSerialization.render(actor))
     case MailboxStatus(id, owner, size) =>
       protocol.MailboxStatus(id, owner.path.toSerializationFormat, size)
   }
