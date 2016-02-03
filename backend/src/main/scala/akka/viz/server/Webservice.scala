@@ -9,8 +9,9 @@ import akka.stream.scaladsl._
 import akka.stream.{FlowShape, Materializer, OverflowStrategy}
 import akka.viz.config.Config
 import akka.viz.events._
-import akka.viz.{MessageSerialization, protocol}
+import akka.viz.protocol
 import akka.viz.events.backend._
+import akka.viz.serialization.MessageSerialization
 
 object ApiMessages {
 

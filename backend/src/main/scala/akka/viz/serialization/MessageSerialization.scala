@@ -1,4 +1,4 @@
-package akka.viz
+package akka.viz.serialization
 
 import scala.pickling.Defaults._
 import scala.pickling.json._
@@ -11,6 +11,7 @@ object MessageSerialization {
       message.pickle.value
     }.recoverWith {
       case t: Throwable =>
+        println(s"Unable to serialize '${message}'")
         Success(s"{'error':'Failed to serialize: ${t.getMessage}'}")
     }.get
   }
