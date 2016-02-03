@@ -12,9 +12,11 @@ object Main extends App {
 
   val system = ActorSystem("small-demos")
   val lazyActorProps = Props(new Actor {
+    var counter = 0
     override def receive: Receive = {
       case msg =>
         Thread.sleep(Random.nextInt(2000))
+        counter += 1
         sender() ! msg
     }
   })
