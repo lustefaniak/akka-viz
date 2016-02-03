@@ -66,8 +66,8 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) {
 
     val out = wsIn.zipMat(eventSrc)((_, m) => m)
       .collect {
-        case (allowed, r: Received) if allowed(r)        => r
-        case (_, other) if !other.isInstanceOf[Received] => other
+        case (allowed, r: ReceivedWithId) if allowed(r)        => r
+        case (_, other) if !other.isInstanceOf[ReceivedWithId] => other
       }.via(internalToApi)
       .via(eventSerialization)
       .map(TextMessage(_))
