@@ -12,7 +12,7 @@ trait SystemManipulation {
 
   def receiveDelay_= : (ReceiveDelay => Unit)
 
-  def publisherActor_= : (ActorRef => Unit)
+  def setPublisherActor(ref: ActorRef) : Unit
 }
 
 /* Ugly singleton thing (supposed to be wrapped in a TypedActor), but there's no way this could be done per-client.
@@ -29,7 +29,7 @@ class SystemManipulationImpl extends SystemManipulation {
     eventPublisher.foreach(_ ! ReceiveDelaySet(rcvDelay))
   }
 
-  override def publisherActor_= : (ActorRef) => Unit = {  ref =>
+  override def setPublisherActor(ref: ActorRef) : Unit = {
     eventPublisher = Some(ref)
     ref ! ReceiveDelaySet(rcvDelay)
   }
