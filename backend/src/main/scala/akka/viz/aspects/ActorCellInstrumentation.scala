@@ -62,4 +62,13 @@ class ActorCellInstrumentation {
     }
   }
 
+  @Pointcut("execution(* akka.actor.Actor.postStop()) && this(actor)")
+  def actorTermination(actor: Actor): Unit = {}
+
+  @After("actorTermination(actor)")
+  def captureActorTermination(actor: Actor): Unit = {
+    if (actor.context.system.name != internalSystemName) {
+      EventSystem.publish(Killed(actor.self))
+    }
+  }
 }

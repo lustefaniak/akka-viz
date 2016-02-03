@@ -62,6 +62,9 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence
 
       case ReceiveDelaySet(duration) =>
         delayMillis() = duration.toMillis.toInt
+
+      case Killed(ref) =>
+        DOMGlobalScope.grayOut(actorName(ref))
     }
   }
 

@@ -32,7 +32,7 @@ package object protocol {
 
   case class ReceiveDelaySet(current: Duration) extends ApiServerMessage
 
-  case class Killed(eventId: Long, actorRef: String) extends ApiServerMessage
+  case class Killed(ref: String) extends ApiServerMessage
 
   sealed trait ApiClientMessage
 

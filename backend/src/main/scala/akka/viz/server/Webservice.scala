@@ -107,6 +107,8 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) {
       protocol.MailboxStatus(owner.path.toSerializationFormat, size)
     case ReceiveDelaySet(current) =>
       protocol.ReceiveDelaySet(current)
+    case Killed(ref) =>
+      protocol.Killed(ref.path.toSerializationFormat)
   }
 
   def eventSerialization: Flow[protocol.ApiServerMessage, String, Any] = Flow[protocol.ApiServerMessage].map {
