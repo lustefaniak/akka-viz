@@ -8,14 +8,13 @@ package object protocol {
 
   case class AvailableClasses(availableClasses: List[String]) extends ApiServerMessage
 
-  case class Spawned(eventId: Long, ref: String, parent: String) extends ApiServerMessage
+  case class Spawned(ref: String, parent: String) extends ApiServerMessage
 
-  case class Instantiated(eventId: Long, ref: String, clazz: String) extends ApiServerMessage
+  case class Instantiated(ref: String, clazz: String) extends ApiServerMessage
 
-  case class MailboxStatus(eventId: Long, owner: String, size: Int) extends ApiServerMessage
+  case class MailboxStatus(owner: String, size: Int) extends ApiServerMessage
 
   case class FSMTransition(
-    eventId: Long,
     ref: String,
     currentState: String,
     currentStateClass: String,
@@ -27,7 +26,7 @@ package object protocol {
     nextDataClass: String
   ) extends ApiServerMessage
 
-  case class CurrentActorState(eventId: Long, ref: String, state: String) extends ApiServerMessage
+  case class CurrentActorState(ref: String, state: String) extends ApiServerMessage
 
   sealed trait ApiClientMessage
 

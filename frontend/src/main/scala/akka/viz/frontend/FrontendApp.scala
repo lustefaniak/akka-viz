@@ -41,7 +41,7 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence
       case ac: AvailableClasses =>
         seenMessages() = ac.availableClasses.toSet
 
-      case Spawned(n, child, parent) =>
+      case Spawned(child, parent) =>
         addActorsToSeen(actorName(child), actorName(parent))
 
       case fsm: FSMTransition =>
@@ -54,7 +54,7 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence
         val actor = actorName(i.ref)
         actorClasses(actor)() = i.clazz
 
-      case CurrentActorState(eventId, ref, state) =>
+      case CurrentActorState(ref, state) =>
         currentActorState.update(actorName(ref), state)
 
       case mb: MailboxStatus =>

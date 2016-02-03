@@ -11,10 +11,10 @@ object FilteringRule {
   val Default: FilteringRule = AllowAll
 }
 
-trait FilteringRule extends Function1[backend.Received, Boolean]
+trait FilteringRule extends Function1[types.Received, Boolean]
 
 case object AllowAll extends FilteringRule {
-  override def apply(event: backend.Received) = true
+  override def apply(event: types.Received) = true
 }
 
 case class AllowedClasses(names: List[String]) extends FilteringRule {
@@ -24,7 +24,7 @@ case class AllowedClasses(names: List[String]) extends FilteringRule {
     loaded.toOption
   }
 
-  override def apply(event: backend.Received): Boolean = {
+  override def apply(event: types.Received): Boolean = {
     allowedClasses.exists(c => c.isAssignableFrom(event.message.getClass))
   }
 }
