@@ -29,7 +29,10 @@ object MessageSerialization extends SerializerFinder with ReflectiveSerializatio
 
   private def getSerializerFor(obj: Any): AkkaVizSerializer = {
     def findSerializerForObject: AkkaVizSerializer = {
-      serializers.find(_.canSerialize(obj)).getOrElse(reflectiveSerializer)
+      serializers.find(_.canSerialize(obj)).getOrElse {
+        println(s"WARNING: There is no serializer for ${obj.getClass.getName}, consider adding one")
+        reflectiveSerializer
+      }
     }
     mappers.getOrElseUpdate(obj.getClass, findSerializerForObject)
   }
