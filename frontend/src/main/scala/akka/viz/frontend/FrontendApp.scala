@@ -46,7 +46,6 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence
 
       case fsm: FSMTransition =>
         val actor = actorName(fsm.ref)
-        console.log(fsm.toString)
         //FIXME: subscribe for data
         fsmTransitions.getOrElseUpdate(actor, mutable.Set()) += FsmTransition(fsm.currentStateClass, fsm.nextStateClass)
         currentActorState.update(actor, """{"state": ${fsm.nextState}, "data":${fsm.nextData}}""")
@@ -156,8 +155,6 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence
               case FsmTransition(from, to) => s"${cleanName(from)}->${cleanName(to)}"
             }.mkString(";"))
             val url = s"https://chart.googleapis.com/chart?cht=gv:neato&chl=digraph{${graphEncoded}}&chs=300x300"
-            console.log(url)
-            console.log(img(src := url).render)
             img(src := url)
         }
       }
@@ -172,7 +169,6 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence
       )
 
       val elem = popover.render
-      console.log(elem)
       elem
     }
 
