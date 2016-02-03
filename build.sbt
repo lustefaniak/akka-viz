@@ -42,6 +42,7 @@ lazy val frontend =
 
 lazy val api =
   Project("api", file("api"))
+    .disablePlugins(RevolverPlugin)
     .settings(commonSettings)
     .settings(
       //FIXME: don't use AST from Js.Value, define one inside api module
