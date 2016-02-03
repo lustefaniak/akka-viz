@@ -20,6 +20,10 @@ object DefaultSerializers {
 
   def mappers: mutable.Map[Class[_], AkkaVizSerializer] = mutable.Map[Class[_], AkkaVizSerializer](
     classOf[String] -> ((s: String) => Js.Str(s)),
+    classOf[Byte] -> ((i: Byte) => Js.Str(i.toString)),
+    classOf[java.lang.Byte] -> ((i: java.lang.Byte) => Js.Str(i.toByte.toString)),
+    classOf[Short] -> ((i: Short) => Js.Num(i)),
+    classOf[java.lang.Short] -> ((i: java.lang.Short) => Js.Num(i.toShort)),
     classOf[Int] -> ((i: Int) => Js.Num(i)),
     classOf[java.lang.Integer] -> ((i: java.lang.Integer) => Js.Num(i.toInt)),
     classOf[Long] -> ((i: Long) => Js.Num(i)),
