@@ -2,6 +2,7 @@ package akka.viz.serialization
 
 import org.clapper.classutil.ClassFinder
 import upickle.Js
+import upickle.Js.Value
 import upickle.json.FastRenderer
 
 import scala.collection.mutable
@@ -15,17 +16,28 @@ trait AkkaVizSerializer {
 
 object MessageSerialization {
 
-  private val placeholderSerializer = new AkkaVizSerializer {
-    override def serialize(obj: Any): Js.Value = Js.Obj(
-      "$type" -> Js.Str(obj.getClass.getCanonicalName)
-    )
+  private val reflectiveSerializer = new AkkaVizSerializer {
+    override def canSerialize(obj: Any): Boolean = {
+      //don't allow autoload just in case
+      false
+    }
 
-    override def canSerialize(obj: Any): Boolean = true
+    def serialize(obj: Any): Js.Value = {
+      val inspector = ClassInspector.of[Any](obj.getClass.asInstanceOf[Class[Any]])
+      val fields = inspector.inspect(obj)
+      Js.Obj(
+        Seq("$type" -> Js.Str(obj.getClass.getName))
+          ++ fields.toSeq.map {
+          case (fieldName, rawValue) =>
+            fieldName -> getSerializerFor(rawValue).serialize(rawValue)
+        }: _*)
+
+    }
   }
 
   private val rm = scala.reflect.runtime.currentMirror
 
-  private val serializers: List[AkkaVizSerializer] = {
+  private lazy val serializers: List[AkkaVizSerializer] = {
     val finder = ClassFinder()
     val classes = finder.getClasses.filter(_.isConcrete).filter(_.implements("akka.viz.serialization.AkkaVizSerializer"))
 
@@ -46,21 +58,21 @@ object MessageSerialization {
     }.toList
   }
 
-  private val mappers = DefaultSerializers.mappers
-
-  private def findSerializerForObject(obj: Any): AkkaVizSerializer = {
-    serializers.find {
-      _.canSerialize(obj)
-    }.getOrElse(placeholderSerializer)
-  }
+  private lazy val mappers = DefaultSerializers.mappers
 
   def getSerializerFor(obj: Any): AkkaVizSerializer = {
+    def findSerializerForObject(obj: Any): AkkaVizSerializer = {
+      serializers.find {
+        ser =>
+          ser.canSerialize(obj)
+      }.getOrElse(reflectiveSerializer)
+    }
     mappers.getOrElseUpdate(obj.getClass, findSerializerForObject(obj))
   }
 
-  def serialize(message: Any): String = {
+  def serializeToString(message: Any): String = {
     Try {
-      val serialized = getSerializerFor(message).serialize(message)
+      val serialized = serialize(message)
       FastRenderer.render(serialized)
     }.recoverWith {
       case t: Throwable =>
@@ -68,5 +80,10 @@ object MessageSerialization {
         Success(s"{'error':'Failed to serialize: ${t.getMessage}'}")
     }.get
   }
+
+  def serialize(message: Any): Js.Value = {
+    getSerializerFor(message).serialize(message)
+  }
+
 
 }
