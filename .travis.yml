@@ -8,7 +8,7 @@ cache:
 
 language: scala
 script:
-  - sbt ++$TRAVIS_SCALA_VERSION clean compile test:compile
+  - sbt ++$TRAVIS_SCALA_VERSION clean compile test
 scala:
   - 2.11.7
 
