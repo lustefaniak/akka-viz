@@ -14,8 +14,6 @@ object MessageSerialization extends SerializerFinder with ReflectiveSerializatio
 
   def serialize(message: Any): Js.Value = {
     def unableToSerialize(t: Throwable): Js.Value = {
-      println(s"Unable to serialize '${message}'")
-      println(t.getMessage)
       Js.Obj("error" -> Js.Str("Failed to serialize: " + t.getMessage))
     }
     try {
