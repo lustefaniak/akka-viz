@@ -12,12 +12,15 @@ case object Var extends FieldType
 case class ClassField(name: String, fullName: String, fieldType: FieldType, resultClass: Class[_], signature: String)
 
 
-trait Inspector[T] {
+trait ClassInspector {
+
+  def underlyingClass: Class[_]
+
   def fields: Seq[ClassField]
 
   def allFieldNames = fields.map(_.name).toSet
 
-  def inspect(obj: T, fields: Set[String] = allFieldNames): Map[String, Any]
+  def inspect(obj: Any, fields: Set[String] = allFieldNames): Map[String, Any]
 
   override def toString: String = {
     s"Inspector(" + fields.map(f => s"${f.name}:${f.signature}").mkString(",") + ")"
@@ -28,7 +31,7 @@ trait Inspector[T] {
 object ClassInspector {
   private val rm = scala.reflect.runtime.currentMirror
 
-  def of[T](clazz: Class[T]): Inspector[T] = {
+  def of(clazz: Class[_]): ClassInspector = {
     val t = rm.classSymbol(clazz).toType
 
     val reflectedFields = t.members.filter(_.isTerm).map(_.asTerm).filter(t => t.isVal || t.isVar).map {
@@ -43,15 +46,15 @@ object ClassInspector {
           s.typeSignature.toString
         )
     }
-    new Inspector[T] {
-      private val cls: Class[T] = clazz
+    new ClassInspector {
+      val underlyingClass: Class[_] = clazz
       private val f = reflectedFields.toSeq
 
-      override def inspect(obj: T, fieldNames: Set[String] = allFieldNames): Map[String, Any] = {
+      override def inspect(obj: Any, fieldNames: Set[String] = allFieldNames): Map[String, Any] = {
         val result = mutable.Map[String, Any]()
         fieldNames.foreach {
           fieldName =>
-            val field = cls.getDeclaredField(fieldName)
+            val field = underlyingClass.getDeclaredField(fieldName)
             field.setAccessible(true)
             result += (fieldName -> field.get(obj))
         }
@@ -62,6 +65,14 @@ object ClassInspector {
       override def fields: Seq[ClassField] = f
     }
   }
+}
 
+object CachingClassInspector {
+
+  private val cache = mutable.Map[Class[_], ClassInspector]()
+
+  def of(clazz: Class[_]): ClassInspector = {
+    cache.getOrElseUpdate(clazz, ClassInspector.of(clazz))
+  }
 
 }

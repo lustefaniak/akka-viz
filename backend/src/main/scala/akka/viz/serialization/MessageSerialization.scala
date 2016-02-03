@@ -23,7 +23,7 @@ object MessageSerialization {
     }
 
     def serialize(obj: Any): Js.Value = {
-      val inspector = ClassInspector.of[Any](obj.getClass.asInstanceOf[Class[Any]])
+      val inspector = CachingClassInspector.of(obj.getClass)
       val fields = inspector.inspect(obj)
       Js.Obj(
         Seq("$type" -> Js.Str(obj.getClass.getName))
