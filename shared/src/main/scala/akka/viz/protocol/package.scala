@@ -32,9 +32,12 @@ package object protocol {
 
   case class ReceiveDelaySet(current: Duration) extends ApiServerMessage
 
+  case class Killed(eventId: Long, actorRef: String) extends ApiServerMessage
+
   sealed trait ApiClientMessage
 
   case class SetAllowedMessages(allowedClasses: List[String]) extends ApiClientMessage
+
 
   case class SetReceiveDelay(duration: FiniteDuration) extends ApiClientMessage
 }
