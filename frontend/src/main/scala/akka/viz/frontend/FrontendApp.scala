@@ -91,7 +91,7 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence
 
   private def messageReceived(rcv: Received): Unit = {
     def insert(e: Element): Unit = {
-      messagesContent.insertBefore(e, messagesContent.firstChild)
+      messagesContent.appendChild(e)
     }
     val uid = rcv.eventId
     val sender = actorName(rcv.sender)
@@ -118,8 +118,8 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence
         )
       )
 
-      insert(detailsRow.render)
       insert(mainRow.render)
+      insert(detailsRow.render)
     }
   }
 
