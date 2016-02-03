@@ -8,7 +8,10 @@ case object ActorRefSerializer extends AkkaVizSerializer {
   override def serialize(obj: Any): Js.Value = {
     obj match {
       case a: ActorRef =>
-        Js.Obj("path" -> Js.Str(a.path.toSerializationFormat))
+        Js.Obj(
+          "$type" -> Js.Str(classOf[ActorRef].getName),
+          "path" -> Js.Str(a.path.toSerializationFormat)
+        )
     }
   }
 
