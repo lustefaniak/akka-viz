@@ -1,6 +1,6 @@
 package akka.viz.events
 
-import akka.actor.{Actor, ActorRef}
+import akka.actor.ActorRef
 
 package object backend {
 
@@ -17,7 +17,5 @@ package object backend {
   case class Instantiated(eventId: Long, actorRef: ActorRef, clazz: Class[_ <: Any]) extends Event
 
   case class FSMTransition(eventId: Long, actorRef: ActorRef, currentState: Any, currentData: Any, nextState: Any, nextData: Any) extends Event
-
-  case class CurrentActorState(eventId: Long, actorRef: ActorRef, actor: Actor) extends Event
 
 }

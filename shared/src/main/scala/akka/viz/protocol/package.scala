@@ -16,18 +16,16 @@ package object protocol {
 
   case class FSMTransition(
                             eventId: Long,
-                            ref: String,
-                            currentState: String,
-                            currentStateClass: String,
-                            currentData: String,
-                            currentDataClass: String,
-                            nextState: String,
-                            nextStateClass: String,
-                            nextData: String,
-                            nextDataClass: String
+                            ref:String,
+                            currentState:String,
+                            currentStateClass:String,
+                            currentData:String,
+                            currentDataClass:String,
+                            nextState:String,
+                            nextStateClass:String,
+                            nextData:String,
+                            nextDataClass:String
                           ) extends ApiServerMessage
-
-  case class CurrentActorState(eventId: Long, ref: String, state: String) extends ApiServerMessage
 
   sealed trait ApiClientMessage
 

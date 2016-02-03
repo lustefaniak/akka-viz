@@ -9,9 +9,8 @@ import akka.stream.scaladsl._
 import akka.stream.{FlowShape, Materializer, OverflowStrategy}
 import akka.viz.config.Config
 import akka.viz.events._
-import akka.viz.protocol
+import akka.viz.{MessageSerialization, protocol}
 import akka.viz.events.backend._
-import akka.viz.serialization.MessageSerialization
 
 object ApiMessages {
 
@@ -79,28 +78,26 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) {
   def internalToApi: Flow[backend.Event, protocol.ApiServerMessage, Any] = Flow[Event].map {
     case Received(eventId, sender, receiver, message) =>
       //FIXME: decide if content of payload should be added to message
-      protocol.Received(eventId, sender.path.toSerializationFormat, receiver.path.toSerializationFormat, message.getClass.getName, Some(MessageSerialization.serializeToString(message)))
+      protocol.Received(eventId, sender.path.toSerializationFormat, receiver.path.toSerializationFormat, message.getClass.getCanonicalName, Some(MessageSerialization.serialize(message)))
     case AvailableMessageTypes(types) =>
-      protocol.AvailableClasses(types.map(_.getName))
+      protocol.AvailableClasses(types.map(_.getCanonicalName))
     case Spawned(id, ref, parent) =>
       protocol.Spawned(id, ref.path.toSerializationFormat, parent.path.toSerializationFormat)
     case Instantiated(id, ref, clazz) =>
-      protocol.Instantiated(id, ref.path.toSerializationFormat, clazz.getName)
+      protocol.Instantiated(id, ref.path.toSerializationFormat, clazz.getCanonicalName)
     case FSMTransition(id, ref, currentState, currentData, nextState, nextData) =>
       protocol.FSMTransition(
         id,
         ref.path.toSerializationFormat,
-        currentState = MessageSerialization.serializeToString(currentState),
-        currentStateClass = currentState.getClass.getName,
-        currentData = MessageSerialization.serializeToString(currentData),
-        currentDataClass = currentData.getClass.getName,
-        nextState = MessageSerialization.serializeToString(nextState),
-        nextStateClass = nextState.getClass.getName,
-        nextData = MessageSerialization.serializeToString(nextData),
-        nextDataClass = nextData.getClass.getName
+        currentState = MessageSerialization.serialize(currentState),
+        currentStateClass = currentState.getClass.getCanonicalName,
+        currentData = MessageSerialization.serialize(currentData),
+        currentDataClass = currentData.getClass.getCanonicalName,
+        nextState = MessageSerialization.serialize(nextState),
+        nextStateClass = nextState.getClass.getCanonicalName,
+        nextData = MessageSerialization.serialize(nextData),
+        nextDataClass = nextData.getClass.getCanonicalName
       )
-    case CurrentActorState(id, ref, actor)=>
-      protocol.CurrentActorState(id, ref.path.toSerializationFormat, MessageSerialization.serializeToString(actor))
     case MailboxStatus(id, owner, size) =>
       protocol.MailboxStatus(id, owner.path.toSerializationFormat, size)
   }
