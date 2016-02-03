@@ -14,8 +14,6 @@ package object internal {
 
   case class Instantiated(actorRef: ActorRef, actor: Actor) extends Event
 
-  case class FSMTransition(actorRef: ActorRef, currentState: Any, currentData: Any, nextState: Any, nextData: Any) extends Event
-
-  case class CurrentActorState(actorRef: ActorRef, actor: Actor) extends Event
+  case class FSMTransition(actorRef: ActorRef, currentState: Any, currentData:Any, nextState:Any, nextData: Any) extends Event
 
 }

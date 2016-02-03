@@ -39,7 +39,6 @@ lazy val backend =
       javaOptions in reStart <++= AspectjKeys.weaverOptions in Aspectj,
       addCompilerPlugin("org.scalamacros" % "paradise" % "2.0.1" cross CrossVersion.full),
       libraryDependencies += "com.wacai" %% "config-annotation" % "0.3.4" % "compile",
-      libraryDependencies += "org.clapper" %% "classutil" % "1.0.6",
       scalacOptions += "-Xmacro-settings:conf.output.dir=" + baseDirectory.value / "src/main/resources/",
       libraryDependencies ++= Dependencies.backend,
       AspectjKeys.inputs in Aspectj <+= compiledClasses,

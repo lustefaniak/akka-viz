@@ -48,9 +48,6 @@ class EventPublisherActor extends Actor with ActorLogging {
     case t: internal.FSMTransition =>
       enqueueAndPublish(backend.FSMTransition(nextEventNumber(), t.actorRef, t.currentState, t.currentData, t.nextState, t.nextData))
 
-    case s: internal.CurrentActorState=>
-      enqueueAndPublish(backend.CurrentActorState(nextEventNumber(), s.actorRef, s.actor))
-
     case EventPublisherActor.Subscribe =>
       val s = sender()
       subscribers += s

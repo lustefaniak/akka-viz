@@ -23,13 +23,6 @@ class ActorCellInstrumentation {
     }
   }
 
-  @After(value = "receiveMessagePointcut(msg) && this(me)", argNames = "jp,msg,me")
-  def afterMessage(jp: JoinPoint, msg: Any, me: ActorCell) {
-    if (me.system.name != internalSystemName) {
-      EventSystem.publish(internal.CurrentActorState(me.self, me.actor))
-    }
-  }
-
   @Pointcut("execution(akka.actor.ActorCell.new(..)) && this(cell) && args(system, self, props, dispatcher, parent)")
   def actorCellCreation(cell: ActorCell, system: ActorSystemImpl, self: InternalActorRef, props: Props, dispatcher: MessageDispatcher, parent: InternalActorRef): Unit = {}
 
