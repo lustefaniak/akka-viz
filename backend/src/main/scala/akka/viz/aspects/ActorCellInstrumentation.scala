@@ -57,7 +57,6 @@ class ActorCellInstrumentation {
         case _ => {}
       }
 
-
     }
   }
 

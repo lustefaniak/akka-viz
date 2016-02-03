@@ -29,9 +29,8 @@ class PostOfficeActor(val postOffice: PostOffice) extends Actor with ActorLoggin
     case p @ Parcel(_, dest, _) =>
 
       Thread.sleep(randomDelay)
-      if(!lostPackage) nextOffice(route(postOffice.city -> dest)) ! p
+      if (!lostPackage) nextOffice(route(postOffice.city -> dest)) ! p
   }
-
 
   def nextOffice(route: List[City]): ActorSelection = {
     val nextCity = route.dropWhile(_ != postOffice.city).drop(1).head
@@ -39,7 +38,6 @@ class PostOfficeActor(val postOffice: PostOffice) extends Actor with ActorLoggin
     val selection: ActorSelection = context.system.actorSelection(s"akka://post-office/user/$nextCity")
     selection
   }
-
 
   def lostPackage = Random.nextGaussian() < 0.002
 }
@@ -67,16 +65,17 @@ class PostOfficeClientActor extends Actor with ActorLogging {
       log.debug(s"$p rejected, trying again")
       sender() ! p.copy(weight = p.weight - 0.02)
 
-    case d : Delivery =>
+    case d: Delivery =>
       log.debug(s"received $d")
       sendPackage
   }
 
   def sendPackage = {
-   import context.dispatcher
-    context.system.scheduler.scheduleOnce(randomDelay.milliseconds,
-      context.parent, Parcel(city.get, Random.shuffle(Cities.filterNot(_ == city)).head, Random.nextDouble() * (WeightLimit + 0.10)))
+    import context.dispatcher
+    context.system.scheduler.scheduleOnce(
+      randomDelay.milliseconds,
+      context.parent, Parcel(city.get, Random.shuffle(Cities.filterNot(_ == city)).head, Random.nextDouble() * (WeightLimit + 0.10))
+    )
   }
-
 
 }

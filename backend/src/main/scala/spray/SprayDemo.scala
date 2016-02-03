@@ -6,7 +6,7 @@ import akka.io.IO
 import spray.can.Http
 import spray.routing.SimpleRoutingApp
 
-object SprayDemo extends SimpleRoutingApp{
+object SprayDemo extends SimpleRoutingApp {
 
   def run(implicit system: ActorSystem) {
 

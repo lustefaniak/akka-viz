@@ -31,7 +31,6 @@ object ClassInspector {
 
   case class ClassField(name: String, fullName: String, fieldType: FieldType, resultClass: Class[_], signature: String)
 
-
   private val rm = scala.reflect.runtime.currentMirror
 
   def of(clazz: Class[_]): ClassInspector = {

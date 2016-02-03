@@ -10,9 +10,10 @@ trait ReflectiveSerialization {
     Js.Obj(
       Seq("$type" -> Js.Str(obj.getClass.getName))
         ++ fields.toSeq.map {
-        case (fieldName, rawValue) =>
-          fieldName -> MessageSerialization.serialize(rawValue)
-      }: _*)
+          case (fieldName, rawValue) =>
+            fieldName -> MessageSerialization.serialize(rawValue)
+        }: _*
+    )
   }
 
 }

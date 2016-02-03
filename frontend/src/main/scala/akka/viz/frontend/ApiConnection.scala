@@ -1,6 +1,5 @@
 package akka.viz.frontend
 
-
 import org.scalajs.dom._
 import org.scalajs.dom.raw.WebSocket
 

@@ -17,8 +17,7 @@ case object ActorRefSerializer extends AkkaVizSerializer {
 
   override def canSerialize(obj: Any): Boolean = obj match {
     case t: ActorRef => true
-    case _ => false
+    case _           => false
   }
 }
-
 

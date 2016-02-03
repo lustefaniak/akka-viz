@@ -15,7 +15,7 @@ import upickle.default._
 case class FsmTransition(fromStateClass: String, toStateClass: String)
 
 object FrontendApp extends JSApp with FrontendUtil with Persistence
-  with MailboxDisplay with PrettyJson {
+    with MailboxDisplay with PrettyJson {
 
   val createdLinks = scala.collection.mutable.Set[String]()
   val graph = DOMGlobalScope.graph
@@ -170,7 +170,8 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence
             td(input(`type` := "checkbox", if (isSelected) checked else ())),
             td(if (isSelected) b(actorName) else actorName), onclick := {
               () => toggleActor(actorName)
-            })(data("actor") := actorName).render
+            }
+          )(data("actor") := actorName).render
 
           DOMGlobalScope.$(element).popover(popoverOptions)
           element
@@ -198,7 +199,8 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence
               () =>
                 console.log(s"Toggling ${clazz} now it will be ${!contains}")
                 selectedMessages() = if (contains) selected - clazz else selected + clazz
-            })
+            }
+          )
       }
 
       val messages = document.getElementById("messagefilter").getElementsByTagName("tbody")(0).asInstanceOf[Element]

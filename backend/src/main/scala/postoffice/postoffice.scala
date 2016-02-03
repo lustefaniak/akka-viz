@@ -56,14 +56,15 @@ object PostOffice {
 
   def randomDelay = Random.nextInt(DelayRange.max - DelayRange.min) + DelayRange.min
 
-  val Cities: Vector[City] = Vector(Wroclaw,
+  val Cities: Vector[City] = Vector(
+    Wroclaw,
     Lodz,
     Warszawa,
     Poznan,
     Krakow,
     GorzowWlkp,
-    Berlin)
-
+    Berlin
+  )
 
   def run(implicit system: ActorSystem) = {
     for (city <- PostOffice.Cities) {
