@@ -67,18 +67,19 @@ object MessageSerialization {
   }
 
   def serializeToString(message: Any): String = {
-    def unableToSerialize(t: Throwable): String = {
+    def unableToSerialize(t: Throwable): Js.Value = {
       println(s"Unable to serialize '${message}'")
       println(t.getMessage)
-      s"{'error':'Failed to serialize: ${t.getMessage}'}"
+      Js.Obj("error" -> Js.Str("Failed to serialize: " + t.getMessage))
     }
 
-    try {
-      val serialized = serialize(message)
-      FastRenderer.render(serialized)
-    } catch {
-      case t: Throwable => unableToSerialize(t)
-    }
+    FastRenderer.render(
+      try {
+        serialize(message)
+      } catch {
+        case t: Throwable => unableToSerialize(t)
+      }
+    )
   }
 
   def serialize(message: Any): Js.Value = {
