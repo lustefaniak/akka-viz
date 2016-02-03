@@ -28,6 +28,13 @@ lazy val frontend =
     )
     .dependsOn(sharedJs)
 
+lazy val api =
+  Project("api", file("api"))
+  .settings(
+    //FIXME: don't use AST from Js.Value, define one inside api module
+    libraryDependencies += "com.lihaoyi" %%% "upickle" % Dependencies.Versions.upickle
+  )
+
 lazy val backend =
   Project("backend", file("backend"))
     .enablePlugins(RevolverPlugin)
@@ -52,7 +59,7 @@ lazy val backend =
           .map((f1, f2, f3) => {println(f3);Seq(f1.data, f2.data, f3)}),
       watchSources <++= (watchSources in frontend)
     )
-    .dependsOn(sharedJvm)
+    .dependsOn(sharedJvm, api)
 
 lazy val shared = (crossProject.crossType(CrossType.Pure) in file("shared"))
 lazy val sharedJvm = shared.jvm
