@@ -49,6 +49,7 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence
         console.log(fsm.toString)
         //FIXME: subscribe for data
         fsmTransitions.getOrElseUpdate(actor, mutable.Set()) += FsmTransition(fsm.currentStateClass, fsm.nextStateClass)
+        currentActorState.update(actor, """{"state": ${fsm.nextState}, "data":${fsm.nextData}}""")
 
       case i: Instantiated =>
         val actor = actorName(i.ref)
