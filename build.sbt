@@ -28,6 +28,13 @@ lazy val frontend =
     )
     .dependsOn(sharedJs)
 
+lazy val api =
+  Project("api", file("api"))
+  .settings(
+    //FIXME: don't use AST from Js.Value, define one inside api module
+    libraryDependencies += "com.lihaoyi" %%% "upickle" % Dependencies.Versions.upickle
+  )
+
 lazy val backend =
   Project("backend", file("backend"))
     .enablePlugins(RevolverPlugin)
@@ -39,6 +46,7 @@ lazy val backend =
       javaOptions in reStart <++= AspectjKeys.weaverOptions in Aspectj,
       addCompilerPlugin("org.scalamacros" % "paradise" % "2.0.1" cross CrossVersion.full),
       libraryDependencies += "com.wacai" %% "config-annotation" % "0.3.4" % "compile",
+      libraryDependencies += "org.clapper" %% "classutil" % "1.0.6",
       scalacOptions += "-Xmacro-settings:conf.output.dir=" + baseDirectory.value / "src/main/resources/",
       libraryDependencies ++= Dependencies.backend,
       AspectjKeys.inputs in Aspectj <+= compiledClasses,
@@ -51,7 +59,7 @@ lazy val backend =
           .map((f1, f2, f3) => {println(f3);Seq(f1.data, f2.data, f3)}),
       watchSources <++= (watchSources in frontend)
     )
-    .dependsOn(sharedJvm)
+    .dependsOn(sharedJvm, api)
 
 lazy val shared = (crossProject.crossType(CrossType.Pure) in file("shared"))
 lazy val sharedJvm = shared.jvm
