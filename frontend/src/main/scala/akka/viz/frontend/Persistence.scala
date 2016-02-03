@@ -9,7 +9,7 @@ import scala.util.Try
 
 trait Persistence {
 
-  def persistedVar[T: Writer : Reader](initialValue: T, name: String): Var[T] = {
+  def persistedVar[T: Writer: Reader](initialValue: T, name: String): Var[T] = {
     val init: T =
       LocalStorage(name).flatMap { stored =>
         val unpickled: Try[T] = Try(read[T](stored))

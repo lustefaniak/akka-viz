@@ -17,15 +17,15 @@ final case class Taken(chopstick: ActorRef) extends ChopstickMessage
 final case class Busy(chopstick: ActorRef) extends ChopstickMessage
 
 /**
-  * Some states the chopstick can be in
-  */
+ * Some states the chopstick can be in
+ */
 sealed trait ChopstickState
 case object Available extends ChopstickState
 case object Taken extends ChopstickState
 
 /**
-  * Some state container for the chopstick
-  */
+ * Some state container for the chopstick
+ */
 final case class TakenBy(hakker: ActorRef)
 
 /*
@@ -58,14 +58,14 @@ class Chopstick extends Actor with FSM[ChopstickState, TakenBy] {
 }
 
 /**
-  * Some fsm hakker messages
-  */
+ * Some fsm hakker messages
+ */
 sealed trait FSMHakkerMessage
 object Think extends FSMHakkerMessage
 
 /**
-  * Some fsm hakker states
-  */
+ * Some fsm hakker states
+ */
 sealed trait FSMHakkerState
 case object Waiting extends FSMHakkerState
 case object Thinking extends FSMHakkerState
@@ -75,8 +75,8 @@ case object FirstChopstickDenied extends FSMHakkerState
 case object Eating extends FSMHakkerState
 
 /**
-  * Some state container to keep track of which chopsticks we have
-  */
+ * Some state container to keep track of which chopsticks we have
+ */
 final case class TakenChopsticks(left: Option[ActorRef], right: Option[ActorRef])
 
 /*
@@ -166,7 +166,7 @@ class FSMHakker(name: String, left: ActorRef, right: ActorRef) extends Actor wit
 */
 object DiningHakkersOnFsm {
 
-  def run(implicit system:ActorSystem): Unit = {
+  def run(implicit system: ActorSystem): Unit = {
     // Create 5 chopsticks
     val chopsticks = for (i <- 1 to 5) yield system.actorOf(Props[Chopstick], "Chopstick" + i)
     // Create 5 awesome fsm hakkers and assign them their left and right chopstick

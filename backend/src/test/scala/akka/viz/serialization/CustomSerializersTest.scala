@@ -14,5 +14,4 @@ class CustomSerializersTest extends FlatSpec with Matchers {
 
   }
 
-
 }

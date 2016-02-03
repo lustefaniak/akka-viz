@@ -18,16 +18,16 @@ case object ActorSerializer extends AkkaVizSerializer {
     Js.Obj(
       Seq("$type" -> Js.Str(obj.getClass.getName))
         ++ values.toSeq.map {
-        case (fieldName, rawValue) =>
-          fieldName -> MessageSerialization.serialize(rawValue)
-      }: _*)
+          case (fieldName, rawValue) =>
+            fieldName -> MessageSerialization.serialize(rawValue)
+        }: _*
+    )
 
   }
 
   override def canSerialize(obj: Any): Boolean = obj match {
     case t: Actor => true
-    case _ => false
+    case _        => false
   }
 }
-
 

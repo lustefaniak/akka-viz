@@ -3,7 +3,6 @@ package akka.viz.serialization
 import akka.viz.serialization.test.JavaTest
 import org.scalatest.{Matchers, FlatSpec}
 
-
 class ReflectiveFieldsTest extends FlatSpec with Matchers {
 
   class MyActor[T] {
@@ -58,6 +57,5 @@ class ReflectiveFieldsTest extends FlatSpec with Matchers {
 
     inspector.inspect(actor, Set("str")).get("str") shouldBe Some("Wroclaw")
   }
-
 
 }

@@ -8,7 +8,7 @@ object MessageSerialization extends SerializerFinder with ReflectiveSerializatio
   def render(message: Any): String = {
     message match {
       case json: Js.Value => FastRenderer.render(json)
-      case other => FastRenderer.render(serialize(other))
+      case other          => FastRenderer.render(serialize(other))
     }
   }
 
