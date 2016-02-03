@@ -36,6 +36,9 @@ class EventPublisherActor extends Actor with ActorLogging {
     case be: BackendEvent =>
       broadcast(be)
 
+    case rd: internal.ReceiveDelaySet =>
+      enqueueAndPublish(backend.ReceiveDelaySet(nextEventNumber(), rd.current))
+
     case EventPublisherActor.Subscribe =>
       val s = sender()
       subscribers += s

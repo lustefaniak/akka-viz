@@ -1,5 +1,7 @@
 package akka.viz
 
+import scala.concurrent.duration.{FiniteDuration, Duration}
+
 package object protocol {
 
   sealed trait ApiServerMessage
@@ -28,8 +30,11 @@ package object protocol {
 
   case class CurrentActorState(ref: String, state: String) extends ApiServerMessage
 
+  case class ReceiveDelaySet(eventId: Long, current: Duration) extends ApiServerMessage
+
   sealed trait ApiClientMessage
 
   case class SetAllowedMessages(allowedClasses: List[String]) extends ApiClientMessage
 
+  case class SetReceiveDelay(duration: FiniteDuration) extends ApiClientMessage
 }
