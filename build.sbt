@@ -34,6 +34,7 @@ lazy val backend =
     .settings(aspectjSettings)
     .settings(
       fork in run := true,
+      fork in Test := true,
       javaOptions <++= AspectjKeys.weaverOptions in Aspectj,
       javaOptions in reStart <++= AspectjKeys.weaverOptions in Aspectj,
       addCompilerPlugin("org.scalamacros" % "paradise" % "2.0.1" cross CrossVersion.full),
