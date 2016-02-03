@@ -7,7 +7,7 @@ import upickle.Js
 case object OptionSerializer extends AkkaVizSerializer {
   override def serialize(obj: Any): Js.Value = {
     obj match {
-      case Some(x) => Js.Obj("$type" -> MessageSerialization.serialize(x))
+      case Some(x) => MessageSerialization.serialize(x)
       case None => Js.Obj("$type" -> Js.Str(s"scala.util.None"))
     }
   }
