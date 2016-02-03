@@ -1,3 +1,6 @@
+import com.typesafe.sbt.SbtScalariform
+import com.typesafe.sbt.SbtScalariform.ScalariformKeys
+import scalariform.formatter.preferences._
 
 name := "akka-message-viz"
 
@@ -5,14 +8,23 @@ version := "1.0"
 
 scalaVersion in ThisBuild := "2.11.7"
 
+val commonSettings: Seq[sbt.Setting[_]] = SbtScalariform.defaultScalariformSettings ++ Seq(
+  ScalariformKeys.preferences := ScalariformKeys.preferences.value
+    .setPreference(AlignSingleLineCaseStatements, true)
+    .setPreference(SpacesAroundMultiImports, false)
+    .setPreference(DoubleIndentClassDeclaration, true)
+)
+
 lazy val root =
   Project("root", file(".")).disablePlugins(RevolverPlugin)
-    .aggregate(frontend, backend)
+    .settings(commonSettings)
+    .aggregate(api, frontend, backend)
 
 lazy val frontend =
   Project("frontend", file("frontend"))
-    .disablePlugins(RevolverPlugin)
+    .disablePlugins(RevolverPlugin, SbtScalariform)
     .enablePlugins(ScalaJSPlugin)
+    .settings(commonSettings)
     .settings(
       persistLauncher in Compile := true,
       persistLauncher in Test := false,
@@ -30,14 +42,17 @@ lazy val frontend =
 
 lazy val api =
   Project("api", file("api"))
-  .settings(
-    //FIXME: don't use AST from Js.Value, define one inside api module
-    libraryDependencies += "com.lihaoyi" %%% "upickle" % Dependencies.Versions.upickle
-  )
+    .settings(commonSettings)
+    .settings(
+      //FIXME: don't use AST from Js.Value, define one inside api module
+      libraryDependencies += "com.lihaoyi" %%% "upickle" % Dependencies.Versions.upickle
+    )
 
 lazy val backend =
   Project("backend", file("backend"))
+    .disablePlugins(SbtScalariform)
     .enablePlugins(RevolverPlugin)
+    .settings(commonSettings)
     .settings(aspectjSettings)
     .settings(
       fork in run := true,
@@ -56,7 +71,10 @@ lazy val backend =
       products in Runtime <<= products in Compile,
       (resourceGenerators in Compile) <+=
         (fastOptJS in Compile in frontend, packageScalaJSLauncher in Compile in frontend, packageJSDependencies in Compile in frontend)
-          .map((f1, f2, f3) => {println(f3);Seq(f1.data, f2.data, f3)}),
+          .map((f1, f2, f3) => {
+            println(f3);
+            Seq(f1.data, f2.data, f3)
+          }),
       watchSources <++= (watchSources in frontend)
     )
     .dependsOn(sharedJvm, api)
@@ -64,3 +82,5 @@ lazy val backend =
 lazy val shared = (crossProject.crossType(CrossType.Pure) in file("shared"))
 lazy val sharedJvm = shared.jvm
 lazy val sharedJs = shared.js
+
+addCommandAlias("formatAll", ";scalariformFormat;test:scalariformFormat")
