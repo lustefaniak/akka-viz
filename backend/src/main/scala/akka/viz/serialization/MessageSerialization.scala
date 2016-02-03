@@ -2,11 +2,7 @@ package akka.viz.serialization
 
 import org.clapper.classutil.ClassFinder
 import upickle.Js
-import upickle.Js.Value
 import upickle.json.FastRenderer
-
-import scala.collection.mutable
-import scala.util.{Success, Try}
 
 trait AkkaVizSerializer {
   def canSerialize(obj: Any): Boolean
@@ -71,14 +67,18 @@ object MessageSerialization {
   }
 
   def serializeToString(message: Any): String = {
-    Try {
+    def unableToSerialize(t: Throwable): String = {
+      println(s"Unable to serialize '${message}'")
+      println(t.getMessage)
+      s"{'error':'Failed to serialize: ${t.getMessage}'}"
+    }
+
+    try {
       val serialized = serialize(message)
       FastRenderer.render(serialized)
-    }.recoverWith {
-      case t: Throwable =>
-        println(s"Unable to serialize '${message}'")
-        Success(s"{'error':'Failed to serialize: ${t.getMessage}'}")
-    }.get
+    } catch {
+      case t: Throwable => unableToSerialize(t)
+    }
   }
 
   def serialize(message: Any): Js.Value = {
