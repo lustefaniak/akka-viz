@@ -79,25 +79,25 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) {
   def internalToApi: Flow[backend.Event, protocol.ApiServerMessage, Any] = Flow[Event].map {
     case Received(eventId, sender, receiver, message) =>
       //FIXME: decide if content of payload should be added to message
-      protocol.Received(eventId, sender.path.toSerializationFormat, receiver.path.toSerializationFormat, message.getClass.getCanonicalName, Some(MessageSerialization.serialize(message)))
+      protocol.Received(eventId, sender.path.toSerializationFormat, receiver.path.toSerializationFormat, message.getClass.getName, Some(MessageSerialization.serializeToString(message)))
     case AvailableMessageTypes(types) =>
-      protocol.AvailableClasses(types.map(_.getCanonicalName))
+      protocol.AvailableClasses(types.map(_.getName))
     case Spawned(id, ref, parent) =>
       protocol.Spawned(id, ref.path.toSerializationFormat, parent.path.toSerializationFormat)
     case Instantiated(id, ref, clazz) =>
-      protocol.Instantiated(id, ref.path.toSerializationFormat, clazz.getCanonicalName)
+      protocol.Instantiated(id, ref.path.toSerializationFormat, clazz.getName)
     case FSMTransition(id, ref, currentState, currentData, nextState, nextData) =>
       protocol.FSMTransition(
         id,
         ref.path.toSerializationFormat,
-        currentState = MessageSerialization.serialize(currentState),
-        currentStateClass = currentState.getClass.getCanonicalName,
-        currentData = MessageSerialization.serialize(currentData),
-        currentDataClass = currentData.getClass.getCanonicalName,
-        nextState = MessageSerialization.serialize(nextState),
-        nextStateClass = nextState.getClass.getCanonicalName,
-        nextData = MessageSerialization.serialize(nextData),
-        nextDataClass = nextData.getClass.getCanonicalName
+        currentState = MessageSerialization.serializeToString(currentState),
+        currentStateClass = currentState.getClass.getName,
+        currentData = MessageSerialization.serializeToString(currentData),
+        currentDataClass = currentData.getClass.getName,
+        nextState = MessageSerialization.serializeToString(nextState),
+        nextStateClass = nextState.getClass.getName,
+        nextData = MessageSerialization.serializeToString(nextData),
+        nextDataClass = nextData.getClass.getName
       )
     case MailboxStatus(id, owner, size) =>
       protocol.MailboxStatus(id, owner.path.toSerializationFormat, size)
