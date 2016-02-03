@@ -30,5 +30,8 @@ class ReflectiveSerializersTest extends FlatSpec with Matchers {
 
   }
 
+  it should "handle cycles" in {
+    pending
+  }
 
 }
