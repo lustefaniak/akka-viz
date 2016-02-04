@@ -14,7 +14,6 @@
         gravity: -1.2
     });
 
-
     var graphics = Viva.Graph.View.svgGraphics();
     var highlightRelatedNodes = function (nodeId, isOn) {
         graph.forEachLinkedNode(nodeId, function (node, link) {
@@ -30,11 +29,11 @@
     graphics.node(function (node) {
         var ui = Viva.Graph.svg('g');
         var svgText = Viva.Graph.svg('text').attr('y', '-4px').text(node.id);
-
+        var imgLink = node.data.dead ? '/img/dead_actor.png' : '/img/actor.png'
         var img = Viva.Graph.svg('image')
                 .attr('width', nodeSize)
                 .attr('height', nodeSize)
-                .link('/img/actor.png');
+                .link(imgLink);
 
         ui.append(svgText);
         if(node.data.mailboxSize > -1){ // because js
