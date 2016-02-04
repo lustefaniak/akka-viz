@@ -1,15 +1,33 @@
 package akka.viz.events
 
 import akka.actor._
+import akka.util.Timeout
 import akka.viz.config.Config
+import akka.viz.events.GlobalSettingsActor.GetDelay
 import akka.viz.events.types._
 
 import scala.collection.immutable
+import scala.concurrent.Await
+import scala.concurrent.duration._
+import akka.pattern._
 
 object EventSystem {
 
+  implicit val timeout = Timeout(100.millis)
   private implicit val system = ActorSystem(Config.internalSystemName)
+
   private val publisher = system.actorOf(Props(classOf[EventPublisherActor]))
+  private val globalSettings = system.actorOf(Props(classOf[GlobalSettingsActor]))
+
+  globalSettings ! publisher
+
+  private[akka] def receiveDelay = {
+    Await.result((globalSettings ? GlobalSettingsActor.GetDelay).mapTo[Duration], timeout.duration)
+  }
+
+  private[akka] def receiveDelay_=(d: Duration): Unit = {
+    globalSettings ! d
+  }
 
   private[akka] def publish(event: InternalEvent): Unit = {
     publisher ! event
@@ -76,4 +94,33 @@ object EventPublisherActor {
 
   case object Unsubscribe
 
+}
+
+import akka.actor.{ActorLogging, Actor, ActorRef}
+import akka.viz.events.types.ReceiveDelaySet
+
+import scala.concurrent.duration._
+
+/* Ugly singleton thing for things that cannot be done per-client,
+   but are not concerned with processing of the events.
+  */
+class GlobalSettingsActor extends Actor with ActorLogging {
+  private[this] var rcvDelay: FiniteDuration = 0.millis
+  private[this] var eventPublisher: Option[ActorRef] = None
+
+  override def receive: Receive = {
+    case d: FiniteDuration =>
+      rcvDelay = d
+      eventPublisher.foreach(_ ! ReceiveDelaySet(d))
+
+    case GetDelay =>
+      sender() ! rcvDelay
+
+    case publisher: ActorRef =>
+      eventPublisher = Some(publisher)
+  }
+}
+
+object GlobalSettingsActor {
+  case object GetDelay
 }

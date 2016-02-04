@@ -15,7 +15,7 @@ import upickle.default._
 case class FsmTransition(fromStateClass: String, toStateClass: String)
 
 object FrontendApp extends JSApp with FrontendUtil with Persistence
-    with MailboxDisplay with PrettyJson {
+    with MailboxDisplay with PrettyJson with ManipulationsUI {
 
   val createdLinks = scala.collection.mutable.Set[String]()
   val graph = DOMGlobalScope.graph
@@ -59,6 +59,9 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence
 
       case mb: MailboxStatus =>
         handleMailboxStatus(mb)
+
+      case ReceiveDelaySet(duration) =>
+        delayMillis() = duration.toMillis.toInt
     }
   }
 
@@ -258,5 +261,12 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence
     document.querySelector("a#actorfilter-select-none").onClick(() => clearActorFilters())
     document.querySelector("a#actorfilter-select-all").onClick(() => selectAllActorFilters())
     document.getElementById("actorfilter-regex").onEnter(() => regexActorFilter())
+
+    document.querySelector("#thebox").appendChild(receiveDelayPanel.render)
+    delayMillis.triggerLater {
+      import scala.concurrent.duration._
+
+      upstream.send(write(SetReceiveDelay(delayMillis.now.millis)))
+    }
   }
 }
