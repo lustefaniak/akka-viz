@@ -59,6 +59,11 @@ object ClassInspector {
         fieldNames.foreach {
           fieldName =>
             try {
+              // It will fail if field is passed as default class constructor and is not referenced in class
+              // There is also a bug in scalac, which makes it unavailable if it was referenced from closure
+              // That happens eg. in FSM trait, as there are only closures
+              // Fields are usually available in the class, but their names are mangled so it is not obvious where
+              // to find them reliably
               val field = underlyingClass.getDeclaredField(fieldName)
               field.setAccessible(true)
               result += (fieldName -> field.get(obj))
