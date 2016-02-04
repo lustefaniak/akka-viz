@@ -21,7 +21,7 @@ _a visual debugger for Akka actor systems (experimental)_
 ### Demos
 We supply a few demos with the source code, so you can explore without hooking up to an existing ActorSystem.
 
-Clone project and run via SBT with `reStart`. Go to `http://localhost:8888` in your favourite browser and play around!
+Clone project and run with `reStart` in SBT. Go to `http://localhost:8888` in your favourite browser and play around!
 
 ### Monitoring existing systems
 Include jar in classpath of your app and run your `main()`. Server should be listening on `http://localhost:8888`.
