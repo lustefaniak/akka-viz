@@ -60,7 +60,7 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence
       case mb: MailboxStatus =>
         handleMailboxStatus(mb)
 
-      case ReceiveDelaySet(_, duration) =>
+      case ReceiveDelaySet(duration) =>
         delayMillis() = duration.toMillis.toInt
     }
   }

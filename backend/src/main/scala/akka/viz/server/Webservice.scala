@@ -56,7 +56,7 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) {
             List(AllowedClasses(classNames))
           case protocol.SetReceiveDelay(duration) =>
             system.log.debug(s"Setting receive delay to $duration")
-            EventSystem.manipulationActor.receiveDelay = ReceiveDelay(duration)
+            EventSystem.receiveDelay = duration
             Nil
           case other =>
             system.log.error(s"Received unsupported unpickled object via WS: ${other}")
@@ -105,8 +105,8 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) {
       protocol.CurrentActorState(ref.path.toSerializationFormat, MessageSerialization.render(actor))
     case MailboxStatus(owner, size) =>
       protocol.MailboxStatus(owner.path.toSerializationFormat, size)
-    case ReceiveDelaySet(id, current) =>
-      protocol.ReceiveDelaySet(id, current.duration)
+    case ReceiveDelaySet(current) =>
+      protocol.ReceiveDelaySet(current)
   }
 
   def eventSerialization: Flow[protocol.ApiServerMessage, String, Any] = Flow[protocol.ApiServerMessage].map {

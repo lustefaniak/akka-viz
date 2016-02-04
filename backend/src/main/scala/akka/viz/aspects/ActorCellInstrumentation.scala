@@ -19,7 +19,7 @@ class ActorCellInstrumentation {
   @Before(value = "receiveMessagePointcut(msg) && this(me)", argNames = "jp,msg,me")
   def message(jp: JoinPoint, msg: Any, me: ActorCell) {
     if (me.system.name != internalSystemName) {
-      Thread.sleep(EventSystem.manipulationActor.receiveDelay.duration.toMillis)
+      Thread.sleep(EventSystem.receiveDelay.toMillis)
       EventSystem.publish(Received(me.sender(), me.self, msg))
       EventSystem.publish(MailboxStatus(me.self, me.mailbox.numberOfMessages))
     }

@@ -2,6 +2,8 @@ package akka.viz.events
 
 import akka.actor.{Actor, ActorRef}
 
+import scala.concurrent.duration.Duration
+
 package object types {
 
   sealed trait InternalEvent
@@ -30,4 +32,5 @@ package object types {
 
   case class CurrentActorState(actorRef: ActorRef, actor: Actor) extends InternalEvent with BackendEvent
 
+  case class ReceiveDelaySet(duration: Duration) extends InternalEvent with BackendEvent
 }

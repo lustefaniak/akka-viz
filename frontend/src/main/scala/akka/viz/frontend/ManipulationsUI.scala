@@ -13,9 +13,11 @@ trait ManipulationsUI {
   lazy val delayDisplay = span("0 msec").render
 
   val receiveDelayPanel = {
-    div(`class` := "panel panel-default",
+    div(
+      `class` := "panel panel-default",
       div(`class` := "panel-heading", p("Receive delay")),
-      div(`class` := "panel-body",
+      div(
+        `class` := "panel-body",
         delaySlider, delayDisplay,
         p("Warning: can cause TimeoutException! Use with care!")
       )
@@ -28,7 +30,7 @@ trait ManipulationsUI {
     delayMillis() = self.asInstanceOf[Input].valueAsNumber
   }
 
-  delayMillis.trigger{
+  delayMillis.trigger {
     val millis: Int = delayMillis.now
     delaySlider.value = millis.toString
     delayDisplay.innerHTML = s"$millis msec"
