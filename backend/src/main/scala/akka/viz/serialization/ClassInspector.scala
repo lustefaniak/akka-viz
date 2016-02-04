@@ -33,6 +33,8 @@ object ClassInspector {
 
   private val rm = scala.reflect.runtime.currentMirror
 
+  case class UnableToInspectField(t: Throwable)
+
   def of(clazz: Class[_]): ClassInspector = {
     val t = rm.classSymbol(clazz).toType
 
@@ -56,11 +58,15 @@ object ClassInspector {
         val result = mutable.Map[String, Any]()
         fieldNames.foreach {
           fieldName =>
-            val field = underlyingClass.getDeclaredField(fieldName)
-            field.setAccessible(true)
-            result += (fieldName -> field.get(obj))
+            try {
+              val field = underlyingClass.getDeclaredField(fieldName)
+              field.setAccessible(true)
+              result += (fieldName -> field.get(obj))
+            } catch {
+              case t: Throwable =>
+                result += (fieldName -> UnableToInspectField(t))
+            }
         }
-
         result.toMap
       }
 
