@@ -4,7 +4,7 @@ import akka.actor.{Props, ActorSystem}
 
 import scala.util.Random
 
-class Game(playersNo: Int) {
+class RussianRoulette(playersNo: Int) {
   def run(system: ActorSystem): Unit = {
     val players = Vector.fill(playersNo)(system.actorOf(Props[Player]))
 
