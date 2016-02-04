@@ -26,6 +26,7 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence
 
   val fsmTransitions = mutable.Map[String, mutable.Set[FsmTransition]]()
   val currentActorState = mutable.Map[String, String]()
+  val deadActors = mutable.Set[String]()
 
   private def handleDownstream(messageEvent: MessageEvent): Unit = {
     val message: ApiServerMessage = ApiMessages.read(messageEvent.data.asInstanceOf[String])
@@ -42,6 +43,7 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence
         seenMessages() = ac.availableClasses.toSet
 
       case Spawned(child, parent) =>
+        deadActors -= actorName(child)
         addActorsToSeen(actorName(child), actorName(parent))
 
       case fsm: FSMTransition =>
@@ -64,7 +66,8 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence
         delayMillis() = duration.toMillis.toInt
 
       case Killed(ref) =>
-        DOMGlobalScope.grayOut(actorName(ref))
+        deadActors += actorName(ref)
+        seenActors.recalc()
     }
   }
 
@@ -84,7 +87,11 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence
   val selectedMessages = persistedVar[Set[String]](Set(), "selectedMessages")
 
   val addNodesObs = seenActors.trigger {
-    seenActors.now.foreach(graph.addNode(_, js.Dictionary.empty[js.Any]))
+    seenActors.now.foreach {
+      actor =>
+        val isDead = deadActors.contains(actor)
+        graph.addNode(actor, js.Dictionary(("dead", isDead)))
+    }
   }
 
   private def addActorsToSeen(actorName: String*): Unit = {

@@ -26,12 +26,6 @@
         });
     };
 
-    function grayOut(nodeId) {
-        if(graph.getNode(nodeId)) {
-            graph.addNode( nodeId, {dead: true});
-        }
-    }
-
     graphics.node(function (node) {
         var ui = Viva.Graph.svg('g');
         var svgText = Viva.Graph.svg('text').attr('y', '-4px').text(node.id);
