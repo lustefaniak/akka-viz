@@ -1,5 +1,6 @@
 package akka.viz.serialization
 
+import akka.viz.serialization.ClassInspector.UnableToInspectField
 import upickle.Js
 import upickle.Js.Value
 
@@ -34,6 +35,14 @@ object DefaultSerializers {
     classOf[java.lang.Float] -> ((i: java.lang.Float) => Js.Num(i.toFloat)),
     classOf[Boolean] -> ((b: Boolean) => if (b) Js.True else Js.False),
     classOf[java.lang.Boolean] -> ((b: java.lang.Boolean) => if (b) Js.True else Js.False)
+  ) ++ internalMappers
+
+  private def internalMappers = mutable.Map[Class[_], AkkaVizSerializer](
+    classOf[UnableToInspectField] -> ((e: UnableToInspectField) => Js.Obj(
+      "$type" -> Js.Str(classOf[UnableToInspectField].getName),
+      "$error" -> Js.Str(e.t.getMessage),
+      "$errorType" -> Js.Str(e.t.getClass.getName)
+    ))
   )
 
 }

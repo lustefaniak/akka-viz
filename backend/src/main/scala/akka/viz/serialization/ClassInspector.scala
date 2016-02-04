@@ -33,6 +33,8 @@ object ClassInspector {
 
   private val rm = scala.reflect.runtime.currentMirror
 
+  case class UnableToInspectField(t: Throwable)
+
   def of(clazz: Class[_]): ClassInspector = {
     val t = rm.classSymbol(clazz).toType
 
@@ -56,11 +58,20 @@ object ClassInspector {
         val result = mutable.Map[String, Any]()
         fieldNames.foreach {
           fieldName =>
-            val field = underlyingClass.getDeclaredField(fieldName)
-            field.setAccessible(true)
-            result += (fieldName -> field.get(obj))
+            try {
+              // It will fail if field is passed as default class constructor and is not referenced in class
+              // There is also a bug in scalac, which makes it unavailable if it was referenced from closure
+              // That happens eg. in FSM trait, as there are only closures
+              // Fields are usually available in the class, but their names are mangled so it is not obvious where
+              // to find them reliably
+              val field = underlyingClass.getDeclaredField(fieldName)
+              field.setAccessible(true)
+              result += (fieldName -> field.get(obj))
+            } catch {
+              case t: Throwable =>
+                result += (fieldName -> UnableToInspectField(t))
+            }
         }
-
         result.toMap
       }
 
