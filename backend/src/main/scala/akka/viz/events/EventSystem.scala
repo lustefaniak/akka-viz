@@ -34,11 +34,17 @@ object EventSystem {
   }
 
   @volatile
-  private var reportingApi: ReportingApi = if (autoStartReporting) PublishingApi(publish) else NoReporting
+  private var reportingApi: ReportingApi = NoReporting
 
-  private[akka] def reportingEnabled_=(enabled: Boolean) = {
+  private[akka] def isEnabled = !(reportingApi == NoReporting)
+
+  private[akka] def setEnabled(enabled: Boolean) = {
+    println(s"setEnabled: ${enabled}")
     reportingApi = if (enabled) PublishingApi(publish) else NoReporting
+    publish(if (enabled) ReportingEnabled else ReportingDisabled)
   }
+
+  if (autoStartReporting) setEnabled(true)
 
   @inline
   def report: ReportingApi = reportingApi

@@ -36,4 +36,8 @@ package object types {
 
   case class Killed(actorRef: ActorRef) extends InternalEvent with BackendEvent
 
+  case object ReportingEnabled extends InternalEvent with BackendEvent
+
+  case object ReportingDisabled extends InternalEvent with BackendEvent
+
 }
