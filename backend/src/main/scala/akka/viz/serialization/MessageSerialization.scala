@@ -10,6 +10,10 @@ case class SerializationContextImpl(depth: Int = 0) extends SerializationContext
 
 object MessageSerialization extends SerializerFinder with ReflectiveSerialization {
 
+  def preload() = {
+
+  }
+
   def render(message: Any): String = {
     message match {
       case json: Js.Value => FastRenderer.render(json)

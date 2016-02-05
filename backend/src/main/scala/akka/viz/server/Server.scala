@@ -4,6 +4,7 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl._
 import akka.stream.ActorMaterializer
 import akka.viz.config.Config
+import akka.viz.serialization.MessageSerialization
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
@@ -24,6 +25,8 @@ object Server {
         println(s"Binding failed with ${e.getMessage}")
         sys.exit(1)
     }(system.dispatcher)
+
+    MessageSerialization.preload()
 
     Await.result(binding, Duration.Inf)
   }
