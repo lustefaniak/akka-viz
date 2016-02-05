@@ -1,6 +1,6 @@
 package akka.viz.frontend
 
-import akka.viz.frontend.components.{MessageFilter, ActorSelector}
+import akka.viz.frontend.components.{MessagesPanel, MessageFilter, ActorSelector}
 import akka.viz.protocol._
 import org.scalajs.dom.html.Input
 import org.scalajs.dom.{onclick => _, raw => _, _}
@@ -29,7 +29,7 @@ object FrontendApp extends JSApp with Persistence
   val fsmTransitions = mutable.Map[String, mutable.Set[FsmTransition]]()
   val currentActorState = mutable.Map[String, String]()
 
-  private def handleDownstream(messageEvent: MessageEvent): Unit = {
+  private def handleDownstream(messageReceived: (Received) => Unit)(messageEvent: MessageEvent): Unit = {
     val message: ApiServerMessage = ApiMessages.read(messageEvent.data.asInstanceOf[String])
 
     message match {
@@ -92,44 +92,9 @@ object FrontendApp extends JSApp with Persistence
     seenActors() = newSeen
   }
 
-  lazy val messagesContent = document.getElementById("messagespanelbody").getElementsByTagName("tbody")(0).asInstanceOf[Element]
-
-  private def messageReceived(rcv: Received): Unit = {
-    def insert(e: Element): Unit = {
-      messagesContent.appendChild(e)
-    }
-    val uid = rcv.eventId
-    val sender = actorName(rcv.sender)
-    val receiver = actorName(rcv.receiver)
-    val selected = selectedActors.now
-
-    if (selected.contains(sender) || selected.contains(receiver)) {
-
-      val mainRow = tr(
-        "data-toggle".attr := "collapse",
-        "data-target".attr := s"#detail$uid",
-        td(sender),
-        td(receiver),
-        td(rcv.payloadClass)
-      )
-
-      val payload: String = rcv.payload.getOrElse("")
-      val detailsRow = tr(
-        id := s"detail$uid",
-        `class` := "collapse",
-        td(
-          colspan := 3,
-          div(pre(prettyPrintJson(payload))) // FIXME: display formated lazily
-        )
-      )
-
-      insert(mainRow.render)
-      insert(detailsRow.render)
-    }
-  }
-
   val actorSelector = new ActorSelector(seenActors, selectedActors, currentActorState, actorClasses)
   val messageFilter = new MessageFilter(seenMessages, selectedMessages, selectedActors)
+  val messagesPanel = new MessagesPanel(selectedActors)
 
   @JSExport("toggleActor")
   def toggleActor(name: String) = actorSelector.toggleActor(name)
@@ -138,28 +103,23 @@ object FrontendApp extends JSApp with Persistence
 
     document.querySelector("#actorselection").appendChild(actorSelector.render)
     document.querySelector("#messagefiltering").appendChild(messageFilter.render)
+    document.querySelector("#messagelist").appendChild(messagesPanel.render)
+    document.querySelector("#receivedelay").appendChild(receiveDelayPanel.render)
 
-    val upstream = ApiConnection(webSocketUrl("stream"), handleDownstream)
+    val upstream = ApiConnection(
+      webSocketUrl("stream"),
+      handleDownstream(messagesPanel.messageReceived)
+    ) // fixme when this will need more callbacks?
 
     selectedMessages.triggerLater {
       console.log(s"Will send allowedClasses: ${selectedMessages.now.mkString("[", ",", "]")}")
       import upickle.default._
       upstream.send(write(SetAllowedMessages(selectedMessages.now.toList)))
 
-      selectedActors.trigger {
-        if (selectedActors.now.isEmpty) {
-          document.getElementById("messagespaneltitle").innerHTML = s"Select actor to show its messages"
-        } else {
-          document.getElementById("messagespaneltitle").innerHTML = s"Messages"
-        }
-        messagesContent.innerHTML = ""
-      }
     }
 
-    document.querySelector("#thebox").appendChild(receiveDelayPanel.render)
     delayMillis.triggerLater {
       import scala.concurrent.duration._
-
       upstream.send(write(SetReceiveDelay(delayMillis.now.millis)))
     }
   }
