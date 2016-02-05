@@ -26,7 +26,7 @@ trait ReflectiveSerialization {
   @inline
   private def inspect(obj: Any, context: SerializationContext): Js.Value = {
     val inspector = CachingClassInspector.of(obj.getClass)
-    if (!inspector.isObject || shouldInspectObjects) {
+    if (!inspector.isScalaObject || shouldInspectObjects) {
       val fields = inspector.inspect(obj, fieldSelector(inspector))
       Js.Obj(
         Seq("$type" -> Js.Str(obj.getClass.getName))

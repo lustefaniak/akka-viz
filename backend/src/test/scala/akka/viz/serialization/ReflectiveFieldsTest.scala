@@ -68,22 +68,22 @@ class ReflectiveFieldsTest extends FlatSpec with Matchers {
 
   it should "know if object inspected" in {
     val inspector = ClassInspector.of(MyObject.getClass)
-    inspector.isObject shouldBe true
+    inspector.isScalaObject shouldBe true
   }
 
   it should "know if case object inspected" in {
     val inspector = ClassInspector.of(MyCaseObject.getClass)
-    inspector.isObject shouldBe true
+    inspector.isScalaObject shouldBe true
   }
 
   it should "know if inner object inspected" in {
     val inspector = ClassInspector.of(Inner.MyObject.getClass)
-    inspector.isObject shouldBe true
+    inspector.isScalaObject shouldBe true
   }
 
   it should "know if inner case object inspected" in {
     val inspector = ClassInspector.of(Inner.MyCaseObject.getClass)
-    inspector.isObject shouldBe true
+    inspector.isScalaObject shouldBe true
   }
 
 }
