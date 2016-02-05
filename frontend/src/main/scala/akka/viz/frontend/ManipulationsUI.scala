@@ -12,10 +12,9 @@ trait ManipulationsUI {
   lazy val delaySlider = input(id := "delay-slider", tpe := "range", min := 0, max := 2000, step := 100, value := 0, onchange := handleSliderChange).render
   lazy val delayDisplay = span("0 msec").render
 
-  val receiveDelayPanel = {
-    div(
-      `class` := "panel panel-default",
-      div(`class` := "panel-heading", p("Receive delay")),
+  val receiveDelayPanel: Seq[Frag] = {
+    Seq(
+      div(`class` := "panel-heading", "Receive delay"),
       div(
         `class` := "panel-body",
         delaySlider, delayDisplay,
