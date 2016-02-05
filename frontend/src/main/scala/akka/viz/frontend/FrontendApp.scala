@@ -1,6 +1,6 @@
 package akka.viz.frontend
 
-import akka.viz.frontend.components.ActorSelector
+import akka.viz.frontend.components.{MessageFilter, ActorSelector}
 import akka.viz.protocol._
 import org.scalajs.dom.html.Input
 import org.scalajs.dom.{onclick => _, raw => _, _}
@@ -12,10 +12,11 @@ import scala.scalajs.js.{ThisFunction0, JSApp, JSON}
 import scala.util.Try
 import scalatags.JsDom.all._
 import upickle.default._
+import FrontendUtil._
 
 case class FsmTransition(fromStateClass: String, toStateClass: String)
 
-object FrontendApp extends JSApp with FrontendUtil with Persistence
+object FrontendApp extends JSApp with Persistence
     with MailboxDisplay with PrettyJson with ManipulationsUI {
 
   val createdLinks = scala.collection.mutable.Set[String]()
@@ -127,45 +128,23 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence
     }
   }
 
-  val selector: ActorSelector = new ActorSelector(seenActors, selectedActors)
+  val actorSelector = new ActorSelector(seenActors, selectedActors, currentActorState, actorClasses)
+  val messageFilter = new MessageFilter(seenMessages, selectedMessages, selectedActors)
 
   @JSExport("toggleActor")
-  def toggleActor(name: String) = selector.toggleActor(name)
+  def toggleActor(name: String) = actorSelector.toggleActor(name)
 
   def main(): Unit = {
 
-    document.querySelector("#actorselection").appendChild(selector.render)
+    document.querySelector("#actorselection").appendChild(actorSelector.render)
+    document.querySelector("#messagefiltering").appendChild(messageFilter.render)
 
     val upstream = ApiConnection(webSocketUrl("stream"), handleDownstream)
 
-    val messagesObs = Rx.unsafe {
-      (seenMessages(), selectedMessages())
-    }.triggerLater {
-
-      val seen = seenMessages.now.toList.sorted
-      val selected = selectedMessages.now
-
-      val content = seen.map {
-        clazz =>
-          val contains = selected(clazz)
-          tr(
-            td(input(`type` := "checkbox", if (contains) checked else ())),
-            td(if (contains) b(clazz) else clazz),
-            onclick := {
-              () =>
-                console.log(s"Toggling ${clazz} now it will be ${!contains}")
-                selectedMessages() = if (contains) selected - clazz else selected + clazz
-            }
-          )
-      }
-
-      val messages = document.getElementById("messagefilter").getElementsByTagName("tbody")(0).asInstanceOf[Element]
-      messages.innerHTML = ""
-      messages.appendChild(content.render)
-
-      console.log(s"Will send allowedClasses: ${selected.mkString("[", ",", "]")}")
+    selectedMessages.triggerLater {
+      console.log(s"Will send allowedClasses: ${selectedMessages.now.mkString("[", ",", "]")}")
       import upickle.default._
-      upstream.send(write(SetAllowedMessages(selected.toList)))
+      upstream.send(write(SetAllowedMessages(selectedMessages.now.toList)))
 
       selectedActors.trigger {
         if (selectedActors.now.isEmpty) {
@@ -176,26 +155,6 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence
         messagesContent.innerHTML = ""
       }
     }
-
-    def clearMessageFilters() = {
-      selectedMessages() = Set.empty
-    }
-
-    def selectAllMessageFilters() = {
-      selectedMessages() = seenMessages.now
-    }
-
-    def regexMessageFilter() = {
-      val input = document.getElementById("messagefilter-regex").asInstanceOf[Input].value
-      Try(input.r).foreach { r =>
-        selectedMessages() = seenMessages.now.filter(_.matches(r.regex))
-      }
-    }
-
-    document.querySelector("a#messagefilter-select-none").onClick(() => clearMessageFilters())
-    document.querySelector("a#messagefilter-select-all").onClick(() => selectAllMessageFilters())
-    document.getElementById("messagefilter-regex").onEnter(() => regexMessageFilter())
-
 
     document.querySelector("#thebox").appendChild(receiveDelayPanel.render)
     delayMillis.triggerLater {

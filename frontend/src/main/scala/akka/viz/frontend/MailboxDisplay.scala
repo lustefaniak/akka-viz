@@ -2,8 +2,9 @@ package akka.viz.frontend
 
 import akka.viz.protocol
 import scalajs.js
+import FrontendUtil._
 
-trait MailboxDisplay extends FrontendUtil {
+trait MailboxDisplay {
   private val graph = DOMGlobalScope.graph
 
   def handleMailboxStatus(mb: protocol.MailboxStatus): Unit = {
