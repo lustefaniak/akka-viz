@@ -10,6 +10,8 @@ trait ClassInspector {
 
   def allFieldNames = fields.map(_.name).toSet
 
+  def isModule: Boolean
+
   def inspect(obj: Any, fields: Set[String] = allFieldNames): Map[String, Any]
 
   def inspect(obj: Any, field: String): Option[Any] = inspect(obj, Set(field)).values.headOption
@@ -37,6 +39,7 @@ object ClassInspector {
 
   def of(clazz: Class[_]): ClassInspector = {
     val t = rm.classSymbol(clazz).toType
+    val isM = t.typeSymbol.isModule
 
     val reflectedFields = t.members.filter(_.isTerm).map(_.asTerm).filter(t => t.isVal || t.isVar).map {
       s =>
@@ -53,7 +56,6 @@ object ClassInspector {
     new ClassInspector {
       val underlyingClass: Class[_] = clazz
       private val f = reflectedFields.toSeq
-
       override def inspect(obj: Any, fieldNames: Set[String] = allFieldNames): Map[String, Any] = {
         val result = mutable.Map[String, Any]()
         fieldNames.foreach {
@@ -74,6 +76,8 @@ object ClassInspector {
         }
         result.toMap
       }
+
+      override def isModule: Boolean = isM
 
       override def fields: Seq[ClassField] = f
     }
