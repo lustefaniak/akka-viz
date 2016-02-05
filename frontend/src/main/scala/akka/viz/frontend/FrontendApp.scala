@@ -1,5 +1,6 @@
 package akka.viz.frontend
 
+import akka.viz.frontend.components.ActorSelector
 import akka.viz.protocol._
 import org.scalajs.dom.html.Input
 import org.scalajs.dom.{onclick => _, raw => _, _}
@@ -126,64 +127,16 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence
     }
   }
 
+  val selector: ActorSelector = new ActorSelector(seenActors, selectedActors)
+
   @JSExport("toggleActor")
-  def toggleActor(actorPath: String): Unit = {
-    if (selectedActors.now contains actorPath) {
-      console.log(s"Unselected '$actorPath' actor")
-      selectedActors() = selectedActors.now - actorPath
-    } else {
-      console.log(s"Selected '$actorPath' actor")
-      selectedActors() = selectedActors.now + actorPath
-    }
-  }
+  def toggleActor(name: String) = selector.toggleActor(name)
 
   def main(): Unit = {
+
+    document.querySelector("#actorselection").appendChild(selector.render)
+
     val upstream = ApiConnection(webSocketUrl("stream"), handleDownstream)
-
-    val popoverContent: ThisFunction0[Element, Node] = (that: Element) => {
-      val actor: String = that.getAttribute("data-actor")
-      val actorState: String = currentActorState.get(actor).map(prettyPrintJson).getOrElse("Internal state unknown")
-      val popover = Seq(
-        h5(actor),
-        h6("Class: " + actorClasses(actor).now.getOrElse("")),
-        pre(actorState)
-      )
-
-      val elem = popover.render
-      elem
-    }
-
-    val popoverOptions = js.Dictionary(
-      "content" -> popoverContent,
-      "trigger" -> "hover",
-      "placement" -> "right",
-      "html" -> true
-    )
-
-    val actorsObs = Rx.unsafe {
-      (seenActors(), selectedActors())
-    }.trigger {
-      val seen = seenActors.now.toList.sorted
-      val selected = selectedActors.now
-
-      val content = seen.map {
-        actorName =>
-          val isSelected = selected.contains(actorName)
-          val element = tr(
-            td(input(`type` := "checkbox", if (isSelected) checked else ())),
-            td(if (isSelected) b(actorName) else actorName), onclick := {
-              () => toggleActor(actorName)
-            }
-          )(data("actor") := actorName).render
-
-          DOMGlobalScope.$(element).popover(popoverOptions)
-          element
-      }
-
-      val actorTree = document.getElementById("actortree").getElementsByTagName("tbody")(0).asInstanceOf[Element]
-      actorTree.innerHTML = ""
-      actorTree.appendChild(content.render)
-    }
 
     val messagesObs = Rx.unsafe {
       (seenMessages(), selectedMessages())
