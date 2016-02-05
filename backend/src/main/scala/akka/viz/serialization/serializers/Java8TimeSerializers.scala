@@ -1,17 +1,15 @@
 package akka.viz.serialization.serializers
 
-import java.time.{LocalDateTime, LocalTime, LocalDate}
-
-import akka.viz.serialization.AkkaVizSerializer
+import akka.viz.serialization.{AkkaVizSerializer, SerializationContext}
 import upickle.Js
 import upickle.Js.Value
 
 class Java8TimeSerializers extends AkkaVizSerializer {
-  override def canSerialize(obj: scala.Any): Boolean = {
+  override def canSerialize(obj: Any): Boolean = {
     obj.getClass.getName.startsWith("java.time")
   }
 
-  override def serialize(obj: scala.Any): Value = {
+  override def serialize(obj: Any, context: SerializationContext): Value = {
     Js.Obj(
       "$type" -> Js.Str(obj.getClass.getName),
       "value" -> Js.Str(obj.toString)

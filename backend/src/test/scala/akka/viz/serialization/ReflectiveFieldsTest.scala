@@ -1,7 +1,7 @@
 package akka.viz.serialization
 
 import akka.viz.serialization.test.JavaTest
-import org.scalatest.{Matchers, FlatSpec}
+import org.scalatest.{FlatSpec, Matchers}
 
 class ReflectiveFieldsTest extends FlatSpec with Matchers {
 

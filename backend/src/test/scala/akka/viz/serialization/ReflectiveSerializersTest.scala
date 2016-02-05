@@ -1,37 +1,55 @@
 package akka.viz.serialization
 
+import java.util.Locale
+
 import org.scalatest.{FlatSpec, Matchers}
-import upickle.Js
-import upickle.json.FastRenderer
 
 class ReflectiveSerializersTest extends FlatSpec with Matchers {
 
   "ReflectiveSerializer" should "use default serializers recursively" in {
 
-    val keys = MessageSerialization.serialize(new {
+    val json = MessageSerialization.render(new {
       val X = 123
       val y = "Test"
-    }).value.asInstanceOf[Seq[(String, Js.Value)]]
+    })
 
-    keys.find(_._1 == "X") shouldBe Some("X" -> Js.Num(123))
-    keys.find(_._1 == "y") shouldBe Some("y" -> Js.Str("Test"))
+    json should include("\"X\":123")
+    json should include("\"y\":\"Test\"")
 
   }
 
   it should "work with nested objects" in {
-    val serialized = MessageSerialization.serialize(new {
+    val json = MessageSerialization.render(new {
       val obj = new {
         val X = 1
       }
     })
 
-    val json = FastRenderer.render(serialized)
     json should include("\"X\":1")
 
   }
 
-  it should "handle cycles" in {
-    pending
+  it should "handle top level null" in {
+    MessageSerialization.render(null) shouldBe "null"
+  }
+
+  it should "handle null inside class" in {
+    val json = MessageSerialization.render(new {
+      val X: Locale = null
+    })
+
+    json should include("\"X\":null")
+  }
+
+  it should "handle cycles and finite serialization depth" in {
+    case class X(var x: X)
+
+    val x = X(null)
+    val y = X(x)
+    x.x = y
+
+    MessageSerialization.render(x).size should be > 0
+
   }
 
 }

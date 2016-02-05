@@ -1,23 +1,34 @@
 package akka.viz.serialization
 
+import java.util
+
 import upickle.Js
 import upickle.json.FastRenderer
+import scala.collection.JavaConversions._
+
+case class SerializationContextImpl(depth: Int = 0) extends SerializationContext
 
 object MessageSerialization extends SerializerFinder with ReflectiveSerialization {
 
   def render(message: Any): String = {
     message match {
       case json: Js.Value => FastRenderer.render(json)
-      case other          => FastRenderer.render(serialize(other))
+      case other          => FastRenderer.render(serialize(other, newSerializationContext))
     }
   }
 
-  def serialize(message: Any): Js.Value = {
+  private def newSerializationContext: SerializationContext = SerializationContextImpl()
+
+  def serialize(message: Any, serializationContext: SerializationContext): Js.Value = {
     def unableToSerialize(t: Throwable): Js.Value = {
-      Js.Obj("error" -> Js.Str("Failed to serialize: " + t.getMessage))
+      Js.Obj("error" -> Js.Str(s"Failed to serialize: ${t.getMessage} (${t.getClass.getName})"))
     }
     try {
-      getSerializerFor(message).serialize(message)
+      if (message == null) {
+        Js.Null
+      } else {
+        getSerializerFor(message).serialize(message, SerializationContextImpl(serializationContext.depth + 1))
+      }
     } catch {
       case t: Throwable => unableToSerialize(t)
     }
@@ -42,8 +53,8 @@ object MessageSerialization extends SerializerFinder with ReflectiveSerializatio
       false
     }
 
-    def serialize(obj: Any): Js.Value = {
-      reflectiveSerialize(obj)
+    def serialize(obj: Any, context: SerializationContext): Js.Value = {
+      reflectiveSerialize(obj, context)
     }
   }
 

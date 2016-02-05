@@ -1,11 +1,11 @@
 package akka.viz.serialization.serializers
 
 import akka.actor.ActorRef
-import akka.viz.serialization.AkkaVizSerializer
+import akka.viz.serialization.{SerializationContext, AkkaVizSerializer}
 import upickle.Js
 
 case object ActorRefSerializer extends AkkaVizSerializer {
-  override def serialize(obj: Any): Js.Value = {
+  override def serialize(obj: Any, context: SerializationContext): Js.Value = {
     obj match {
       case a: ActorRef =>
         Js.Obj(

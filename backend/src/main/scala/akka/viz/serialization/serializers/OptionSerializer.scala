@@ -1,12 +1,12 @@
 package akka.viz.serialization.serializers
 
-import akka.viz.serialization.{AkkaVizSerializer, MessageSerialization}
+import akka.viz.serialization.{SerializationContext, AkkaVizSerializer, MessageSerialization}
 import upickle.Js
 
 case object OptionSerializer extends AkkaVizSerializer {
-  override def serialize(obj: Any): Js.Value = {
+  override def serialize(obj: Any, context: SerializationContext): Js.Value = {
     obj match {
-      case Some(x) => MessageSerialization.serialize(x)
+      case Some(x) => MessageSerialization.serialize(x, context)
       case None    => Js.Null
     }
   }
