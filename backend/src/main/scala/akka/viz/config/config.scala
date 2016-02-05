@@ -9,6 +9,7 @@ private[viz] trait akkaviz {
   val interface = "127.0.0.1"
   val port = 8888
   val bufferSize: Int = 10000
+  val maxSerializationDepth = 3
 }
 
 case object Config extends akkaviz
