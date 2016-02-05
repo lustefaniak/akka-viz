@@ -11,6 +11,7 @@ private[viz] trait akkaviz {
   val bufferSize: Int = 10000
   val maxSerializationDepth = 3
   val inspectObjects = false
+  val autoStartReporting = true
 }
 
 case object Config extends akkaviz
