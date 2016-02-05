@@ -10,7 +10,7 @@ trait ClassInspector {
 
   def allFieldNames = fields.map(_.name).toSet
 
-  def isModule: Boolean
+  def isObject: Boolean
 
   def inspect(obj: Any, fields: Set[String] = allFieldNames): Map[String, Any]
 
@@ -18,7 +18,7 @@ trait ClassInspector {
 
   override def toString: String = {
     val fieldsStr = fields.map(f => s"${f.name}:${f.signature}").mkString(",")
-    s"ClassInspector(underlyingClass=${underlyingClass},fields=${fieldsStr})"
+    s"ClassInspector(underlyingClass=${underlyingClass},fields=${fieldsStr},isObject=${isObject})"
   }
 
 }
@@ -39,7 +39,7 @@ object ClassInspector {
 
   def of(clazz: Class[_]): ClassInspector = {
     val t = rm.classSymbol(clazz).toType
-    val isM = t.typeSymbol.isModule
+    val isM = t.typeSymbol.isModuleClass
 
     val reflectedFields = t.members.filter(_.isTerm).map(_.asTerm).filter(t => t.isVal || t.isVar).map {
       s =>
@@ -56,6 +56,7 @@ object ClassInspector {
     new ClassInspector {
       val underlyingClass: Class[_] = clazz
       private val f = reflectedFields.toSeq
+
       override def inspect(obj: Any, fieldNames: Set[String] = allFieldNames): Map[String, Any] = {
         val result = mutable.Map[String, Any]()
         fieldNames.foreach {
@@ -77,7 +78,7 @@ object ClassInspector {
         result.toMap
       }
 
-      override def isModule: Boolean = isM
+      override def isObject: Boolean = isM
 
       override def fields: Seq[ClassField] = f
     }

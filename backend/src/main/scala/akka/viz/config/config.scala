@@ -10,6 +10,7 @@ private[viz] trait akkaviz {
   val port = 8888
   val bufferSize: Int = 10000
   val maxSerializationDepth = 3
+  val inspectObjects = false
 }
 
 case object Config extends akkaviz
