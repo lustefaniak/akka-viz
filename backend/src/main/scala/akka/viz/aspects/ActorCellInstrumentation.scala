@@ -20,8 +20,8 @@ class ActorCellInstrumentation {
   def message(jp: JoinPoint, msg: Any, me: ActorCell) {
     if (me.system.name != internalSystemName) {
       Thread.sleep(EventSystem.receiveDelay.toMillis)
-      EventSystem.publish(Received(me.sender(), me.self, msg))
-      EventSystem.publish(MailboxStatus(me.self, me.mailbox.numberOfMessages))
+      EventSystem.report.received(me.sender(), me.self, msg)
+      EventSystem.report.mailboxStatus(me.self, me.mailbox.numberOfMessages)
     }
   }
 
@@ -29,7 +29,7 @@ class ActorCellInstrumentation {
   def afterMessage(jp: JoinPoint, msg: Any, me: ActorCell) {
     if (me.system.name != internalSystemName) {
       //FIXME: only if me.self is registered for tracking internal state
-      EventSystem.publish(CurrentActorState(me.self, me.actor))
+      EventSystem.report.currentActorState(me.self, me.actor)
     }
   }
 
@@ -39,7 +39,7 @@ class ActorCellInstrumentation {
   @After("actorCellCreation(cell, system, self, props, dispatcher, parent)")
   def captureCellCreation(cell: ActorCell, system: ActorSystemImpl, self: InternalActorRef, props: Props, dispatcher: MessageDispatcher, parent: InternalActorRef): Unit = {
     if (cell.system.name != internalSystemName)
-      EventSystem.publish(Spawned(self, parent))
+      EventSystem.report.spawned(self, parent)
   }
 
   @Pointcut("execution(* akka.actor.ActorCell.newActor()) && this(cell)")
@@ -49,12 +49,13 @@ class ActorCellInstrumentation {
   def captureActorCreation(cell: ActorCell, actor: Actor): Unit = {
     if (cell.system.name != internalSystemName) {
       val self = cell.self
-      EventSystem.publish(Instantiated(self, actor))
+      EventSystem.report.instantiated(self, actor)
       actor match {
         case fsm: akka.actor.FSM[_, _] =>
+          //FIXME: unregister?
           fsm.onTransition {
             case (x, y) =>
-              EventSystem.publish(FSMTransition(self, x, fsm.stateData, y, fsm.nextStateData))
+              EventSystem.report.fsmTransition(self, x, fsm.stateData, y, fsm.nextStateData)
           }
         case _ => {}
       }
@@ -68,7 +69,7 @@ class ActorCellInstrumentation {
   @After("actorTermination(actor)")
   def captureActorTermination(actor: Actor): Unit = {
     if (actor.context.system.name != internalSystemName) {
-      EventSystem.publish(Killed(actor.self))
+      EventSystem.report.killed(actor.self)
     }
   }
 }
