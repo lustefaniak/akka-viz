@@ -10,13 +10,15 @@ trait ClassInspector {
 
   def allFieldNames = fields.map(_.name).toSet
 
+  def isScalaObject: Boolean
+
   def inspect(obj: Any, fields: Set[String] = allFieldNames): Map[String, Any]
 
   def inspect(obj: Any, field: String): Option[Any] = inspect(obj, Set(field)).values.headOption
 
   override def toString: String = {
     val fieldsStr = fields.map(f => s"${f.name}:${f.signature}").mkString(",")
-    s"ClassInspector(underlyingClass=${underlyingClass},fields=${fieldsStr})"
+    s"ClassInspector(underlyingClass=${underlyingClass},fields=${fieldsStr},isObject=${isScalaObject})"
   }
 
 }
@@ -37,6 +39,7 @@ object ClassInspector {
 
   def of(clazz: Class[_]): ClassInspector = {
     val t = rm.classSymbol(clazz).toType
+    val isM = t.typeSymbol.isModuleClass
 
     val reflectedFields = t.members.filter(_.isTerm).map(_.asTerm).filter(t => t.isVal || t.isVar).map {
       s =>
@@ -74,6 +77,8 @@ object ClassInspector {
         }
         result.toMap
       }
+
+      override def isScalaObject: Boolean = isM
 
       override def fields: Seq[ClassField] = f
     }

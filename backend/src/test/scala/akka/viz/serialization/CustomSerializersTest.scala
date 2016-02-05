@@ -1,6 +1,6 @@
 package akka.viz.serialization
 
-import org.scalatest.{Matchers, FlatSpec}
+import org.scalatest.{FlatSpec, Matchers}
 
 class CustomSerializersTest extends FlatSpec with Matchers {
 

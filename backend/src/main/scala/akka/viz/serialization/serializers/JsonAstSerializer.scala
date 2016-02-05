@@ -1,22 +1,17 @@
 package akka.viz.serialization.serializers
 
-import akka.actor.ActorRef
 import akka.viz.serialization.{SerializationContext, AkkaVizSerializer}
 import upickle.Js
 
-case object ActorRefSerializer extends AkkaVizSerializer {
+case object JsonAstSerializer extends AkkaVizSerializer {
   override def serialize(obj: Any, context: SerializationContext): Js.Value = {
     obj match {
-      case a: ActorRef =>
-        Js.Obj(
-          "$type" -> Js.Str(classOf[ActorRef].getName),
-          "path" -> Js.Str(a.path.toSerializationFormat)
-        )
+      case a: Js.Value => a
     }
   }
 
   override def canSerialize(obj: Any): Boolean = obj match {
-    case t: ActorRef => true
+    case t: Js.Value => true
     case _           => false
   }
 }
