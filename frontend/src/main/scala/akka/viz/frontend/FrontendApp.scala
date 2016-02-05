@@ -22,12 +22,11 @@ object FrontendApp extends JSApp with Persistence
   val createdLinks = scala.collection.mutable.Set[String]()
   val graph = DOMGlobalScope.graph
 
-  val _actorClasses: mutable.Map[String, Var[js.UndefOr[String]]] = mutable.Map()
+  private val _actorClasses: mutable.Map[String, Var[js.UndefOr[String]]] = mutable.Map()
+  private val _currentActorState = mutable.Map[String, Var[js.UndefOr[String]]]()
 
   def actorClasses(actor: String) = _actorClasses.getOrElseUpdate(actor, Var(js.undefined))
-
-  val fsmTransitions = mutable.Map[String, mutable.Set[FsmTransition]]()
-  val currentActorState = mutable.Map[String, String]()
+  def currentActorState(actor: String) = _currentActorState.getOrElseUpdate(actor, Var(js.undefined))
   val deadActors = mutable.Set[String]()
 
   private def handleDownstream(messageReceived: (Received) => Unit)(messageEvent: MessageEvent): Unit = {
@@ -50,16 +49,14 @@ object FrontendApp extends JSApp with Persistence
 
       case fsm: FSMTransition =>
         val actor = actorName(fsm.ref)
-        //FIXME: subscribe for data
-        fsmTransitions.getOrElseUpdate(actor, mutable.Set()) += FsmTransition(fsm.currentStateClass, fsm.nextStateClass)
-        currentActorState.update(actor, """{"state": ${fsm.nextState}, "data":${fsm.nextData}}""")
+      //TODO: handle in UI
 
       case i: Instantiated =>
         val actor = actorName(i.ref)
         actorClasses(actor)() = i.clazz
 
       case CurrentActorState(ref, state) =>
-        currentActorState.update(actorName(ref), state)
+        currentActorState(actorName(ref))() = state
 
       case mb: MailboxStatus =>
         handleMailboxStatus(mb)
@@ -99,7 +96,8 @@ object FrontendApp extends JSApp with Persistence
   private def addActorsToSeen(actorName: String*): Unit = {
     val previouslySeen = seenActors.now
     val newSeen = previouslySeen ++ actorName.filterNot(previouslySeen(_))
-    seenActors() = newSeen
+    if (previouslySeen.size != newSeen.size)
+      seenActors() = newSeen
   }
 
   val actorSelector = new ActorSelector(seenActors, selectedActors, currentActorState, actorClasses)

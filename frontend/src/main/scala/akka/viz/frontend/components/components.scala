@@ -21,16 +21,22 @@ trait Component {
 }
 
 class ActorSelector(seenActors: Var[Set[String]], selectedActors: Var[Set[String]],
-    currentActorState: mutable.Map[String, String], // FIXME use var here?
+    currentActorState: (String) => Var[js.UndefOr[String]],
     actorClasses: String => Var[js.UndefOr[String]]) extends PrettyJson with Component {
 
   val popoverContent: ThisFunction0[domElement, Node] = (that: domElement) => {
     val actor: String = that.getAttribute("data-actor")
-    val actorState: String = currentActorState.get(actor).map(prettyPrintJson).getOrElse("Internal state unknown")
-    val popover = Seq(
+    val stateVar = currentActorState(actor)
+    def stateVarFormatted = stateVar.now.map(prettyPrintJson).getOrElse("Internal state unknown")
+    val actorState: String = stateVarFormatted
+    val stateElem = pre(actorState).render
+    stateVar.triggerLater {
+      stateElem.innerHTML = stateVarFormatted
+    }
+    val popover = Seq[Frag](
       h5(actor),
       h6("Class: " + actorClasses(actor).now.getOrElse("")),
-      pre(actorState)
+      stateElem
     )
 
     val elem = popover.render
@@ -115,7 +121,7 @@ class ActorSelector(seenActors: Var[Set[String]], selectedActors: Var[Set[String
 }
 
 class MessageFilter(
-  seenMessages: Var[Set[String]],
+    seenMessages: Var[Set[String]],
     selectedMessages: Var[Set[String]],
     selectedActors: Var[Set[String]]
 ) extends Component {
