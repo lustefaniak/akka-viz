@@ -39,8 +39,7 @@ object DefaultSerializers {
 
   private def internalMappers = mutable.Map[Class[_], AkkaVizSerializer](
     classOf[UnableToInspectField] -> ((e: UnableToInspectField) => Js.Obj(
-      "$type" -> Js.Str(classOf[UnableToInspectField].getName),
-      "$error" -> Js.Str(e.t.getMessage),
+      "$error" -> Js.Str(s"Field '${e.t.getMessage}' is not available using reflection"),
       "$errorType" -> Js.Str(e.t.getClass.getName)
     ))
   )
