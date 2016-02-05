@@ -1,5 +1,6 @@
 package akka.viz.frontend
 
+import akka.viz.frontend.components.{MessagesPanel, MessageFilter, ActorSelector}
 import akka.viz.protocol._
 import org.scalajs.dom.html.Input
 import org.scalajs.dom.{onclick => _, raw => _, _}
@@ -11,10 +12,11 @@ import scala.scalajs.js.{ThisFunction0, JSApp, JSON}
 import scala.util.Try
 import scalatags.JsDom.all._
 import upickle.default._
+import FrontendUtil._
 
 case class FsmTransition(fromStateClass: String, toStateClass: String)
 
-object FrontendApp extends JSApp with FrontendUtil with Persistence
+object FrontendApp extends JSApp with Persistence
     with MailboxDisplay with PrettyJson with ManipulationsUI {
 
   val createdLinks = scala.collection.mutable.Set[String]()
@@ -28,7 +30,7 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence
   val currentActorState = mutable.Map[String, String]()
   val deadActors = mutable.Set[String]()
 
-  private def handleDownstream(messageEvent: MessageEvent): Unit = {
+  private def handleDownstream(messageReceived: (Received) => Unit)(messageEvent: MessageEvent): Unit = {
     val message: ApiServerMessage = ApiMessages.read(messageEvent.data.asInstanceOf[String])
 
     message match {
@@ -100,182 +102,34 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence
     seenActors() = newSeen
   }
 
-  lazy val messagesContent = document.getElementById("messagespanelbody").getElementsByTagName("tbody")(0).asInstanceOf[Element]
-
-  private def messageReceived(rcv: Received): Unit = {
-    def insert(e: Element): Unit = {
-      messagesContent.appendChild(e)
-    }
-    val uid = rcv.eventId
-    val sender = actorName(rcv.sender)
-    val receiver = actorName(rcv.receiver)
-    val selected = selectedActors.now
-
-    if (selected.contains(sender) || selected.contains(receiver)) {
-
-      val mainRow = tr(
-        "data-toggle".attr := "collapse",
-        "data-target".attr := s"#detail$uid",
-        td(sender),
-        td(receiver),
-        td(rcv.payloadClass)
-      )
-
-      val payload: String = rcv.payload.getOrElse("")
-      val detailsRow = tr(
-        id := s"detail$uid",
-        `class` := "collapse",
-        td(
-          colspan := 3,
-          div(pre(prettyPrintJson(payload))) // FIXME: display formated lazily
-        )
-      )
-
-      insert(mainRow.render)
-      insert(detailsRow.render)
-    }
-  }
+  val actorSelector = new ActorSelector(seenActors, selectedActors, currentActorState, actorClasses)
+  val messageFilter = new MessageFilter(seenMessages, selectedMessages, selectedActors)
+  val messagesPanel = new MessagesPanel(selectedActors)
 
   @JSExport("toggleActor")
-  def toggleActor(actorPath: String): Unit = {
-    if (selectedActors.now contains actorPath) {
-      console.log(s"Unselected '$actorPath' actor")
-      selectedActors() = selectedActors.now - actorPath
-    } else {
-      console.log(s"Selected '$actorPath' actor")
-      selectedActors() = selectedActors.now + actorPath
-    }
-  }
+  def toggleActor(name: String) = actorSelector.toggleActor(name)
 
   def main(): Unit = {
-    val upstream = ApiConnection(webSocketUrl("stream"), handleDownstream)
 
-    val popoverContent: ThisFunction0[Element, Node] = (that: Element) => {
-      val actor: String = that.getAttribute("data-actor")
-      val actorState: String = currentActorState.get(actor).map(prettyPrintJson).getOrElse("Internal state unknown")
-      val popover = Seq(
-        h5(actor),
-        h6("Class: " + actorClasses(actor).now.getOrElse("")),
-        pre(actorState)
-      )
+    document.querySelector("#actorselection").appendChild(actorSelector.render)
+    document.querySelector("#messagefiltering").appendChild(messageFilter.render)
+    document.querySelector("#messagelist").appendChild(messagesPanel.render)
+    document.querySelector("#receivedelay").appendChild(receiveDelayPanel.render)
 
-      val elem = popover.render
-      elem
-    }
+    val upstream = ApiConnection(
+      webSocketUrl("stream"),
+      handleDownstream(messagesPanel.messageReceived)
+    ) // fixme when this will need more callbacks?
 
-    val popoverOptions = js.Dictionary(
-      "content" -> popoverContent,
-      "trigger" -> "hover",
-      "placement" -> "right",
-      "html" -> true
-    )
-
-    val actorsObs = Rx.unsafe {
-      (seenActors(), selectedActors())
-    }.trigger {
-      val seen = seenActors.now.toList.sorted
-      val selected = selectedActors.now
-
-      val content = seen.map {
-        actorName =>
-          val isSelected = selected.contains(actorName)
-          val element = tr(
-            td(input(`type` := "checkbox", if (isSelected) checked else ())),
-            td(if (isSelected) b(actorName) else actorName), onclick := {
-              () => toggleActor(actorName)
-            }
-          )(data("actor") := actorName).render
-
-          DOMGlobalScope.$(element).popover(popoverOptions)
-          element
-      }
-
-      val actorTree = document.getElementById("actortree").getElementsByTagName("tbody")(0).asInstanceOf[Element]
-      actorTree.innerHTML = ""
-      actorTree.appendChild(content.render)
-    }
-
-    val messagesObs = Rx.unsafe {
-      (seenMessages(), selectedMessages())
-    }.triggerLater {
-
-      val seen = seenMessages.now.toList.sorted
-      val selected = selectedMessages.now
-
-      val content = seen.map {
-        clazz =>
-          val contains = selected(clazz)
-          tr(
-            td(input(`type` := "checkbox", if (contains) checked else ())),
-            td(if (contains) b(clazz) else clazz),
-            onclick := {
-              () =>
-                console.log(s"Toggling ${clazz} now it will be ${!contains}")
-                selectedMessages() = if (contains) selected - clazz else selected + clazz
-            }
-          )
-      }
-
-      val messages = document.getElementById("messagefilter").getElementsByTagName("tbody")(0).asInstanceOf[Element]
-      messages.innerHTML = ""
-      messages.appendChild(content.render)
-
-      console.log(s"Will send allowedClasses: ${selected.mkString("[", ",", "]")}")
+    selectedMessages.triggerLater {
+      console.log(s"Will send allowedClasses: ${selectedMessages.now.mkString("[", ",", "]")}")
       import upickle.default._
-      upstream.send(write(SetAllowedMessages(selected.toList)))
+      upstream.send(write(SetAllowedMessages(selectedMessages.now.toList)))
 
-      selectedActors.trigger {
-        if (selectedActors.now.isEmpty) {
-          document.getElementById("messagespaneltitle").innerHTML = s"Select actor to show its messages"
-        } else {
-          document.getElementById("messagespaneltitle").innerHTML = s"Messages"
-        }
-        messagesContent.innerHTML = ""
-      }
     }
 
-    def clearMessageFilters() = {
-      selectedMessages() = Set.empty
-    }
-
-    def selectAllMessageFilters() = {
-      selectedMessages() = seenMessages.now
-    }
-
-    def regexMessageFilter() = {
-      val input = document.getElementById("messagefilter-regex").asInstanceOf[Input].value
-      Try(input.r).foreach { r =>
-        selectedMessages() = seenMessages.now.filter(_.matches(r.regex))
-      }
-    }
-
-    document.querySelector("a#messagefilter-select-none").onClick(() => clearMessageFilters())
-    document.querySelector("a#messagefilter-select-all").onClick(() => selectAllMessageFilters())
-    document.getElementById("messagefilter-regex").onEnter(() => regexMessageFilter())
-
-    def clearActorFilters() = {
-      selectedActors() = Set.empty
-    }
-
-    def selectAllActorFilters() = {
-      selectedActors() = seenActors.now
-    }
-
-    def regexActorFilter() = {
-      val input = document.getElementById("actorfilter-regex").asInstanceOf[Input].value
-      Try(input.r).foreach { r =>
-        selectedActors() = seenActors.now.filter(_.matches(r.regex))
-      }
-    }
-
-    document.querySelector("a#actorfilter-select-none").onClick(() => clearActorFilters())
-    document.querySelector("a#actorfilter-select-all").onClick(() => selectAllActorFilters())
-    document.getElementById("actorfilter-regex").onEnter(() => regexActorFilter())
-
-    document.querySelector("#thebox").appendChild(receiveDelayPanel.render)
     delayMillis.triggerLater {
       import scala.concurrent.duration._
-
       upstream.send(write(SetReceiveDelay(delayMillis.now.millis)))
     }
   }

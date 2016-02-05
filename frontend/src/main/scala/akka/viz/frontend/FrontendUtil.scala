@@ -2,7 +2,7 @@ package akka.viz.frontend
 
 import org.scalajs.dom._
 
-trait FrontendUtil {
+object FrontendUtil {
 
   def webSocketUrl(path: String) = {
     val l = window.location
