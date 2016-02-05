@@ -6,8 +6,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="css/style.css">
-    <script type="text/javascript" src="frontend-jsdeps.js"></script>
-    <script type="text/javascript" src="js/vivagraph.js"></script>
+
     <!-- Material Design fonts -->
     <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto:300,400,500,700" type="text/css">
     <link href="//fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -15,11 +14,15 @@
     <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css"
           integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"
-            integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS"
-            crossorigin="anonymous"></script>
     <link href="//cdnjs.cloudflare.com/ajax/libs/bootstrap-material-design/0.5.7/css/bootstrap-material-design.min.css"
           rel="stylesheet">
+
+    <script src="frontend-jsdeps.js"></script>
+    <script src="js/vivagraph.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-material-design/0.5.7/js/material.min.js"></script>
+    <script src="frontend-fastopt.js"></script>
+
 </head>
 <body>
 <div id="graphview"></div>
@@ -33,20 +36,13 @@
         <div class="tab-pane fade active in panel panel-default" id="actorselection"></div>
         <div class="tab-pane fade panel panel-default" id="messagefiltering"></div>
         <div class="tab-pane fade panel panel-default" id="globalsettings">
-            <div id="receivedelay"></div>
+            <div id="onoffsettings" class="panel panel-default"></div>
+            <div id="receivedelay" class="panel panel-default"></div>
         </div>
     </div>
     <div id="messagelist"></div>
 </div>
-
-<script type="text/javascript" src="frontend-fastopt.js"></script>
-<script type="text/javascript" src="js/init.js"></script>
-<script type="text/javascript" src="frontend-launcher.js"></script>
-<script type="text/javascript"
-        src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-material-design/0.5.7/js/material.min.js"/>
-<script type="text/javascript">
-    $.material.init()
-</script>
+<script src="js/init.js"></script>
+<script src="frontend-launcher.js"></script>
 </body>
-
 </html>
