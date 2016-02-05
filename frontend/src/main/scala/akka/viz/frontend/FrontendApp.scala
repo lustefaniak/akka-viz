@@ -196,24 +196,6 @@ object FrontendApp extends JSApp with FrontendUtil with Persistence
     document.querySelector("a#messagefilter-select-all").onClick(() => selectAllMessageFilters())
     document.getElementById("messagefilter-regex").onEnter(() => regexMessageFilter())
 
-    def clearActorFilters() = {
-      selectedActors() = Set.empty
-    }
-
-    def selectAllActorFilters() = {
-      selectedActors() = seenActors.now
-    }
-
-    def regexActorFilter() = {
-      val input = document.getElementById("actorfilter-regex").asInstanceOf[Input].value
-      Try(input.r).foreach { r =>
-        selectedActors() = seenActors.now.filter(_.matches(r.regex))
-      }
-    }
-
-    document.querySelector("a#actorfilter-select-none").onClick(() => clearActorFilters())
-    document.querySelector("a#actorfilter-select-all").onClick(() => selectAllActorFilters())
-    document.getElementById("actorfilter-regex").onEnter(() => regexActorFilter())
 
     document.querySelector("#thebox").appendChild(receiveDelayPanel.render)
     delayMillis.triggerLater {
