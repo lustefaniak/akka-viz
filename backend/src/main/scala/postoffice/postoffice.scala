@@ -3,6 +3,9 @@ package postoffice
 import java.time.LocalDateTime
 
 import akka.actor.{Actor, ActorSystem, Props}
+import akka.viz.serialization.{SerializationContext, AkkaVizSerializer}
+import upickle.Js
+import upickle.Js.Value
 
 import scala.util.Random
 
@@ -33,6 +36,17 @@ case object Krakow extends City
 case object GorzowWlkp extends City
 
 case object Berlin extends City
+
+object PostOfficeSerializer extends AkkaVizSerializer {
+  override def canSerialize(obj: scala.Any): Boolean = obj match {
+    case c: City => true
+    case _       => false
+  }
+
+  override def serialize(obj: scala.Any, context: SerializationContext): Value = obj match {
+    case c: City => Js.Str(c.getClass.getName.split('.').last.stripSuffix("$"))
+  }
+}
 
 object PostOffice {
   val ParcelRoutes = Map[(City, City), List[City]](
