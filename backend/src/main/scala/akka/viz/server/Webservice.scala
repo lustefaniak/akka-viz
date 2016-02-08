@@ -11,6 +11,7 @@ import akka.viz.events._
 import akka.viz.events.types._
 import akka.viz.protocol
 import akka.viz.serialization.MessageSerialization
+import scala.concurrent.duration._
 
 object ApiMessages {
 
@@ -77,6 +78,7 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) {
         case (allowed, r: ReceivedWithId) if allowed(r)        => r
         case (_, other) if !other.isInstanceOf[ReceivedWithId] => other
       }.via(internalToApi)
+      .keepAlive(10.seconds, () => protocol.Ping)
       .via(eventSerialization)
       .map(TextMessage(_))
 
