@@ -224,12 +224,13 @@ class MessagesPanel(selectedActors: Var[Set[String]]) extends Component with Pre
     if (selected.contains(sender) || selected.contains(receiver)) {
       val mainRow = tr(
         "data-message".attr := rcv.payload.getOrElse(""),
+        `class` := "tgl",
         td(sender),
         td(receiver),
-        td(rcv.payloadClass)
+        td(rcv.payloadClass),
+        onclick := toggleMessageDetails
       ).render
 
-      mainRow.onclick = toggleMessageDetails
       insert(mainRow)
     }
   }

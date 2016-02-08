@@ -39,3 +39,7 @@ html {
 .popover {
     min-width: 600px !important;
 }
+
+.tgl {
+    cursor: pointer;
+}
