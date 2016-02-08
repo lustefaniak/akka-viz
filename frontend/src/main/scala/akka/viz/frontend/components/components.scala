@@ -200,7 +200,7 @@ class MessagesPanel(selectedActors: Var[Set[String]]) extends Component with Pre
       mouseEvent.srcElement.parentNode.asInstanceOf[Element]
     }
     val nextRow = row.nextElementSibling
-    if (nextRow.hasAttribute("data-message")) {
+    if (nextRow == null || nextRow.hasAttribute("data-message")) {
       val payload = row.getAttribute("data-message")
       val detailsRow = tr(
         td(
