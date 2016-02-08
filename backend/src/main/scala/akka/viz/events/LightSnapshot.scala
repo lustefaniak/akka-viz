@@ -11,8 +11,9 @@ case class LightSnapshot(
     receivedFrom: Set[(String, String)] = Set()
 ) {
 
-  implicit def ref2String(r: ActorRef): String = r.path.toSerializationFormat
-  implicit def refPair2StringPair(pair: (ActorRef, ActorRef)): (String, String) = (ref2String(pair._1), ref2String(pair._2))
+  import Helpers.actorRefToString
+
+  implicit def refPair2StringPair(pair: (ActorRef, ActorRef)): (String, String) = (actorRefToString(pair._1), actorRefToString(pair._2))
 
   def dead: Set[String] = {
     liveActors diff (children.values.flatten ++ receivedFrom.flatMap(p => Seq(p._1, p._2))).toSet

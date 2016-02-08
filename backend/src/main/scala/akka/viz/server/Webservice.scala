@@ -29,7 +29,7 @@ object ApiMessages {
 }
 
 class Webservice(implicit fm: Materializer, system: ActorSystem) extends SubscriptionSession {
-
+  import Helpers.actorRefToString
   import Directives._
 
   def route: Flow[HttpRequest, HttpResponse, Any] = get {
@@ -92,16 +92,16 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) extends Subscri
   def internalToApi: Flow[BackendEvent, protocol.ApiServerMessage, Any] = Flow[BackendEvent].map {
     case ReceivedWithId(eventId, sender, receiver, message) =>
       //FIXME: decide if content of payload should be added to message
-      protocol.Received(eventId, sender.path.toSerializationFormat, receiver.path.toSerializationFormat, message.getClass.getName, Some(MessageSerialization.render(message)))
+      protocol.Received(eventId, sender, receiver, message.getClass.getName, Some(MessageSerialization.render(message)))
     case AvailableMessageTypes(types) =>
       protocol.AvailableClasses(types.map(_.getName))
     case Spawned(ref, parent) =>
-      protocol.Spawned(ref.path.toSerializationFormat, parent.path.toSerializationFormat)
+      protocol.Spawned(ref, parent)
     case Instantiated(ref, clazz) =>
-      protocol.Instantiated(ref.path.toSerializationFormat, clazz.getClass.getName)
+      protocol.Instantiated(ref, clazz.getClass.getName)
     case FSMTransition(ref, currentState, currentData, nextState, nextData) =>
       protocol.FSMTransition(
-        ref.path.toSerializationFormat,
+        ref,
         currentState = MessageSerialization.render(currentState),
         currentStateClass = currentState.getClass.getName,
         currentData = MessageSerialization.render(currentData),
@@ -112,13 +112,13 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) extends Subscri
         nextDataClass = nextData.getClass.getName
       )
     case CurrentActorState(ref, actor) =>
-      protocol.CurrentActorState(ref.path.toSerializationFormat, MessageSerialization.render(actor))
+      protocol.CurrentActorState(ref, MessageSerialization.render(actor))
     case MailboxStatus(owner, size) =>
-      protocol.MailboxStatus(owner.path.toSerializationFormat, size)
+      protocol.MailboxStatus(owner, size)
     case ReceiveDelaySet(current) =>
       protocol.ReceiveDelaySet(current)
     case Killed(ref) =>
-      protocol.Killed(ref.path.toSerializationFormat)
+      protocol.Killed(ref)
     case ReportingDisabled =>
       protocol.ReportingDisabled
     case ReportingEnabled =>
