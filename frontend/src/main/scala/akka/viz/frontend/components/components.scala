@@ -1,7 +1,7 @@
 package akka.viz.frontend.components
 
 import akka.viz.frontend.FrontendUtil._
-import akka.viz.frontend.{DOMGlobalScope, PrettyJson}
+import akka.viz.frontend.{FrontendUtil, DOMGlobalScope, PrettyJson}
 import akka.viz.protocol.Received
 import org.scalajs.dom.html._
 import org.scalajs.dom.raw.MouseEvent
@@ -194,23 +194,22 @@ class MessagesPanel(selectedActors: Var[Set[String]]) extends Component with Pre
 
   val toggleMessageDetails = (mouseEvent: MouseEvent) => {
     mouseEvent.preventDefault()
-    val row = if (mouseEvent.srcElement.hasAttribute("data-message")) {
-      mouseEvent.srcElement
-    } else {
-      mouseEvent.srcElement.parentNode.asInstanceOf[Element]
-    }
-    val nextRow = row.nextElementSibling
-    if (nextRow == null || nextRow.hasAttribute("data-message")) {
-      val payload = row.getAttribute("data-message")
-      val detailsRow = tr(
-        td(
-          colspan := 3,
-          div(pre(prettyPrintJson(payload)))
-        )
-      ).render
-      row.parentNode.insertBefore(detailsRow, nextRow)
-    } else {
-      toggleVisibility(nextRow)
+    console.log(mouseEvent.srcElement)
+    FrontendUtil.findParentWithAttribute(mouseEvent.srcElement, "data-message").foreach {
+      row =>
+        val nextRow = row.nextElementSibling
+        if (nextRow == null || nextRow.hasAttribute("data-message")) {
+          val payload = row.getAttribute("data-message")
+          val detailsRow = tr(
+            td(
+              colspan := 3,
+              div(pre(prettyPrintJson(payload)))
+            )
+          ).render
+          row.parentNode.insertBefore(detailsRow, nextRow)
+        } else {
+          toggleVisibility(nextRow)
+        }
     }
   }
 
