@@ -1,7 +1,7 @@
 package akka.viz.events
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Terminated}
-import akka.viz.events.types.{AvailableMessageTypes, BackendEvent, Received, ReceivedWithId}
+import akka.viz.events.types._
 
 import scala.collection.immutable
 
@@ -23,6 +23,7 @@ class EventPublisherActor extends Actor with ActorLogging {
       val s = sender()
       subscribers += s
       context.watch(s)
+      s ! (if (EventSystem.isEnabled) ReportingEnabled else ReportingDisabled)
       s ! AvailableMessageTypes(availableTypes.toList)
 
     case EventPublisherActor.Unsubscribe =>

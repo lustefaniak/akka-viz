@@ -1,6 +1,6 @@
 package akka.viz.frontend
 
-import akka.viz.frontend.components.{MessagesPanel, MessageFilter, ActorSelector}
+import akka.viz.frontend.components.{OnOffPanel, MessagesPanel, MessageFilter, ActorSelector}
 import akka.viz.protocol._
 import org.scalajs.dom.html.Input
 import org.scalajs.dom.{onclick => _, raw => _, _}
@@ -22,12 +22,14 @@ object FrontendApp extends JSApp with Persistence
   val createdLinks = scala.collection.mutable.Set[String]()
   val graph = DOMGlobalScope.graph
 
-  val _actorClasses: mutable.Map[String, Var[js.UndefOr[String]]] = mutable.Map()
+  private val _actorClasses: mutable.Map[String, Var[js.UndefOr[String]]] = mutable.Map()
+  private val _currentActorState = mutable.Map[String, Var[js.UndefOr[String]]]()
+  private val _eventsEnabled = Var(false)
 
   def actorClasses(actor: String) = _actorClasses.getOrElseUpdate(actor, Var(js.undefined))
 
-  val fsmTransitions = mutable.Map[String, mutable.Set[FsmTransition]]()
-  val currentActorState = mutable.Map[String, String]()
+  def currentActorState(actor: String) = _currentActorState.getOrElseUpdate(actor, Var(js.undefined))
+
   val deadActors = mutable.Set[String]()
 
   private def handleDownstream(messageReceived: (Received) => Unit)(messageEvent: MessageEvent): Unit = {
@@ -50,22 +52,26 @@ object FrontendApp extends JSApp with Persistence
 
       case fsm: FSMTransition =>
         val actor = actorName(fsm.ref)
-        //FIXME: subscribe for data
-        fsmTransitions.getOrElseUpdate(actor, mutable.Set()) += FsmTransition(fsm.currentStateClass, fsm.nextStateClass)
-        currentActorState.update(actor, """{"state": ${fsm.nextState}, "data":${fsm.nextData}}""")
+      //TODO: handle in UI
 
       case i: Instantiated =>
         val actor = actorName(i.ref)
         actorClasses(actor)() = i.clazz
 
       case CurrentActorState(ref, state) =>
-        currentActorState.update(actorName(ref), state)
+        currentActorState(actorName(ref))() = state
 
       case mb: MailboxStatus =>
         handleMailboxStatus(mb)
 
       case ReceiveDelaySet(duration) =>
         delayMillis() = duration.toMillis.toInt
+
+      case ReportingEnabled =>
+        _eventsEnabled() = true
+
+      case ReportingDisabled =>
+        _eventsEnabled() = false
 
       case Killed(ref) =>
         deadActors += actorName(ref)
@@ -99,12 +105,15 @@ object FrontendApp extends JSApp with Persistence
   private def addActorsToSeen(actorName: String*): Unit = {
     val previouslySeen = seenActors.now
     val newSeen = previouslySeen ++ actorName.filterNot(previouslySeen(_))
-    seenActors() = newSeen
+    if (previouslySeen.size != newSeen.size)
+      seenActors() = newSeen
   }
 
   val actorSelector = new ActorSelector(seenActors, selectedActors, currentActorState, actorClasses)
   val messageFilter = new MessageFilter(seenMessages, selectedMessages, selectedActors)
   val messagesPanel = new MessagesPanel(selectedActors)
+  val userIsEnabled = Var(false)
+  val onOffPanel = new OnOffPanel(_eventsEnabled, userIsEnabled)
 
   @JSExport("toggleActor")
   def toggleActor(name: String) = actorSelector.toggleActor(name)
@@ -115,6 +124,7 @@ object FrontendApp extends JSApp with Persistence
     document.querySelector("#messagefiltering").appendChild(messageFilter.render)
     document.querySelector("#messagelist").appendChild(messagesPanel.render)
     document.querySelector("#receivedelay").appendChild(receiveDelayPanel.render)
+    document.querySelector("#onoffsettings").appendChild(onOffPanel.render)
 
     val upstream = ApiConnection(
       webSocketUrl("stream"),
@@ -125,12 +135,18 @@ object FrontendApp extends JSApp with Persistence
       console.log(s"Will send allowedClasses: ${selectedMessages.now.mkString("[", ",", "]")}")
       import upickle.default._
       upstream.send(write(SetAllowedMessages(selectedMessages.now.toList)))
-
     }
 
     delayMillis.triggerLater {
       import scala.concurrent.duration._
       upstream.send(write(SetReceiveDelay(delayMillis.now.millis)))
     }
+
+    userIsEnabled.triggerLater {
+      import scala.concurrent.duration._
+      upstream.send(write(SetEnabled(userIsEnabled.now)))
+    }
+
+    DOMGlobalScope.$.material.init()
   }
 }
