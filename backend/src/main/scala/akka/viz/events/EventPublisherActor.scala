@@ -1,7 +1,7 @@
 package akka.viz.events
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Terminated}
-import akka.viz.events.types.{AvailableMessageTypes, BackendEvent, Received, ReceivedWithId}
+import akka.viz.events.types._
 
 import scala.collection.immutable
 
@@ -10,8 +10,9 @@ class EventPublisherActor extends Actor with ActorLogging {
   var subscribers = immutable.Set[ActorRef]()
   var availableTypes = immutable.Set[Class[_ <: Any]]()
   var eventCounter = 0L
+  var replayables: Vector[ReplayableEvent] = Vector.empty
 
-  override def receive: Receive = {
+  override def receive = storeIfReplayable andThen {
     case r: Received =>
       trackMsgType(r.message)
       broadcast(ReceivedWithId(nextEventNumber(), r.sender, r.receiver, r.message))
@@ -24,6 +25,7 @@ class EventPublisherActor extends Actor with ActorLogging {
       subscribers += s
       context.watch(s)
       s ! AvailableMessageTypes(availableTypes.toList)
+      replayables.foreach(s ! _)
 
     case EventPublisherActor.Unsubscribe =>
       unsubscribe(sender())
@@ -34,6 +36,13 @@ class EventPublisherActor extends Actor with ActorLogging {
 
   def broadcast(backendEvent: BackendEvent): Unit = {
     subscribers.foreach(_ ! backendEvent)
+  }
+
+  def storeIfReplayable: PartialFunction[Any, Any] = {
+    case r: ReplayableEvent =>
+      replayables = replayables :+ r
+      r
+    case other => other
   }
 
   @inline
