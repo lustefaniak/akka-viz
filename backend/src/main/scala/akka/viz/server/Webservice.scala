@@ -119,6 +119,8 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) {
       protocol.ReportingDisabled
     case ReportingEnabled =>
       protocol.ReportingEnabled
+    case SnapshotAvailable(s) =>
+      protocol.SnapshotAvailable(s.liveActors.toList, s.dead.toList, s.children, s.receivedFrom)
   }
 
   def eventSerialization: Flow[protocol.ApiServerMessage, String, Any] = Flow[protocol.ApiServerMessage].map {

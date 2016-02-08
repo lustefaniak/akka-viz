@@ -40,4 +40,6 @@ package object types {
 
   case object ReportingDisabled extends InternalEvent with BackendEvent
 
+  case class SnapshotAvailable(snapshot: LightSnapshot) extends BackendEvent
+
 }

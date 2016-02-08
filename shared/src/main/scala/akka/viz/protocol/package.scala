@@ -40,6 +40,8 @@ package object protocol {
 
   case object Ping extends ApiServerMessage
 
+  case class SnapshotAvailable(live: List[String], dead: List[String], children: Map[String, Set[String]], receivedFrom: Set[(String, String)]) extends ApiServerMessage
+
   sealed trait ApiClientMessage
 
   case class SetAllowedMessages(allowedClasses: List[String]) extends ApiClientMessage
