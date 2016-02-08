@@ -22,7 +22,14 @@ case class AllowedClasses(names: Set[String]) extends (Any => Boolean) {
 }
 
 case class ActorRefFilter(actors: Set[String]) extends (ActorRef => Boolean) {
+  @transient private val paths = actors.flatMap {
+    path =>
+      Try {
+        ActorPath.fromString(path)
+      }.toOption
+  }
+
   override def apply(v1: ActorRef): Boolean = {
-    true
+    paths(v1.path)
   }
 }
