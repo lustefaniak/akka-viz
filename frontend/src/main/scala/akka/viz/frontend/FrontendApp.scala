@@ -1,23 +1,23 @@
 package akka.viz.frontend
 
-import akka.viz.frontend.components.{OnOffPanel, MessagesPanel, MessageFilter, ActorSelector}
+import akka.viz.frontend.FrontendUtil._
+import akka.viz.frontend.components.{ActorSelector, MessageFilter, MessagesPanel, OnOffPanel}
 import akka.viz.protocol._
-import org.scalajs.dom.html.Input
-import org.scalajs.dom.{onclick => _, raw => _, _}
+import org.scalajs.dom.{console, document}
+import org.scalajs.dom.raw.MessageEvent
 import rx._
+import upickle.default._
+
 import scala.collection.mutable
 import scala.scalajs.js
+import scala.scalajs.js.JSApp
 import scala.scalajs.js.annotation.JSExport
-import scala.scalajs.js.{Dictionary, ThisFunction0, JSApp, JSON}
-import scala.util.Try
 import scalatags.JsDom.all._
-import upickle.default._
-import FrontendUtil._
 
 case class FsmTransition(fromStateClass: String, toStateClass: String)
 
 object FrontendApp extends JSApp with Persistence
-    with MailboxDisplay with PrettyJson with ManipulationsUI {
+  with MailboxDisplay with PrettyJson with ManipulationsUI {
 
   val createdLinks = scala.collection.mutable.Set[String]()
   val graph = DOMGlobalScope.graph
@@ -37,8 +37,8 @@ object FrontendApp extends JSApp with Persistence
 
     message match {
       case rcv: Received =>
-        val sender = actorName(rcv.sender)
-        val receiver = actorName(rcv.receiver)
+        val sender = rcv.sender
+        val receiver = rcv.receiver
         addActorsToSeen(sender, receiver)
         messageReceived(rcv)
         ensureGraphLink(sender, receiver)
@@ -47,19 +47,18 @@ object FrontendApp extends JSApp with Persistence
         seenMessages() = ac.availableClasses.toSet
 
       case Spawned(child, parent) =>
-        deadActors -= actorName(child)
-        addActorsToSeen(actorName(child), actorName(parent))
+        deadActors -= child
+        addActorsToSeen(child, parent)
 
       case fsm: FSMTransition =>
-        val actor = actorName(fsm.ref)
       //TODO: handle in UI
 
       case i: Instantiated =>
-        val actor = actorName(i.ref)
+        val actor = i.ref
         actorClasses(actor)() = i.clazz
 
       case CurrentActorState(ref, state) =>
-        currentActorState(actorName(ref))() = state
+        currentActorState(ref)() = state
 
       case mb: MailboxStatus =>
         handleMailboxStatus(mb)
@@ -74,15 +73,15 @@ object FrontendApp extends JSApp with Persistence
         _eventsEnabled() = false
 
       case Killed(ref) =>
-        deadActors += actorName(ref)
+        deadActors += ref
         seenActors.recalc()
 
       case SnapshotAvailable(live, dead, childrenOf, rcv) =>
-        addActorsToSeen(live.map(actorName) : _*)
-        deadActors ++= dead.map(actorName)
+        addActorsToSeen(live: _*)
+        deadActors ++= dead
         for {
           (from, to) <- rcv
-        } ensureGraphLink(actorName(from), actorName(to))
+        } ensureGraphLink(from, to)
         seenActors.recalc()
 
       case Ping => {}

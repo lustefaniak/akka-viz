@@ -12,8 +12,4 @@ object FrontendUtil {
       l.pathname + path
   }
 
-  def actorName(actorRef: String): String = {
-    actorRef.split("/").drop(3).mkString("/").split("#").head
-  }
-
 }
