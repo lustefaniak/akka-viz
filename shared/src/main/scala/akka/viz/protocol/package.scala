@@ -44,7 +44,7 @@ package object protocol {
 
   sealed trait ApiClientMessage
 
-  case class SetAllowedMessages(allowedClasses: List[String]) extends ApiClientMessage
+  case class SetAllowedMessages(allowedClasses: Set[String]) extends ApiClientMessage
 
   case class SetReceiveDelay(duration: FiniteDuration) extends ApiClientMessage
 

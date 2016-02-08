@@ -144,7 +144,7 @@ object FrontendApp extends JSApp with Persistence
     selectedMessages.triggerLater {
       console.log(s"Will send allowedClasses: ${selectedMessages.now.mkString("[", ",", "]")}")
       import upickle.default._
-      upstream.send(write(SetAllowedMessages(selectedMessages.now.toList)))
+      upstream.send(write(SetAllowedMessages(selectedMessages.now.toSet)))
     }
 
     delayMillis.triggerLater {

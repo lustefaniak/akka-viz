@@ -11,6 +11,7 @@ import akka.viz.events._
 import akka.viz.events.types._
 import akka.viz.protocol
 import akka.viz.serialization.MessageSerialization
+
 import scala.concurrent.duration._
 
 object ApiMessages {
@@ -27,7 +28,7 @@ object ApiMessages {
 
 }
 
-class Webservice(implicit fm: Materializer, system: ActorSystem) {
+class Webservice(implicit fm: Materializer, system: ActorSystem) extends SubscriptionSession {
 
   import Directives._
 
@@ -48,13 +49,16 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) {
   def tracingEventsFlow: Flow[Message, Message, ActorRef] = {
     val eventSrc = Source.actorRef[BackendEvent](Config.bufferSize, OverflowStrategy.dropNew)
 
-    val wsIn = Flow[Message].mapConcat[FilteringRule] {
+    val wsIn = Flow[Message].mapConcat[ChangeSubscriptionSettings] {
       case TextMessage.Strict(msg) =>
         val command = ApiMessages.read(msg)
         command match {
           case protocol.SetAllowedMessages(classNames) =>
             system.log.debug(s"Set allowed messages to $classNames")
-            List(AllowedClasses(classNames))
+            List(SetAllowedClasses(classNames))
+          case protocol.ObserveActors(actors) =>
+            system.log.debug(s"Set observed actors to $actors")
+            List(SetActorEventFilter(actors))
           case protocol.SetReceiveDelay(duration) =>
             system.log.debug(s"Setting receive delay to $duration")
             EventSystem.receiveDelay = duration
@@ -70,13 +74,13 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) {
       case other =>
         system.log.error(s"Received unsupported Message in WS: ${other}")
         Nil
-    }.prepend(Source.single(FilteringRule.Default))
+    }
+      .scan(defaultSettings)(updateSettings)
       .expand(identity)(r => (r, r))
 
     val out = wsIn.zipMat(eventSrc)((_, m) => m)
       .collect {
-        case (allowed, r: ReceivedWithId) if allowed(r)        => r
-        case (_, other) if !other.isInstanceOf[ReceivedWithId] => other
+        case (settings, r: BackendEvent) if settings.eventAllowed(r) => r
       }.via(internalToApi)
       .keepAlive(10.seconds, () => protocol.Ping)
       .via(eventSerialization)
