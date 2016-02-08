@@ -58,7 +58,7 @@ class ActorSelector(seenActors: Var[Set[String]], selectedActors: Var[Set[String
         val isSelected = selected.contains(actorName)
         val element = tr(
           td(input(`type` := "checkbox", if (isSelected) checked else ())),
-          td(actorName, if (isSelected) fontWeight.bold else ()), onclick := {
+          td(actorComponent(actorName)), onclick := {
             () => toggleActor(actorName)
           }
         )(data("actor") := actorName).render
@@ -67,7 +67,6 @@ class ActorSelector(seenActors: Var[Set[String]], selectedActors: Var[Set[String
         element
     }
 
-    //    val actorTree = document.querySelector("#actortree tbody")
     actorTreeTbody.innerHTML = ""
     actorTreeTbody.appendChild(content.render)
   }
@@ -223,8 +222,8 @@ class MessagesPanel(selectedActors: Var[Set[String]]) extends Component with Pre
       val mainRow = tr(
         "data-message".attr := rcv.payload.getOrElse(""),
         `class` := "tgl",
-        td(rcv.sender),
-        td(rcv.receiver),
+        td(actorComponent(rcv.sender)),
+        td(actorComponent(rcv.receiver)),
         td(rcv.payloadClass),
         onclick := toggleMessageDetails
       ).render
