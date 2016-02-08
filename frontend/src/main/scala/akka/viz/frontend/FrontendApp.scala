@@ -129,12 +129,6 @@ object FrontendApp extends JSApp with Persistence
 
   def main(): Unit = {
 
-    document.querySelector("#actorselection").appendChild(actorSelector.render)
-    document.querySelector("#messagefiltering").appendChild(messageFilter.render)
-    document.querySelector("#messagelist").appendChild(messagesPanel.render)
-    document.querySelector("#receivedelay").appendChild(receiveDelayPanel.render)
-    document.querySelector("#onoffsettings").appendChild(onOffPanel.render)
-
     val upstream = ApiConnection(
       webSocketUrl("stream"),
       handleDownstream(messagesPanel.messageReceived)
@@ -143,7 +137,13 @@ object FrontendApp extends JSApp with Persistence
     selectedMessages.triggerLater {
       console.log(s"Will send allowedClasses: ${selectedMessages.now.mkString("[", ",", "]")}")
       import upickle.default._
-      upstream.send(write(SetAllowedMessages(selectedMessages.now.toSet)))
+      upstream.send(write(SetAllowedMessages(selectedMessages.now)))
+    }
+
+    selectedActors.triggerLater {
+      console.log(s"Will send ObserveActors: ${selectedActors.now.mkString("[", ",", "]")}")
+      import upickle.default._
+      upstream.send(write(ObserveActors(selectedActors.now)))
     }
 
     delayMillis.triggerLater {
@@ -152,10 +152,16 @@ object FrontendApp extends JSApp with Persistence
     }
 
     userIsEnabled.triggerLater {
-      import scala.concurrent.duration._
       upstream.send(write(SetEnabled(userIsEnabled.now)))
     }
 
+    document.querySelector("#actorselection").appendChild(actorSelector.render)
+    document.querySelector("#messagefiltering").appendChild(messageFilter.render)
+    document.querySelector("#messagelist").appendChild(messagesPanel.render)
+    document.querySelector("#receivedelay").appendChild(receiveDelayPanel.render)
+    document.querySelector("#onoffsettings").appendChild(onOffPanel.render)
+
     DOMGlobalScope.$.material.init()
+
   }
 }
