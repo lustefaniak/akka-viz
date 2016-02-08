@@ -76,6 +76,8 @@ object FrontendApp extends JSApp with Persistence
       case Killed(ref) =>
         deadActors += actorName(ref)
         seenActors.recalc()
+
+      case Ping => {}
     }
   }
 
