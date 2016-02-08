@@ -2,20 +2,20 @@ import com.typesafe.sbt.SbtScalariform
 import com.typesafe.sbt.SbtScalariform.ScalariformKeys
 import scalariform.formatter.preferences._
 
-scalaVersion in ThisBuild := "2.11.7"
-
 val commonSettings: Seq[sbt.Setting[_]] = SbtScalariform.defaultScalariformSettings ++ Seq(
   ScalariformKeys.preferences := ScalariformKeys.preferences.value
     .setPreference(AlignSingleLineCaseStatements, true)
     .setPreference(SpacesAroundMultiImports, false)
     .setPreference(DoubleIndentClassDeclaration, true),
-  git.useGitDescribe := true
+  git.useGitDescribe := true,
+  organization := "com.blstream.akkaviz",
+  scalaVersion := "2.11.7"
 ) ++ useJGit
 
 lazy val root =
   Project("root", file(".")).disablePlugins(RevolverPlugin, GitVersioning)
     .settings(commonSettings)
-    .aggregate(api, frontend, backend)
+    .aggregate(api, backend)
 
 lazy val frontend =
   Project("frontend", file("frontend"))
@@ -54,6 +54,7 @@ lazy val backend =
     .settings(commonSettings)
     .settings(aspectjSettings)
     .settings(
+      moduleName := "library",
       fork in run := true,
       fork in Test := true,
       javaOptions <++= AspectjKeys.weaverOptions in Aspectj,
@@ -79,6 +80,7 @@ lazy val backend =
     .dependsOn(sharedJvm, api)
 
 lazy val shared = (crossProject.crossType(CrossType.Pure) in file("shared")).enablePlugins(GitVersioning)
+  .settings(commonSettings: _*)
 lazy val sharedJvm = shared.jvm
 lazy val sharedJs = shared.js
 
