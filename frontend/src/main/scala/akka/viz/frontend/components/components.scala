@@ -1,18 +1,15 @@
 package akka.viz.frontend.components
 
 import akka.viz.frontend.FrontendUtil._
-import akka.viz.frontend.{PrettyJson, DOMGlobalScope}
-import org.scalajs.dom.raw.Event
-
-import scala.collection.mutable
-
-import akka.viz.protocol.{Received, SetAllowedMessages}
-import org.scalajs.dom.{Element => domElement, Node, console}
+import akka.viz.frontend.{DOMGlobalScope, PrettyJson}
+import akka.viz.protocol.Received
 import org.scalajs.dom.html._
+import org.scalajs.dom.raw.MouseEvent
+import org.scalajs.dom.{Element => domElement, Node, console}
 import rx.{Rx, Var}
 
 import scala.scalajs.js
-import scala.scalajs.js.{ThisFunction, ThisFunction0}
+import scala.scalajs.js.ThisFunction0
 import scala.util.Try
 import scalatags.JsDom.all._
 
@@ -188,37 +185,52 @@ class MessageFilter(
 
 class MessagesPanel(selectedActors: Var[Set[String]]) extends Component with PrettyJson {
 
+  def toggleVisibility(e: domElement): Unit = {
+    val elem = e.asInstanceOf[Element]
+    if (elem.style.display == "none")
+      elem.style.display = ""
+    else elem.style.display = "none"
+  }
+
+  val toggleMessageDetails = (mouseEvent: MouseEvent) => {
+    mouseEvent.preventDefault()
+    val row = if (mouseEvent.srcElement.hasAttribute("data-message")) {
+      mouseEvent.srcElement
+    } else {
+      mouseEvent.srcElement.parentNode.asInstanceOf[Element]
+    }
+    val nextRow = row.nextElementSibling
+    if (nextRow.hasAttribute("data-message")) {
+      val payload = row.getAttribute("data-message")
+      val detailsRow = tr(
+        td(
+          colspan := 3,
+          div(pre(prettyPrintJson(payload)))
+        )
+      ).render
+      row.parentNode.insertBefore(detailsRow, nextRow)
+    } else {
+      toggleVisibility(nextRow)
+    }
+  }
+
   def messageReceived(rcv: Received): Unit = {
     def insert(e: Element): Unit = {
       messagesTbody.appendChild(e)
     }
-    val uid = rcv.eventId
     val sender = actorName(rcv.sender)
     val receiver = actorName(rcv.receiver)
     val selected = selectedActors.now
-
     if (selected.contains(sender) || selected.contains(receiver)) {
-
       val mainRow = tr(
-        "data-toggle".attr := "collapse",
-        "data-target".attr := s"#detail$uid",
+        "data-message".attr := rcv.payload.getOrElse(""),
         td(sender),
         td(receiver),
         td(rcv.payloadClass)
-      )
+      ).render
 
-      val payload: String = rcv.payload.getOrElse("")
-      val detailsRow = tr(
-        id := s"detail$uid",
-        cls := "collapse",
-        td(
-          colspan := 3,
-          div(pre(prettyPrintJson(payload))) // FIXME: display formated lazily
-        )
-      )
-
-      insert(mainRow.render)
-      insert(detailsRow.render)
+      mainRow.onclick = toggleMessageDetails
+      insert(mainRow)
     }
   }
 
