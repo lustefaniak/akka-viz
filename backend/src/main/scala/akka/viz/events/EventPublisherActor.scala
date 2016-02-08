@@ -23,7 +23,7 @@ class EventPublisherActor extends Actor with ActorLogging {
       val s = sender()
       subscribers += s
       context.watch(s)
-      s ! (if (EventSystem.isEnabled) ReportingEnabled else ReportingDisabled)
+      s ! (if (EventSystem.isEnabled()) ReportingEnabled else ReportingDisabled)
       s ! AvailableMessageTypes(availableTypes.toList)
 
     case EventPublisherActor.Unsubscribe =>
