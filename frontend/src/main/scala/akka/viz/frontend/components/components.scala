@@ -12,6 +12,7 @@ import scala.scalajs.js
 import scala.scalajs.js.ThisFunction0
 import scala.util.Try
 import scalatags.JsDom.all._
+import akka.viz.frontend.FrontendUtil.actorComponent
 
 trait Component {
   def render: Element
@@ -238,17 +239,24 @@ class MessagesPanel(selectedActors: Var[Set[String]]) extends Component with Pre
     } else {
       messagePanelTitle.innerHTML = s"Messages"
     }
+  }
+  lazy val messagePanelTitle = span("Messages").render
+  lazy val messagePanelHeader = div(
+    cls := "panel-heading", id := "messagespaneltitle",
+    messagePanelTitle,
+    a(href := "#", float.right, onclick := clearMessageList, i(`class` := "material-icons", "delete"))
+  ).render
+  lazy val messagesTbody = tbody().render
+
+  val clearMessageList = () => {
     messagesTbody.innerHTML = ""
   }
-
-  lazy val messagePanelTitle = div(cls := "panel-heading", id := "messagespaneltitle", "Messages").render
-  lazy val messagesTbody = tbody().render
 
   override def render: Element = {
     div(
       cls := "panel panel-default",
-      messagePanelTitle,
-      div(cls := "panel-body", id := "messagespanelbody", overflowY.scroll, overflowX.scroll, maxHeight := 400.px,
+      messagePanelHeader,
+      div(cls := "panel-body", id := "messagespanelbody", overflowY.scroll, overflowX.scroll, maxHeight := 500.px,
         table(
           cls := "table table-striped table-hover",
           thead(
