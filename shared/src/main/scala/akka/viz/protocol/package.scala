@@ -34,6 +34,8 @@ package object protocol {
 
   case class Killed(ref: String) extends ApiServerMessage
 
+  case class ActorFailure(actorRef: String, cause: String) extends ApiServerMessage
+
   case object ReportingEnabled extends ApiServerMessage
 
   case object ReportingDisabled extends ApiServerMessage

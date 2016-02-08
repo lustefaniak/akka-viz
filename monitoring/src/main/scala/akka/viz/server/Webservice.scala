@@ -118,6 +118,8 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directi
       protocol.ReceiveDelaySet(current)
     case Killed(ref) =>
       protocol.Killed(ref)
+    case ActorFailure(ref, cause) =>
+      protocol.ActorFailure(ref, cause.toString)
     case ReportingDisabled =>
       protocol.ReportingDisabled
     case ReportingEnabled =>

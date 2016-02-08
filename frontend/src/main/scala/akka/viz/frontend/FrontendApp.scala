@@ -76,6 +76,9 @@ object FrontendApp extends JSApp with Persistence
         deadActors += ref
         seenActors.recalc()
 
+      case ActorFailure(ref, cause) =>
+        // TODO display it somehow
+
       case SnapshotAvailable(live, dead, childrenOf, rcv) =>
         addActorsToSeen(live: _*)
         deadActors ++= dead
