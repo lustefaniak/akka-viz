@@ -50,4 +50,7 @@ package object protocol {
 
   case class SetEnabled(isEnabled: Boolean) extends ApiClientMessage
 
+  type SerializedActorPath = String
+  case class ObserveActors(actors: Set[SerializedActorPath]) extends ApiClientMessage
+
 }
