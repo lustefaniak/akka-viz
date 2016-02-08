@@ -12,12 +12,12 @@ class EventPublisherActor extends Actor with ActorLogging {
   var availableTypes = immutable.Set[Class[_ <: Any]]()
   var eventCounter = 0L
   var snapshot: LightSnapshot = LightSnapshot()
-  var snapshotQueue = immutable.Queue.empty[InternalEvent]
+  var snapshotQueue = immutable.Queue.empty[BackendEvent]
 
   override def receive = collectForSnapshot andThen {
-    case r: Received =>
+    case r: ReceivedWithId =>
       trackMsgType(r.message)
-      broadcast(ReceivedWithId(nextEventNumber(), r.sender, r.receiver, r.message))
+      broadcast(r)
 
     case be: BackendEvent =>
       broadcast(be)
@@ -43,15 +43,20 @@ class EventPublisherActor extends Actor with ActorLogging {
   }
 
   def collectForSnapshot: PartialFunction[Any, Any] = {
-    case ev: InternalEvent if snapshotQueue.size == EventPublisherActor.EventsForSnaphot =>
+    case r: Received =>
+      collectForSnapshot(ReceivedWithId(nextEventNumber(), r.sender, r.receiver, r.message))
+
+    case ev: BackendEvent if snapshotQueue.size == EventPublisherActor.EventsForSnaphot =>
       snapshot = snapshotQueue.enqueue(ev).foldLeft(snapshot) {
         _.update(_)
       }
       snapshotQueue = Queue.empty
       ev
-    case ev: InternalEvent =>
+    case ev: BackendEvent =>
       snapshotQueue = snapshotQueue.enqueue(ev)
       ev
+    case other =>
+      other
   }
 
   @inline

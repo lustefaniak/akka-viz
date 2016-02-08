@@ -8,7 +8,7 @@ import rx._
 import scala.collection.mutable
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSExport
-import scala.scalajs.js.{ThisFunction0, JSApp, JSON}
+import scala.scalajs.js.{Dictionary, ThisFunction0, JSApp, JSON}
 import scala.util.Try
 import scalatags.JsDom.all._
 import upickle.default._
@@ -75,6 +75,14 @@ object FrontendApp extends JSApp with Persistence
 
       case Killed(ref) =>
         deadActors += actorName(ref)
+        seenActors.recalc()
+
+      case SnapshotAvailable(live, dead, childrenOf, rcv) =>
+        addActorsToSeen(live.map(actorName) : _*)
+        deadActors ++= dead.map(actorName)
+        for {
+          (from, to) <- rcv
+        } ensureGraphLink(actorName(from), actorName(to))
         seenActors.recalc()
 
       case Ping => {}
