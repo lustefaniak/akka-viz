@@ -2,28 +2,25 @@ import com.typesafe.sbt.SbtScalariform
 import com.typesafe.sbt.SbtScalariform.ScalariformKeys
 import scalariform.formatter.preferences._
 
-name := "akka-message-viz"
-
-version := "1.0"
-
-scalaVersion in ThisBuild := "2.11.7"
-
 val commonSettings: Seq[sbt.Setting[_]] = SbtScalariform.defaultScalariformSettings ++ Seq(
   ScalariformKeys.preferences := ScalariformKeys.preferences.value
     .setPreference(AlignSingleLineCaseStatements, true)
     .setPreference(SpacesAroundMultiImports, false)
-    .setPreference(DoubleIndentClassDeclaration, true)
-)
+    .setPreference(DoubleIndentClassDeclaration, true),
+  git.useGitDescribe := true,
+  organization := "com.blstream.akkaviz",
+  scalaVersion := "2.11.7"
+) ++ useJGit
 
 lazy val root =
-  Project("root", file(".")).disablePlugins(RevolverPlugin)
+  Project("root", file(".")).disablePlugins(RevolverPlugin, GitVersioning)
     .settings(commonSettings)
-    .aggregate(api, frontend, backend)
+    .aggregate(api, backend)
 
 lazy val frontend =
   Project("frontend", file("frontend"))
     .disablePlugins(RevolverPlugin, SbtScalariform)
-    .enablePlugins(ScalaJSPlugin)
+    .enablePlugins(ScalaJSPlugin, GitVersioning)
     .settings(commonSettings)
     .settings(
       persistLauncher in Compile := true,
@@ -42,6 +39,7 @@ lazy val frontend =
 
 lazy val api =
   Project("api", file("api"))
+    .enablePlugins(GitVersioning)
     .disablePlugins(RevolverPlugin)
     .settings(commonSettings)
     .settings(
@@ -52,10 +50,11 @@ lazy val api =
 lazy val backend =
   Project("backend", file("backend"))
     .disablePlugins(SbtScalariform)
-    .enablePlugins(RevolverPlugin)
+    .enablePlugins(RevolverPlugin, GitVersioning)
     .settings(commonSettings)
     .settings(aspectjSettings)
     .settings(
+      moduleName := "library",
       fork in run := true,
       fork in Test := true,
       javaOptions <++= AspectjKeys.weaverOptions in Aspectj,
@@ -80,7 +79,8 @@ lazy val backend =
     )
     .dependsOn(sharedJvm, api)
 
-lazy val shared = (crossProject.crossType(CrossType.Pure) in file("shared"))
+lazy val shared = (crossProject.crossType(CrossType.Pure) in file("shared")).enablePlugins(GitVersioning)
+  .settings(commonSettings: _*)
 lazy val sharedJvm = shared.jvm
 lazy val sharedJs = shared.js
 
