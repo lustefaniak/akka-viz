@@ -9,9 +9,9 @@ trait SubscriptionSession {
   case class SubscriptionSettings(actorEventFilter: ActorRef => Boolean, messageFilter: Any => Boolean) {
     def eventAllowed(event: BackendEvent): Boolean = {
       event match {
-        case r: ReceivedWithId => actorEventFilter(r.actorRef) && messageFilter(r.message)
-        case ae: ActorEvent    => actorEventFilter(ae.actorRef)
-        case _                 => true
+        case r: ReceivedWithId      => actorEventFilter(r.actorRef) && messageFilter(r.message)
+        case ae: FilteredActorEvent => actorEventFilter(ae.actorRef)
+        case _                      => true
       }
     }
   }
