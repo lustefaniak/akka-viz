@@ -12,10 +12,10 @@ val commonSettings: Seq[sbt.Setting[_]] = SbtScalariform.defaultScalariformSetti
   scalaVersion := "2.11.7"
 ) ++ useJGit
 
-lazy val root =
-  Project("root", file(".")).disablePlugins(RevolverPlugin, GitVersioning)
+lazy val akkaviz =
+  Project("akkaviz", file(".")).disablePlugins(RevolverPlugin).enablePlugins(GitVersioning)
     .settings(commonSettings)
-    .aggregate(api, monitoring, demo)
+    .aggregate(api, sharedJvm, monitoring, demo)
 
 lazy val frontend =
   Project("frontend", file("frontend"))
@@ -54,6 +54,7 @@ lazy val monitoring =
     .settings(commonSettings)
     .settings(aspectjSettings)
     .settings(
+      fork := true,
       addCompilerPlugin("org.scalamacros" % "paradise" % "2.0.1" cross CrossVersion.full),
       libraryDependencies += "com.wacai" %% "config-annotation" % "0.3.4" % "compile",
       libraryDependencies += "org.clapper" %% "classutil" % "1.0.6",
@@ -78,8 +79,7 @@ lazy val demo =
     .settings(commonSettings)
     .settings(aspectjSettings)
     .settings(
-      fork in run := true,
-      fork in Test := true,
+      fork := true,
       publishArtifact := false,
       javaOptions <++= AspectjKeys.weaverOptions in Aspectj,
       javaOptions in reStart <++= AspectjKeys.weaverOptions in Aspectj,
@@ -94,6 +94,6 @@ lazy val demo =
 lazy val shared = (crossProject.crossType(CrossType.Pure) in file("shared")).enablePlugins(GitVersioning)
   .settings(commonSettings: _*)
 lazy val sharedJvm = shared.jvm
-lazy val sharedJs = shared.js
+lazy val sharedJs = shared.js.settings(publishArtifact := false)
 
 addCommandAlias("formatAll", ";scalariformFormat;test:scalariformFormat")
