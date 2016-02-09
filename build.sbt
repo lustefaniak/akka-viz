@@ -15,7 +15,7 @@ val commonSettings: Seq[sbt.Setting[_]] = SbtScalariform.defaultScalariformSetti
 lazy val root =
   Project("root", file(".")).disablePlugins(RevolverPlugin, GitVersioning)
     .settings(commonSettings)
-    .aggregate(api, backend)
+    .aggregate(api, backend, demo)
 
 lazy val frontend =
   Project("frontend", file("frontend"))
@@ -49,35 +49,48 @@ lazy val api =
 
 lazy val backend =
   Project("backend", file("backend"))
-    .disablePlugins(SbtScalariform)
-    .enablePlugins(RevolverPlugin, GitVersioning)
+    .disablePlugins(SbtScalariform, RevolverPlugin)
+    .enablePlugins(GitVersioning)
     .settings(commonSettings)
     .settings(aspectjSettings)
     .settings(
       moduleName := "library",
-      fork in run := true,
-      fork in Test := true,
-      javaOptions <++= AspectjKeys.weaverOptions in Aspectj,
-      javaOptions in reStart <++= AspectjKeys.weaverOptions in Aspectj,
       addCompilerPlugin("org.scalamacros" % "paradise" % "2.0.1" cross CrossVersion.full),
       libraryDependencies += "com.wacai" %% "config-annotation" % "0.3.4" % "compile",
       libraryDependencies += "org.clapper" %% "classutil" % "1.0.6",
       scalacOptions += "-Xmacro-settings:conf.output.dir=" + baseDirectory.value / "src/main/resources/",
       libraryDependencies ++= Dependencies.backend,
-      AspectjKeys.inputs in Aspectj <+= compiledClasses,
-      AspectjKeys.showWeaveInfo := true,
-      AspectjKeys.verbose := true,
-      products in Compile <<= products in Aspectj,
-      products in Runtime <<= products in Compile,
       (resourceGenerators in Compile) <+=
         (fastOptJS in Compile in frontend, packageScalaJSLauncher in Compile in frontend, packageJSDependencies in Compile in frontend)
           .map((f1, f2, f3) => {
-            println(f3);
             Seq(f1.data, f2.data, f3)
           }),
-      watchSources <++= (watchSources in frontend)
+      watchSources <++= (watchSources in frontend),
+      AspectjKeys.compileOnly in Aspectj := true,
+      AspectjKeys.outXml in Aspectj := false,
+      products in Compile <++= products in Aspectj
     )
     .dependsOn(sharedJvm, api)
+
+lazy val demo =
+  Project("demo", file("demo"))
+    .disablePlugins(SbtScalariform)
+    .enablePlugins(GitVersioning, RevolverPlugin)
+    .settings(commonSettings)
+    .settings(aspectjSettings)
+    .settings(
+      fork in run := true,
+      fork in Test := true,
+      publishArtifact := false,
+      javaOptions <++= AspectjKeys.weaverOptions in Aspectj,
+      javaOptions in reStart <++= AspectjKeys.weaverOptions in Aspectj,
+      libraryDependencies ++= Seq(
+        "com.typesafe.akka" %% "akka-actor" % Dependencies.Versions.akka,
+        "io.spray" %% "spray-can" % "1.3.3",
+        "io.spray" %% "spray-routing" % "1.3.3"
+      )
+    )
+    .dependsOn(backend)
 
 lazy val shared = (crossProject.crossType(CrossType.Pure) in file("shared")).enablePlugins(GitVersioning)
   .settings(commonSettings: _*)
