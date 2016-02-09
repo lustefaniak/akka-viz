@@ -11,6 +11,7 @@ Latest version is: [ ![Download](https://api.bintray.com/packages/lustefaniak/ma
 
 ```
 resolvers += Resolver.bintrayRepo("lustefaniak", "maven")
+
 libraryDependencies += "com.blstream.akkaviz" %% "monitoring" % "0.1.1"
 ```
 
