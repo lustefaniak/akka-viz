@@ -15,7 +15,7 @@ val commonSettings: Seq[sbt.Setting[_]] = SbtScalariform.defaultScalariformSetti
 lazy val root =
   Project("root", file(".")).disablePlugins(RevolverPlugin, GitVersioning)
     .settings(commonSettings)
-    .aggregate(api, backend, demo)
+    .aggregate(api, monitoring, demo)
 
 lazy val frontend =
   Project("frontend", file("frontend"))
@@ -47,14 +47,13 @@ lazy val api =
       libraryDependencies += "com.lihaoyi" %%% "upickle" % Dependencies.Versions.upickle
     )
 
-lazy val backend =
-  Project("backend", file("backend"))
+lazy val monitoring =
+  Project("monitoring", file("monitoring"))
     .disablePlugins(SbtScalariform, RevolverPlugin)
     .enablePlugins(GitVersioning)
     .settings(commonSettings)
     .settings(aspectjSettings)
     .settings(
-      moduleName := "library",
       addCompilerPlugin("org.scalamacros" % "paradise" % "2.0.1" cross CrossVersion.full),
       libraryDependencies += "com.wacai" %% "config-annotation" % "0.3.4" % "compile",
       libraryDependencies += "org.clapper" %% "classutil" % "1.0.6",
@@ -90,7 +89,7 @@ lazy val demo =
         "io.spray" %% "spray-routing" % "1.3.3"
       )
     )
-    .dependsOn(backend)
+    .dependsOn(monitoring)
 
 lazy val shared = (crossProject.crossType(CrossType.Pure) in file("shared")).enablePlugins(GitVersioning)
   .settings(commonSettings: _*)
