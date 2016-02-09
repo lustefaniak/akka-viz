@@ -29,6 +29,7 @@
     graphics.node(function (node) {
         var ui = Viva.Graph.svg('g');
         var svgText = Viva.Graph.svg('text').attr('y', '-4px').text(node.id);
+        if (!node.data) node.data = {}; // fixme refactor scala code to ensure this is created
         var imgLink = node.data.dead ? '/img/dead_actor.png' : '/img/actor.png'
         var img = Viva.Graph.svg('image')
                 .attr('width', nodeSize)

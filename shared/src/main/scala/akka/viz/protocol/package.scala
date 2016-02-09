@@ -1,6 +1,6 @@
 package akka.viz
 
-import scala.concurrent.duration.{ Duration, FiniteDuration }
+import scala.concurrent.duration.{Duration, FiniteDuration}
 
 package object protocol {
 

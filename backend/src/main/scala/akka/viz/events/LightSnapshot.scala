@@ -6,9 +6,10 @@ import Predef.{any2stringadd => _, _}
 import scala.language.implicitConversions
 
 case class LightSnapshot(
-  liveActors: Set[String] = Set(),
+    liveActors: Set[String] = Set(),
     children: Map[String, Set[String]] = Map(),
-    receivedFrom: Set[(String, String)] = Set()) {
+    receivedFrom: Set[(String, String)] = Set()
+) {
 
   implicit def ref2String(r: ActorRef): String = r.path.toSerializationFormat
   implicit def refPair2StringPair(pair: (ActorRef, ActorRef)): (String, String) = (ref2String(pair._1), ref2String(pair._2))
