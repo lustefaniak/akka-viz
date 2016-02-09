@@ -11,7 +11,7 @@ case class LightSnapshot(
     receivedFrom: Set[(String, String)] = Set()
 ) {
 
-  import Helpers.actorRefToString
+  import Helpers._
 
   implicit def refPair2StringPair(pair: (ActorRef, ActorRef)): (String, String) = (actorRefToString(pair._1), actorRefToString(pair._2))
 
@@ -21,18 +21,22 @@ case class LightSnapshot(
 
   def update(ev: BackendEvent): LightSnapshot = ev match {
     case ReceivedWithId(_, from, to, _) =>
-      val live = liveActors ++ Seq[String](from, to)
+      val live: Set[String] = liveActors ++ Set[ActorRef](from, to).filter(_.isUserActor).map(actorRefToString)
       val recv = receivedFrom + (from -> to)
       copy(liveActors = live, receivedFrom = recv)
     case Spawned(ref, parent) =>
-      val live = liveActors + ref
-      val childr = children.updated(parent, children.getOrElse(parent, Set()) + ref)
-      copy(liveActors = live, children = childr)
-    case Killed(ref) =>
+      if (ref.isUserActor) {
+        val live = liveActors + ref
+        val childr = children.updated(parent, children.getOrElse(parent, Set()) + ref)
+        copy(liveActors = live, children = childr)
+      } else {
+        this
+      }
+    case Killed(ref) if ref.isUserActor =>
       copy(liveActors = liveActors - ref)
-    case CurrentActorState(ref, _) =>
+    case CurrentActorState(ref, _) if ref.isUserActor =>
       copy(liveActors = liveActors + ref)
-    case Instantiated(ref, _) =>
+    case Instantiated(ref, _) if ref.isUserActor =>
       copy(liveActors = liveActors + ref)
     case other =>
       this

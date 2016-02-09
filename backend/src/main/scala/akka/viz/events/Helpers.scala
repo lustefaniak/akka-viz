@@ -8,6 +8,14 @@ trait Helpers {
     val idPos = path.indexOf('#')
     if (idPos >= 0) path.substring(0, idPos) else path
   }
+
+  implicit class IsUserActorRef(underlying: ActorRef) {
+    def isUserActor: Boolean = {
+      val elems = underlying.path.elements
+      elems.size > 1 && elems.exists(_ == "user")
+    }
+  }
+
 }
 
 object Helpers extends Helpers
