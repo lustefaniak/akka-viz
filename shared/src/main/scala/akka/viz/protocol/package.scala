@@ -1,6 +1,6 @@
 package akka.viz
 
-import scala.concurrent.duration.{ Duration, FiniteDuration }
+import scala.concurrent.duration.{Duration, FiniteDuration}
 
 package object protocol {
 
@@ -39,6 +39,8 @@ package object protocol {
   case object ReportingDisabled extends ApiServerMessage
 
   case object Ping extends ApiServerMessage
+
+  case class SnapshotAvailable(live: List[String], dead: List[String], children: Map[String, Set[String]], receivedFrom: Set[(String, String)]) extends ApiServerMessage
 
   sealed trait ApiClientMessage
 
