@@ -1,6 +1,6 @@
 package roulette
 
-import akka.actor.{ActorRef, ActorLogging, Actor}
+import akka.actor.{Actor, ActorLogging, ActorRef}
 
 import scala.util.Random
 

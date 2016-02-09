@@ -1,8 +1,10 @@
 package akka.viz.events
 
 import akka.actor.ActorRef
+import akka.viz.events.Helpers._
 import akka.viz.events.types._
-import Predef.{any2stringadd => _, _}
+
+import scala.Predef.{any2stringadd => _, _}
 import scala.language.implicitConversions
 
 case class LightSnapshot(
@@ -11,9 +13,10 @@ case class LightSnapshot(
     receivedFrom: Set[(String, String)] = Set()
 ) {
 
-  import Helpers._
-
-  implicit def refPair2StringPair(pair: (ActorRef, ActorRef)): (String, String) = (actorRefToString(pair._1), actorRefToString(pair._2))
+  implicit def refPair2StringPair(pair: (ActorRef, ActorRef)): (String, String) = {
+    val (actor1, actor2) = pair
+    (actorRefToString(actor1), actorRefToString(actor2))
+  }
 
   def dead: Set[String] = {
     liveActors diff (children.values.flatten ++ receivedFrom.flatMap(p => Seq(p._1, p._2))).toSet

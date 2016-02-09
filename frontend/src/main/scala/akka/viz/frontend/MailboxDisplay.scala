@@ -1,8 +1,8 @@
 package akka.viz.frontend
 
 import akka.viz.protocol
-import scalajs.js
-import FrontendUtil._
+
+import scala.scalajs.js
 
 trait MailboxDisplay {
   private val graph = DOMGlobalScope.graph

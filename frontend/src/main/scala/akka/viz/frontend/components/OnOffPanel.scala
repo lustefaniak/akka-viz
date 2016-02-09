@@ -2,7 +2,7 @@ package akka.viz.frontend.components
 
 import akka.viz.frontend.PrettyJson
 import org.scalajs.dom.html._
-import org.scalajs.dom.{Element => domElement, Event, Node, console}
+import org.scalajs.dom.{Element => domElement, Event}
 import rx.Var
 
 import scalatags.JsDom.all._

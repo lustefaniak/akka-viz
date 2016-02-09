@@ -2,8 +2,8 @@ package postoffice
 
 import java.time.LocalDateTime
 
-import akka.actor.{Actor, ActorSystem, Props}
-import akka.viz.serialization.{SerializationContext, AkkaVizSerializer}
+import akka.actor.{ActorSystem, Props}
+import akka.viz.serialization.{AkkaVizSerializer, SerializationContext}
 import upickle.Js
 import upickle.Js.Value
 

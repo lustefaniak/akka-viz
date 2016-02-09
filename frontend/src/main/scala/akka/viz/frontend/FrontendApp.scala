@@ -3,8 +3,8 @@ package akka.viz.frontend
 import akka.viz.frontend.FrontendUtil._
 import akka.viz.frontend.components.{ActorSelector, MessageFilter, MessagesPanel, OnOffPanel}
 import akka.viz.protocol._
-import org.scalajs.dom.{console, document}
 import org.scalajs.dom.raw.MessageEvent
+import org.scalajs.dom.{console, document}
 import rx._
 import upickle.default._
 

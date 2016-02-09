@@ -1,7 +1,6 @@
 package akka.viz.frontend
 
-import org.scalajs.dom.Element
-import org.scalajs.dom.window
+import org.scalajs.dom.{Element, window}
 
 import scala.annotation.tailrec
 import scala.scalajs.js

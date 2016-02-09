@@ -3,8 +3,8 @@ package akka.viz.aspects
 import akka.actor._
 import akka.dispatch.MessageDispatcher
 import akka.viz.config.Config
+import akka.viz.events.EventSystem
 import akka.viz.events.types._
-import akka.viz.events.{EventSystem}
 import org.aspectj.lang.JoinPoint
 import org.aspectj.lang.annotation._
 

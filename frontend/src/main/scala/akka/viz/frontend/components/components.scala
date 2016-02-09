@@ -1,7 +1,7 @@
 package akka.viz.frontend.components
 
-import akka.viz.frontend.FrontendUtil._
-import akka.viz.frontend.{FrontendUtil, DOMGlobalScope, PrettyJson}
+import akka.viz.frontend.FrontendUtil.actorComponent
+import akka.viz.frontend.{DOMGlobalScope, FrontendUtil, PrettyJson}
 import akka.viz.protocol.Received
 import org.scalajs.dom.html._
 import org.scalajs.dom.raw.MouseEvent
@@ -12,7 +12,6 @@ import scala.scalajs.js
 import scala.scalajs.js.ThisFunction0
 import scala.util.Try
 import scalatags.JsDom.all._
-import akka.viz.frontend.FrontendUtil.actorComponent
 
 trait Component {
   def render: Element

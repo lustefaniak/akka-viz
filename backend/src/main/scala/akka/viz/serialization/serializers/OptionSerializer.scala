@@ -1,6 +1,6 @@
 package akka.viz.serialization.serializers
 
-import akka.viz.serialization.{SerializationContext, AkkaVizSerializer, MessageSerialization}
+import akka.viz.serialization.{AkkaVizSerializer, MessageSerialization, SerializationContext}
 import upickle.Js
 
 case object OptionSerializer extends AkkaVizSerializer {

@@ -1,7 +1,7 @@
 package akka.viz.serialization.serializers
 
 import akka.actor.ActorRef
-import akka.viz.serialization.{SerializationContext, AkkaVizSerializer}
+import akka.viz.serialization.{AkkaVizSerializer, SerializationContext}
 import upickle.Js
 
 case object ActorRefSerializer extends AkkaVizSerializer {

@@ -1,6 +1,6 @@
 package akka.viz.serialization.serializers
 
-import akka.viz.serialization.{SerializationContext, AkkaVizSerializer}
+import akka.viz.serialization.{AkkaVizSerializer, SerializationContext}
 import upickle.Js
 
 case object JsonAstSerializer extends AkkaVizSerializer {
