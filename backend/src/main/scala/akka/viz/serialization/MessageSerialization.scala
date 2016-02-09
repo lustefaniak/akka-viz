@@ -1,10 +1,7 @@
 package akka.viz.serialization
 
-import java.util
-
 import upickle.Js
 import upickle.json.FastRenderer
-import scala.collection.JavaConversions._
 
 case class SerializationContextImpl(depth: Int = 0) extends SerializationContext
 

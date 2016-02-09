@@ -1,7 +1,7 @@
 package akka.viz.frontend.components
 
-import akka.viz.frontend.FrontendUtil._
-import akka.viz.frontend.{DOMGlobalScope, PrettyJson}
+import akka.viz.frontend.FrontendUtil.actorComponent
+import akka.viz.frontend.{DOMGlobalScope, FrontendUtil, PrettyJson}
 import akka.viz.protocol.Received
 import org.scalajs.dom.html._
 import org.scalajs.dom.raw.MouseEvent
@@ -58,7 +58,7 @@ class ActorSelector(seenActors: Var[Set[String]], selectedActors: Var[Set[String
         val isSelected = selected.contains(actorName)
         val element = tr(
           td(input(`type` := "checkbox", if (isSelected) checked else ())),
-          td(actorName, if (isSelected) fontWeight.bold else ()), onclick := {
+          td(actorComponent(actorName)), onclick := {
             () => toggleActor(actorName)
           }
         )(data("actor") := actorName).render
@@ -67,7 +67,6 @@ class ActorSelector(seenActors: Var[Set[String]], selectedActors: Var[Set[String
         element
     }
 
-    //    val actorTree = document.querySelector("#actortree tbody")
     actorTreeTbody.innerHTML = ""
     actorTreeTbody.appendChild(content.render)
   }
@@ -194,23 +193,22 @@ class MessagesPanel(selectedActors: Var[Set[String]]) extends Component with Pre
 
   val toggleMessageDetails = (mouseEvent: MouseEvent) => {
     mouseEvent.preventDefault()
-    val row = if (mouseEvent.srcElement.hasAttribute("data-message")) {
-      mouseEvent.srcElement
-    } else {
-      mouseEvent.srcElement.parentNode.asInstanceOf[Element]
-    }
-    val nextRow = row.nextElementSibling
-    if (nextRow == null || nextRow.hasAttribute("data-message")) {
-      val payload = row.getAttribute("data-message")
-      val detailsRow = tr(
-        td(
-          colspan := 3,
-          div(pre(prettyPrintJson(payload)))
-        )
-      ).render
-      row.parentNode.insertBefore(detailsRow, nextRow)
-    } else {
-      toggleVisibility(nextRow)
+    console.log(mouseEvent.srcElement)
+    FrontendUtil.findParentWithAttribute(mouseEvent.srcElement, "data-message").foreach {
+      row =>
+        val nextRow = row.nextElementSibling
+        if (nextRow == null || nextRow.hasAttribute("data-message")) {
+          val payload = row.getAttribute("data-message")
+          val detailsRow = tr(
+            td(
+              colspan := 3,
+              div(pre(prettyPrintJson(payload)))
+            )
+          ).render
+          row.parentNode.insertBefore(detailsRow, nextRow)
+        } else {
+          toggleVisibility(nextRow)
+        }
     }
   }
 
@@ -218,15 +216,13 @@ class MessagesPanel(selectedActors: Var[Set[String]]) extends Component with Pre
     def insert(e: Element): Unit = {
       messagesTbody.appendChild(e)
     }
-    val sender = actorName(rcv.sender)
-    val receiver = actorName(rcv.receiver)
     val selected = selectedActors.now
-    if (selected.contains(sender) || selected.contains(receiver)) {
+    if (selected.contains(rcv.sender) || selected.contains(rcv.receiver)) {
       val mainRow = tr(
         "data-message".attr := rcv.payload.getOrElse(""),
         `class` := "tgl",
-        td(sender),
-        td(receiver),
+        td(actorComponent(rcv.sender)),
+        td(actorComponent(rcv.receiver)),
         td(rcv.payloadClass),
         onclick := toggleMessageDetails
       ).render
@@ -241,17 +237,24 @@ class MessagesPanel(selectedActors: Var[Set[String]]) extends Component with Pre
     } else {
       messagePanelTitle.innerHTML = s"Messages"
     }
+  }
+  lazy val messagePanelTitle = span("Messages").render
+  lazy val messagePanelHeader = div(
+    cls := "panel-heading", id := "messagespaneltitle",
+    messagePanelTitle,
+    a(href := "#", float.right, onclick := clearMessageList, i(`class` := "material-icons", "delete"))
+  ).render
+  lazy val messagesTbody = tbody().render
+
+  val clearMessageList = () => {
     messagesTbody.innerHTML = ""
   }
-
-  lazy val messagePanelTitle = div(cls := "panel-heading", id := "messagespaneltitle", "Messages").render
-  lazy val messagesTbody = tbody().render
 
   override def render: Element = {
     div(
       cls := "panel panel-default",
-      messagePanelTitle,
-      div(cls := "panel-body", id := "messagespanelbody", overflowY.scroll, overflowX.scroll, maxHeight := 400.px,
+      messagePanelHeader,
+      div(cls := "panel-body", id := "messagespanelbody", overflowY.scroll, overflowX.scroll, maxHeight := 500.px,
         table(
           cls := "table table-striped table-hover",
           thead(

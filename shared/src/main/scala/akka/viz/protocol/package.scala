@@ -44,10 +44,13 @@ package object protocol {
 
   sealed trait ApiClientMessage
 
-  case class SetAllowedMessages(allowedClasses: List[String]) extends ApiClientMessage
+  case class SetAllowedMessages(allowedClasses: Set[String]) extends ApiClientMessage
 
   case class SetReceiveDelay(duration: FiniteDuration) extends ApiClientMessage
 
   case class SetEnabled(isEnabled: Boolean) extends ApiClientMessage
+
+  type SerializedActorPath = String
+  case class ObserveActors(actors: Set[SerializedActorPath]) extends ApiClientMessage
 
 }

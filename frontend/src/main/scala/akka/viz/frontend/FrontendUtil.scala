@@ -1,6 +1,10 @@
 package akka.viz.frontend
 
-import org.scalajs.dom._
+import org.scalajs.dom.{Element, window}
+
+import scala.annotation.tailrec
+import scala.scalajs.js
+import scalatags.JsDom.all._
 
 object FrontendUtil {
 
@@ -12,8 +16,20 @@ object FrontendUtil {
       l.pathname + path
   }
 
-  def actorName(actorRef: String): String = {
-    actorRef.split("/").drop(3).mkString("/").split("#").head
+  @tailrec
+  def findParentWithAttribute(elem: Element, attributeName: String): js.UndefOr[Element] = {
+    if (elem == null || elem.hasAttribute(attributeName))
+      elem
+    else
+      findParentWithAttribute(elem.parentNode.asInstanceOf[Element], attributeName)
+  }
+
+  def actorComponent(actorRef: String): Element = {
+    def isUser(ref: String): Boolean = ref.contains("user")
+    val shortActorName = actorRef.split('/').drop(3).mkString("/")
+    span(
+      "data-toggle".attr := "tooltip", "data-placement".attr := "top", title := actorRef, shortActorName
+    ).render
   }
 
 }

@@ -44,7 +44,7 @@ class EventPublisherActor extends Actor with ActorLogging {
 
   def collectForSnapshot: PartialFunction[Any, Any] = {
     case r: Received =>
-      collectForSnapshot(ReceivedWithId(nextEventNumber(), r.sender, r.receiver, r.message))
+      collectForSnapshot(ReceivedWithId(nextEventNumber(), r.sender, r.actorRef, r.message))
 
     case ev: BackendEvent if snapshotQueue.size == EventPublisherActor.EventsForSnaphot =>
       snapshot = snapshotQueue.enqueue(ev).foldLeft(snapshot) {

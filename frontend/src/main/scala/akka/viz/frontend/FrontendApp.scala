@@ -1,23 +1,23 @@
 package akka.viz.frontend
 
-import akka.viz.frontend.components.{OnOffPanel, MessagesPanel, MessageFilter, ActorSelector}
+import akka.viz.frontend.FrontendUtil._
+import akka.viz.frontend.components.{ActorSelector, MessageFilter, MessagesPanel, OnOffPanel}
 import akka.viz.protocol._
-import org.scalajs.dom.html.Input
-import org.scalajs.dom.{onclick => _, raw => _, _}
+import org.scalajs.dom.raw.MessageEvent
+import org.scalajs.dom.{console, document}
 import rx._
+import upickle.default._
+
 import scala.collection.mutable
 import scala.scalajs.js
+import scala.scalajs.js.JSApp
 import scala.scalajs.js.annotation.JSExport
-import scala.scalajs.js.{Dictionary, ThisFunction0, JSApp, JSON}
-import scala.util.Try
 import scalatags.JsDom.all._
-import upickle.default._
-import FrontendUtil._
 
 case class FsmTransition(fromStateClass: String, toStateClass: String)
 
 object FrontendApp extends JSApp with Persistence
-    with MailboxDisplay with PrettyJson with ManipulationsUI {
+  with MailboxDisplay with PrettyJson with ManipulationsUI {
 
   val createdLinks = scala.collection.mutable.Set[String]()
   val graph = DOMGlobalScope.graph
@@ -37,8 +37,8 @@ object FrontendApp extends JSApp with Persistence
 
     message match {
       case rcv: Received =>
-        val sender = actorName(rcv.sender)
-        val receiver = actorName(rcv.receiver)
+        val sender = rcv.sender
+        val receiver = rcv.receiver
         addActorsToSeen(sender, receiver)
         messageReceived(rcv)
         ensureGraphLink(sender, receiver)
@@ -47,19 +47,18 @@ object FrontendApp extends JSApp with Persistence
         seenMessages() = ac.availableClasses.toSet
 
       case Spawned(child, parent) =>
-        deadActors -= actorName(child)
-        addActorsToSeen(actorName(child), actorName(parent))
+        deadActors -= child
+        addActorsToSeen(child, parent)
 
       case fsm: FSMTransition =>
-        val actor = actorName(fsm.ref)
       //TODO: handle in UI
 
       case i: Instantiated =>
-        val actor = actorName(i.ref)
+        val actor = i.ref
         actorClasses(actor)() = i.clazz
 
       case CurrentActorState(ref, state) =>
-        currentActorState(actorName(ref))() = state
+        currentActorState(ref)() = state
 
       case mb: MailboxStatus =>
         handleMailboxStatus(mb)
@@ -74,15 +73,15 @@ object FrontendApp extends JSApp with Persistence
         _eventsEnabled() = false
 
       case Killed(ref) =>
-        deadActors += actorName(ref)
+        deadActors += ref
         seenActors.recalc()
 
       case SnapshotAvailable(live, dead, childrenOf, rcv) =>
-        addActorsToSeen(live.map(actorName) : _*)
-        deadActors ++= dead.map(actorName)
+        addActorsToSeen(live: _*)
+        deadActors ++= dead
         for {
           (from, to) <- rcv
-        } ensureGraphLink(actorName(from), actorName(to))
+        } ensureGraphLink(from, to)
         seenActors.recalc()
 
       case Ping => {}
@@ -130,12 +129,6 @@ object FrontendApp extends JSApp with Persistence
 
   def main(): Unit = {
 
-    document.querySelector("#actorselection").appendChild(actorSelector.render)
-    document.querySelector("#messagefiltering").appendChild(messageFilter.render)
-    document.querySelector("#messagelist").appendChild(messagesPanel.render)
-    document.querySelector("#receivedelay").appendChild(receiveDelayPanel.render)
-    document.querySelector("#onoffsettings").appendChild(onOffPanel.render)
-
     val upstream = ApiConnection(
       webSocketUrl("stream"),
       handleDownstream(messagesPanel.messageReceived)
@@ -144,7 +137,13 @@ object FrontendApp extends JSApp with Persistence
     selectedMessages.triggerLater {
       console.log(s"Will send allowedClasses: ${selectedMessages.now.mkString("[", ",", "]")}")
       import upickle.default._
-      upstream.send(write(SetAllowedMessages(selectedMessages.now.toList)))
+      upstream.send(write(SetAllowedMessages(selectedMessages.now)))
+    }
+
+    selectedActors.triggerLater {
+      console.log(s"Will send ObserveActors: ${selectedActors.now.mkString("[", ",", "]")}")
+      import upickle.default._
+      upstream.send(write(ObserveActors(selectedActors.now)))
     }
 
     delayMillis.triggerLater {
@@ -153,10 +152,16 @@ object FrontendApp extends JSApp with Persistence
     }
 
     userIsEnabled.triggerLater {
-      import scala.concurrent.duration._
       upstream.send(write(SetEnabled(userIsEnabled.now)))
     }
 
+    document.querySelector("#actorselection").appendChild(actorSelector.render)
+    document.querySelector("#messagefiltering").appendChild(messageFilter.render)
+    document.querySelector("#messagelist").appendChild(messagesPanel.render)
+    document.querySelector("#receivedelay").appendChild(receiveDelayPanel.render)
+    document.querySelector("#onoffsettings").appendChild(onOffPanel.render)
+
     DOMGlobalScope.$.material.init()
+
   }
 }
