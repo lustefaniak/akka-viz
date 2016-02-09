@@ -6,7 +6,6 @@ object Dependencies {
     val akkaStream = "2.0.2"
     val scalatest = "3.0.0-M15"
     val upickle = "0.3.6"
-    val spray = "1.3.3"
   }
 
   val upickle = "com.lihaoyi" %% "upickle" % Versions.upickle
@@ -16,9 +15,7 @@ object Dependencies {
   val akkaHttp = "com.typesafe.akka" %% "akka-http-experimental" % Versions.akkaStream
   val akkaHttpTestkit = "com.typesafe.akka" %% "akka-http-testkit-experimental" % Versions.akkaStream
   val scalatest = "org.scalatest" %% "scalatest" % Versions.scalatest % "test"
-  val spray = "io.spray" %% "spray-can" % Versions.spray
-  val sprayRouting = "io.spray" %% "spray-routing" % Versions.spray
 
-  val backend = Seq(upickle, akkaActor, akkaStream, akkaHttp, scalatest, spray, sprayRouting)
+  val backend = Seq(upickle, akkaActor, akkaStream, akkaHttp, scalatest)
 
 }

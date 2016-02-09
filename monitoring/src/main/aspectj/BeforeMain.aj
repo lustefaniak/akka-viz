@@ -1,3 +1,4 @@
+package  akka.viz.aspects;
 import akka.viz.server.Server;
 
 public aspect BeforeMain {
