@@ -9,13 +9,50 @@ val commonSettings: Seq[sbt.Setting[_]] = SbtScalariform.defaultScalariformSetti
     .setPreference(DoubleIndentClassDeclaration, true),
   git.useGitDescribe := true,
   organization := "com.blstream.akkaviz",
-  scalaVersion := "2.11.7"
+  scalaVersion := "2.11.7",
+  crossScalaVersions := Seq("2.11.7"),
+  licenses +=("MIT", url("http://opensource.org/licenses/MIT")),
+  git.uncommittedSignifier := None,
+  publishMavenStyle := true,
+  publishArtifact in Test := false,
+  scalaVersion := "2.11.7",
+  homepage := Some(url("https://github.com/blstream/akka-viz")),
+  description := "A visual debugger for Akka actor systems",
+  pomExtra :=
+    <scm>
+      <url>git@github.com:blstream/akka-viz.git</url>
+      <connection>scm:git:git@github.com:blstream/akka-viz.git</connection>
+    </scm>
+      <developers>
+        <developer>
+          <id>lustefaniak</id>
+        </developer>
+        <developer>
+          <id>pkoryzna</id>
+        </developer>
+      </developers>,
+  publishTo := Some("Bintray API Realm" at "https://api.bintray.com/content/lustefaniak/maven/" + moduleName.value + "/" + version.value + "/"),
+  (for {
+    username <- sys.env.get("BINTRAY_USER")
+    token <- sys.env.get("BINTRAY_TOKEN")
+  } yield
+    credentials += Credentials(
+      "Bintray API Realm",
+      "api.bintray.com",
+      username,
+      token)
+    ).getOrElse(credentials ++= Seq())
 ) ++ useJGit
+
+val noPublish: Seq[sbt.Setting[_]] = Seq(
+  publishTo := Some(Resolver.file("Unused transient repository", file("target/unusedrepo"))),
+  publishArtifact := false
+)
 
 lazy val akkaviz =
   Project("akkaviz", file(".")).disablePlugins(RevolverPlugin).enablePlugins(GitVersioning)
     .settings(commonSettings)
-    .aggregate(api, sharedJvm, monitoring, demo)
+    .aggregate(api, monitoring)
 
 lazy val frontend =
   Project("frontend", file("frontend"))
@@ -33,9 +70,9 @@ lazy val frontend =
         "org.querki" %%% "jquery-facade" % "0.11",
         "org.scalatest" %%% "scalatest" % Dependencies.Versions.scalatest % "test"
       ),
-      jsDependencies += RuntimeDOM
+      jsDependencies += RuntimeDOM,
+      unmanagedSourceDirectories in Compile += baseDirectory.value / ".." / "shared" / "src" / "main" / "scala"
     )
-    .dependsOn(sharedJs)
 
 lazy val api =
   Project("api", file("api"))
@@ -68,9 +105,10 @@ lazy val monitoring =
       watchSources <++= (watchSources in frontend),
       AspectjKeys.compileOnly in Aspectj := true,
       AspectjKeys.outXml in Aspectj := false,
-      products in Compile <++= products in Aspectj
+      products in Compile <++= products in Aspectj,
+      unmanagedSourceDirectories in Compile += baseDirectory.value / ".." / "shared" / "src" / "main" / "scala"
     )
-    .dependsOn(sharedJvm, api)
+    .dependsOn(api)
 
 lazy val demo =
   Project("demo", file("demo"))
@@ -78,9 +116,9 @@ lazy val demo =
     .enablePlugins(GitVersioning, RevolverPlugin)
     .settings(commonSettings)
     .settings(aspectjSettings)
+    .settings(noPublish)
     .settings(
       fork := true,
-      publishArtifact := false,
       javaOptions <++= AspectjKeys.weaverOptions in Aspectj,
       javaOptions in reStart <++= AspectjKeys.weaverOptions in Aspectj,
       libraryDependencies ++= Seq(
@@ -90,10 +128,5 @@ lazy val demo =
       )
     )
     .dependsOn(monitoring)
-
-lazy val shared = (crossProject.crossType(CrossType.Pure) in file("shared")).enablePlugins(GitVersioning)
-  .settings(commonSettings: _*)
-lazy val sharedJvm = shared.jvm
-lazy val sharedJs = shared.js.settings(publishArtifact := false)
 
 addCommandAlias("formatAll", ";scalariformFormat;test:scalariformFormat")

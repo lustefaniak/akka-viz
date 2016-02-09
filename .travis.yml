@@ -1,5 +1,9 @@
 sudo: false
 
+branches:
+  only:
+    - master
+
 cache:
   directories:
     - $HOME/.m2/repository
@@ -8,7 +12,7 @@ cache:
 
 language: scala
 script:
-  - sbt ++$TRAVIS_SCALA_VERSION clean compile test
+  - sbt ++$TRAVIS_SCALA_VERSION clean compile test package
 scala:
   - 2.11.7
 
@@ -18,3 +22,6 @@ jdk:
 notifications:
   email:
     - lukasz.stefaniak@blstream.com
+
+after_success:
+  - if [ -n "$TRAVIS_TAG" -o "$TRAVIS_BRANCH" == "master" ]; then sbt publish; fi
