@@ -184,7 +184,7 @@ class MessageFilter(
 }
 
 class MessagesPanel(selectedActors: Var[Set[String]]) extends Component with PrettyJson {
-  val ShowMoreLength = 20
+  val ShowMoreLength = 200
 
   private val msgQueue = Var[Queue[Received]](Queue.empty)
 
@@ -203,11 +203,11 @@ class MessagesPanel(selectedActors: Var[Set[String]]) extends Component with Pre
   }
 
   val showMoreRow = tr(cell, onclick := displayMoreMessages).render
-  lazy val cell = td(colspan := 3).render
+  lazy val cell = td(colspan := 3, fontStyle.italic).render
 
   msgQueue.foreach { q =>
     if (q.headOption.exists(_.eventId > lastDisplayed))
-      cell.innerHTML = s"${q.length} messages more, click to display"
+      cell.innerHTML = s"${q.length} messages not shown, click to display more"
   }
 
 
@@ -273,12 +273,13 @@ class MessagesPanel(selectedActors: Var[Set[String]]) extends Component with Pre
   lazy val messagePanelHeader = div(
     cls := "panel-heading", id := "messagespaneltitle",
     messagePanelTitle,
-    a(href := "#", float.right, onclick := clearMessageList, i(`class` := "material-icons", "delete"))
+    a(href := "#", float.right, onclick := clearMessages, i(`class` := "material-icons", "delete"))
   ).render
   lazy val messagesTbody = tbody().render
 
-  val clearMessageList = () => {
+  val clearMessages = () => {
     messagesTbody.innerHTML = ""
+    msgQueue() = Queue.empty
   }
 
   override def render: Element = {
