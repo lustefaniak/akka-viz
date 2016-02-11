@@ -8,8 +8,9 @@ import org.scalajs.dom.raw.MouseEvent
 import org.scalajs.dom.{Element => domElement, Node, console}
 import rx.{Rx, Var}
 
+import scala.collection.immutable.Queue
 import scala.scalajs.js
-import scala.scalajs.js.ThisFunction0
+import scala.scalajs.js.{ThisFunction1, ThisFunction0}
 import scala.util.Try
 import scalatags.JsDom.all._
 
@@ -183,6 +184,44 @@ class MessageFilter(
 }
 
 class MessagesPanel(selectedActors: Var[Set[String]]) extends Component with PrettyJson {
+  val ShowMoreLength = 200
+
+  private val msgQueue = Var[Queue[Received]](Queue.empty)
+
+  private var lastDisplayed = 0L
+
+  def messageReceived(rcv: Received): Unit = {
+    val selected = selectedActors.now
+    if (selected.contains(rcv.sender) || selected.contains(rcv.receiver)) {
+      if (messagesTbody.childNodes.length < 20) {
+        messagesTbody.appendChild(messageRow(rcv).render)
+        lastDisplayed = rcv.eventId
+      } else {
+        msgQueue() = msgQueue.now.enqueue(rcv)
+      }
+    }
+  }
+
+  val showMoreRow = tr(cell, onclick := displayMoreMessages).render
+  lazy val cell = td(colspan := 3, fontStyle.italic).render
+
+  msgQueue.foreach { q =>
+    if (q.headOption.exists(_.eventId > lastDisplayed))
+      cell.innerHTML = s"${q.length} messages not shown, click to display more"
+  }
+
+
+  def displayMoreMessages: ThisFunction1[TableRow, MouseEvent, Unit] = { (row: TableRow, ev: MouseEvent) =>
+    ev.preventDefault()
+    val (portion, q) = (msgQueue.now.take(ShowMoreLength), msgQueue.now.drop(ShowMoreLength))
+    msgQueue() = q
+    portion.foreach { rcv =>
+      messagesTbody.appendChild(messageRow(rcv).render)
+      lastDisplayed = rcv.eventId
+    }
+
+    ()
+  }
 
   def toggleVisibility(e: domElement): Unit = {
     val elem = e.asInstanceOf[Element]
@@ -212,23 +251,15 @@ class MessagesPanel(selectedActors: Var[Set[String]]) extends Component with Pre
     }
   }
 
-  def messageReceived(rcv: Received): Unit = {
-    def insert(e: Element): Unit = {
-      messagesTbody.appendChild(e)
-    }
-    val selected = selectedActors.now
-    if (selected.contains(rcv.sender) || selected.contains(rcv.receiver)) {
-      val mainRow = tr(
-        "data-message".attr := rcv.payload.getOrElse(""),
-        `class` := "tgl",
-        td(actorComponent(rcv.sender)),
-        td(actorComponent(rcv.receiver)),
-        td(rcv.payloadClass),
-        onclick := toggleMessageDetails
-      ).render
-
-      insert(mainRow)
-    }
+  def messageRow(rcv: Received) = {
+    tr(
+      "data-message".attr := rcv.payload.getOrElse(""),
+      `class` := "tgl",
+      td(actorComponent(rcv.sender)),
+      td(actorComponent(rcv.receiver)),
+      td(rcv.payloadClass),
+      onclick := toggleMessageDetails
+    )
   }
 
   selectedActors.trigger {
@@ -242,12 +273,13 @@ class MessagesPanel(selectedActors: Var[Set[String]]) extends Component with Pre
   lazy val messagePanelHeader = div(
     cls := "panel-heading", id := "messagespaneltitle",
     messagePanelTitle,
-    a(href := "#", float.right, onclick := clearMessageList, i(`class` := "material-icons", "delete"))
+    a(href := "#", float.right, onclick := clearMessages, i(`class` := "material-icons", "delete"))
   ).render
   lazy val messagesTbody = tbody().render
 
-  val clearMessageList = () => {
+  val clearMessages = () => {
     messagesTbody.innerHTML = ""
+    msgQueue() = Queue.empty
   }
 
   override def render: Element = {
@@ -259,7 +291,7 @@ class MessagesPanel(selectedActors: Var[Set[String]]) extends Component with Pre
           cls := "table table-striped table-hover",
           thead(
             tr(th("From"), th("To"), th("Class"))
-          ), messagesTbody
+          ), messagesTbody, tfoot(showMoreRow)
         ))
     ).render
   }
