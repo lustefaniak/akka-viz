@@ -2,7 +2,8 @@ package akka.viz.frontend.components
 
 import akka.viz.frontend.FrontendUtil.actorComponent
 import akka.viz.frontend.{DOMGlobalScope, FrontendUtil, PrettyJson}
-import akka.viz.protocol.Received
+import DOMGlobalScope.$
+import akka.viz.protocol.{ActorFailure, Received}
 import org.scalajs.dom.html._
 import org.scalajs.dom.raw.MouseEvent
 import org.scalajs.dom.{Element => domElement, Node, console}
@@ -13,14 +14,17 @@ import scala.scalajs.js
 import scala.scalajs.js.{ThisFunction1, ThisFunction0}
 import scala.util.Try
 import scalatags.JsDom.all._
-
 trait Component {
   def render: Element
 }
 
-class ActorSelector(seenActors: Var[Set[String]], selectedActors: Var[Set[String]],
-    currentActorState: (String) => Var[js.UndefOr[String]],
-    actorClasses: String => Var[js.UndefOr[String]]) extends PrettyJson with Component {
+class ActorSelector(
+  seenActors: Var[Set[String]],
+  selectedActors: Var[Set[String]],
+  currentActorState: (String) => Var[js.UndefOr[String]],
+  actorClasses: String => Var[js.UndefOr[String]],
+  actorFailures: Var[Seq[ActorFailure]]
+) extends PrettyJson with Component {
 
   val popoverContent: ThisFunction0[domElement, Node] = (that: domElement) => {
     val actor: String = that.getAttribute("data-actor")
@@ -48,8 +52,36 @@ class ActorSelector(seenActors: Var[Set[String]], selectedActors: Var[Set[String
     "html" -> true
   )
 
+  def failureTable(failures: Seq[ActorFailure]) =
+    table(
+      id := "failures-table",
+      `class` := "table",
+      thead(
+        tr(th("Exception"), th("Supervisor decision"))),
+      tbody(
+        for (f <- failures)
+          yield tr(td(f.cause), td(f.decision))
+      )
+    ).render
+
+  def exceptionsButton(actorName: String, failures: Seq[ActorFailure]) =
+    span(
+      style := "color: red",
+      `class` := "glyphicon glyphicon-exclamation-sign",
+      "data-toggle".attr := "modal",
+      "data-target".attr := "#failures-modal",
+      onclick := { () =>
+        $("#actor-name").html(actorName)
+        $("#actor-failures").html(failureTable(failures))
+      }
+    )
+
+  def actorExceptionsIndicator(actorName: String, failures: Seq[ActorFailure]): _root_.scalatags.JsDom.Modifier =
+    if(failures.isEmpty) ""
+    else span(b(s"${failures.length} "), exceptionsButton(actorName, failures))
+
   val actorsObs = Rx.unsafe {
-    (seenActors(), selectedActors())
+    (seenActors(), selectedActors(), actorFailures())
   }.trigger {
     val seen = seenActors.now.toList.sorted
     val selected = selectedActors.now
@@ -58,10 +90,12 @@ class ActorSelector(seenActors: Var[Set[String]], selectedActors: Var[Set[String
       actorName =>
         val isSelected = selected.contains(actorName)
         val element = tr(
-          td(input(`type` := "checkbox", if (isSelected) checked else ())),
-          td(actorComponent(actorName)), onclick := {
-            () => toggleActor(actorName)
-          }
+          td(input(`type` := "checkbox", if (isSelected) checked else (),
+            onclick := {
+              () => toggleActor(actorName)
+            })),
+          td(actorComponent(actorName)),
+          td(actorExceptionsIndicator(actorName, actorFailures.now.filter(_.actorRef == actorName)))
         )(data("actor") := actorName).render
 
         DOMGlobalScope.$(element).popover(popoverOptions)
@@ -296,4 +330,6 @@ class MessagesPanel(selectedActors: Var[Set[String]]) extends Component with Pre
     ).render
   }
 }
+
+
 

@@ -1,6 +1,6 @@
 package akka.viz.events
 
-import akka.actor.{Actor, ActorRef}
+import akka.actor.{SupervisorStrategy, Actor, ActorRef}
 
 import scala.concurrent.duration.Duration
 
@@ -40,7 +40,11 @@ package object types {
 
   case class Killed(actorRef: ActorRef) extends InternalEvent with BackendEvent with FilteredActorEvent
 
-  case class ActorFailure(actorRef: ActorRef, cause: Throwable) extends InternalEvent with BackendEvent
+  case class ActorFailure(
+    actorRef: ActorRef,
+    cause: Throwable,
+    decision: SupervisorStrategy.Directive
+  ) extends InternalEvent with BackendEvent
 
   case object ReportingEnabled extends InternalEvent with BackendEvent
 

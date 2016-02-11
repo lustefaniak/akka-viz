@@ -73,11 +73,13 @@ object FrontendApp extends JSApp with Persistence
         _eventsEnabled() = false
 
       case Killed(ref) =>
+        addActorsToSeen(ref)
         deadActors += ref
         seenActors.recalc()
 
-      case ActorFailure(ref, cause) =>
-        // TODO display it somehow
+      case af: ActorFailure =>
+        addActorsToSeen(af.actorRef)
+        thrownExceptions() = af +: thrownExceptions.now
 
       case SnapshotAvailable(live, dead, childrenOf, rcv) =>
         addActorsToSeen(live: _*)
@@ -105,6 +107,7 @@ object FrontendApp extends JSApp with Persistence
   val selectedActors = persistedVar[Set[String]](Set(), "selectedActors")
   val seenMessages = Var[Set[String]](Set())
   val selectedMessages = persistedVar[Set[String]](Set(), "selectedMessages")
+  val thrownExceptions = Var[Seq[ActorFailure]](Seq())
 
   val addNodesObs = seenActors.trigger {
     seenActors.now.foreach {
@@ -121,7 +124,7 @@ object FrontendApp extends JSApp with Persistence
       seenActors() = newSeen
   }
 
-  val actorSelector = new ActorSelector(seenActors, selectedActors, currentActorState, actorClasses)
+  val actorSelector = new ActorSelector(seenActors, selectedActors, currentActorState, actorClasses, thrownExceptions)
   val messageFilter = new MessageFilter(seenMessages, selectedMessages, selectedActors)
   val messagesPanel = new MessagesPanel(selectedActors)
   val userIsEnabled = Var(false)

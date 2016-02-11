@@ -81,7 +81,7 @@ class ActorCellInstrumentation {
   @After("handleFailure(strategy, context, child, cause, decision)")
   def captureHandleFailure(strategy: SupervisorStrategy, context: ActorContext, child: ActorRef, cause: Throwable, decision: Directive): Unit = {
     if (context.system.name != internalSystemName) {
-      EventSystem.report(ActorFailure(child, cause))
+      EventSystem.report(ActorFailure(child, cause, decision))
     }
   }
 
