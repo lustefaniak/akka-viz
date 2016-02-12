@@ -1,5 +1,6 @@
 package akka.viz.aspects
 
+import akka.actor.SupervisorStrategy.Directive
 import akka.actor._
 import akka.dispatch.MessageDispatcher
 import akka.viz.config.Config
@@ -72,4 +73,16 @@ class ActorCellInstrumentation {
       EventSystem.report(Killed(actor.self))
     }
   }
+
+
+  @Pointcut("execution(* akka.actor.SupervisorStrategy.logFailure(..)) && this(strategy) && args(context, child, cause, decision)")
+  def handleFailure(strategy: SupervisorStrategy, context: ActorContext, child: ActorRef, cause: Throwable, decision: Directive): Unit = {}
+
+  @After("handleFailure(strategy, context, child, cause, decision)")
+  def captureHandleFailure(strategy: SupervisorStrategy, context: ActorContext, child: ActorRef, cause: Throwable, decision: Directive): Unit = {
+    if (context.system.name != internalSystemName) {
+      EventSystem.report(ActorFailure(child, cause, decision))
+    }
+  }
+
 }

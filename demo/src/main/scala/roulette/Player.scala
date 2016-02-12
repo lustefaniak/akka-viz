@@ -1,6 +1,6 @@
 package roulette
 
-import akka.actor.{Actor, ActorLogging, ActorRef}
+import akka.actor._
 
 import scala.util.Random
 
@@ -20,8 +20,7 @@ class Player extends Actor with ActorLogging {
         sender() ! Next(nextGuy)
         nextGuy.tell(Revolver(Random.nextInt(6)), sender())
       }
-
-      context.stop(self)
+      self ! Kill
 
     case Revolver(x) =>
       Thread.sleep(2000)
