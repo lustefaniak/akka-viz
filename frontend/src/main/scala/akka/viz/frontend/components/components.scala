@@ -208,6 +208,7 @@ class MessagesPanel(selectedActors: Var[Set[String]]) extends Component with Pre
   msgQueue.foreach { q =>
     if (q.headOption.exists(_.eventId > lastDisplayed))
       cell.innerHTML = s"${q.length} messages not shown, click to display more"
+    else cell.innerHTML = ""
   }
 
 
