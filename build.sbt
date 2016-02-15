@@ -27,9 +27,15 @@ lazy val commonSettings: Seq[sbt.Setting[_]] = SbtScalariform.defaultScalariform
       <developers>
         <developer>
           <id>lustefaniak</id>
+          <url>https://github.com/lustefaniak</url>
         </developer>
         <developer>
           <id>pkoryzna</id>
+          <url>https://github.com/pkoryzna</url>
+        </developer>
+        <developer>
+          <id>JJag</id>
+          <url>https://github.com/JJag</url>
         </developer>
       </developers>
 ) ++ useJGit ++ bintraySettings

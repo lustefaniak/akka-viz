@@ -49,6 +49,7 @@ Please check [lustefaniak/akka-viz-demo](https://github.com/lustefaniak/akka-viz
 * display messages in realtime (with contents) for selected actors
 * filter messages by class
 * delay processing of messages
+* display information about exceptions in actors and used supervisor strategies
 
 ## Running
 
