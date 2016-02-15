@@ -12,6 +12,7 @@ cache:
 
 language: scala
 script:
+  - ./.bintray_setup_credentials.sh
   - sbt clean compile test package scripted
 
 jdk:
