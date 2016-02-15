@@ -12,9 +12,7 @@ cache:
 
 language: scala
 script:
-  - sbt ++$TRAVIS_SCALA_VERSION clean compile test package
-scala:
-  - 2.11.7
+  - sbt clean compile test package scripted
 
 jdk:
   - oraclejdk8
