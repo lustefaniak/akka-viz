@@ -2,7 +2,9 @@ import com.typesafe.sbt.SbtScalariform
 import com.typesafe.sbt.SbtScalariform.ScalariformKeys
 import scalariform.formatter.preferences._
 
-val commonSettings: Seq[sbt.Setting[_]] = SbtScalariform.defaultScalariformSettings ++ Seq(
+cancelable in Global := true
+
+lazy val commonSettings: Seq[sbt.Setting[_]] = SbtScalariform.defaultScalariformSettings ++ Seq(
   ScalariformKeys.preferences := ScalariformKeys.preferences.value
     .setPreference(AlignSingleLineCaseStatements, true)
     .setPreference(SpacesAroundMultiImports, false)
@@ -13,7 +15,6 @@ val commonSettings: Seq[sbt.Setting[_]] = SbtScalariform.defaultScalariformSetti
   crossScalaVersions := Seq("2.11.7"),
   licenses +=("MIT", url("http://opensource.org/licenses/MIT")),
   git.uncommittedSignifier := None,
-  publishMavenStyle := true,
   publishArtifact in Test := false,
   scalaVersion := "2.11.7",
   homepage := Some(url("https://github.com/blstream/akka-viz")),
@@ -30,23 +31,13 @@ val commonSettings: Seq[sbt.Setting[_]] = SbtScalariform.defaultScalariformSetti
         <developer>
           <id>pkoryzna</id>
         </developer>
-      </developers>,
-  publishTo := Some("Bintray API Realm" at "https://api.bintray.com/content/lustefaniak/maven/" + moduleName.value + "/" + version.value + "/"),
-  (for {
-    username <- sys.env.get("BINTRAY_USER")
-    token <- sys.env.get("BINTRAY_TOKEN")
-  } yield
-    credentials += Credentials(
-      "Bintray API Realm",
-      "api.bintray.com",
-      username,
-      token)
-    ).getOrElse(credentials ++= Seq())
-) ++ useJGit
+      </developers>
+) ++ useJGit ++ bintraySettings
 
-val noPublish: Seq[sbt.Setting[_]] = Seq(
-  publishTo := Some(Resolver.file("Unused transient repository", file("target/unusedrepo"))),
-  publishArtifact := false
+
+lazy val bintraySettings: Seq[sbt.Setting[_]] = Seq(
+  bintrayCredentialsFile := file(".bintray_credentials"),
+  bintrayVcsUrl := Some("https://github.com/blstream/akka-viz.git")
 )
 
 lazy val akkaviz =
@@ -118,8 +109,8 @@ lazy val demo =
     .enablePlugins(GitVersioning, RevolverPlugin)
     .settings(commonSettings)
     .settings(aspectjSettings)
-    .settings(noPublish)
     .settings(
+      publishArtifact := false,
       fork := true,
       javaOptions <++= AspectjKeys.weaverOptions in Aspectj,
       javaOptions in reStart <++= AspectjKeys.weaverOptions in Aspectj,
@@ -141,7 +132,6 @@ lazy val plugin = (project in file("plugin"))
     scalaVersion := "2.10.6",
     crossScalaVersions := Seq("2.10.6"),
     sbtPlugin := true,
-    publishMavenStyle := false,
     buildInfoPackage := "akkaviz.sbt",
 
     addSbtPlugin("com.typesafe.sbt" % "sbt-aspectj" % "0.10.4"),
