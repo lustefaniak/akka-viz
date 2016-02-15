@@ -130,7 +130,7 @@ lazy val demo =
 
 lazy val plugin = (project in file("plugin"))
   .enablePlugins(BuildInfoPlugin)
-  .disablePlugins(GitVersioning, SbtScalariform)
+  .disablePlugins(GitVersioning, SbtScalariform, RevolverPlugin)
   .settings(commonSettings)
   .settings(scriptedSettings: _*)
   .settings(
