@@ -9,11 +9,32 @@ _a visual debugger for Akka actor systems (experimental)_
 
 Latest version is: [ ![Download](https://api.bintray.com/packages/lustefaniak/maven/monitoring/images/download.svg) ](https://bintray.com/lustefaniak/maven/monitoring/_latestVersion)
 
+To get started you need to add dependencies for "monitoring" jar:
+
 ```
 resolvers += Resolver.bintrayRepo("lustefaniak", "maven")
 
-libraryDependencies += "com.blstream.akkaviz" %% "monitoring" % "0.1.1"
+libraryDependencies += "com.blstream.akkaviz" %% "monitoring" % "0.1.2"
 ```
+
+After that you must configure your application to run with AspectJ weaver.
+
+
+## SBT plugin
+Latest version is: [ ![Download](https://api.bintray.com/packages/lustefaniak/sbt-plugins/sbt-akka-viz/images/download.svg) ](https://bintray.com/lustefaniak/sbt-plugins/sbt-akka-viz/_latestVersion)
+
+Simpler way is to use sbt plugin, which will preconfigure required bits, in your project directory create file `project/akkaviz.sbt` with:
+
+```
+resolvers += Resolver.url("lustefaniak/sbt-plugins", url("https://dl.bintray.com/lustefaniak/sbt-plugins/"))(Resolver.ivyStylePatterns)
+
+addSbtPlugin("com.blstream.akkaviz" % "sbt-akka-viz" % "0.1.2")
+```
+
+
+## Sample project
+
+Please check [lustefaniak/akka-viz-demo](https://github.com/lustefaniak/akka-viz-demo) for simple, preconfigured SBT project.
 
 ## Screenshot
 
