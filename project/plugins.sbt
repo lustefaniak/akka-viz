@@ -16,6 +16,8 @@ addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.5")
 
 addSbtPlugin("org.scalariform" % "sbt-scalariform" % "1.6.0")
 
+addSbtPlugin("me.lessis" % "bintray-sbt" % "0.3.0")
+
 libraryDependencies <+= (sbtVersion) { sv =>
   "org.scala-sbt" % "scripted-plugin" % sv
 }
