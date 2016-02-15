@@ -14,6 +14,8 @@ import scala.scalajs.js.JSApp
 import scala.scalajs.js.annotation.JSExport
 import scalatags.JsDom.all._
 
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+
 case class FsmTransition(fromStateClass: String, toStateClass: String)
 
 object FrontendApp extends JSApp with Persistence
@@ -129,30 +131,31 @@ object FrontendApp extends JSApp with Persistence
 
   def main(): Unit = {
 
-    val upstream = ApiConnection(
+    val upstreamF = ApiConnection(
       webSocketUrl("stream"),
       handleDownstream(messagesPanel.messageReceived)
-    ) // fixme when this will need more callbacks?
+    ).foreach { upstream =>
 
-    selectedMessages.triggerLater {
-      console.log(s"Will send allowedClasses: ${selectedMessages.now.mkString("[", ",", "]")}")
-      import upickle.default._
-      upstream.send(write(SetAllowedMessages(selectedMessages.now)))
-    }
+      selectedMessages.triggerLater {
+        console.log(s"Will send allowedClasses: ${selectedMessages.now.mkString("[", ",", "]")}")
+        import upickle.default._
+        upstream.send(write(SetAllowedMessages(selectedMessages.now)))
+      }
 
-    selectedActors.triggerLater {
-      console.log(s"Will send ObserveActors: ${selectedActors.now.mkString("[", ",", "]")}")
-      import upickle.default._
-      upstream.send(write(ObserveActors(selectedActors.now)))
-    }
+      selectedActors.triggerLater {
+        console.log(s"Will send ObserveActors: ${selectedActors.now.mkString("[", ",", "]")}")
+        import upickle.default._
+        upstream.send(write(ObserveActors(selectedActors.now)))
+      }
 
-    delayMillis.triggerLater {
-      import scala.concurrent.duration._
-      upstream.send(write(SetReceiveDelay(delayMillis.now.millis)))
-    }
+      delayMillis.triggerLater {
+        import scala.concurrent.duration._
+        upstream.send(write(SetReceiveDelay(delayMillis.now.millis)))
+      }
 
-    userIsEnabled.triggerLater {
-      upstream.send(write(SetEnabled(userIsEnabled.now)))
+      userIsEnabled.triggerLater {
+        upstream.send(write(SetEnabled(userIsEnabled.now)))
+      }
     }
 
     document.querySelector("#actorselection").appendChild(actorSelector.render)

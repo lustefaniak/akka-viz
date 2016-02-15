@@ -1,43 +1,48 @@
 package akka.viz.frontend
 
-import org.scalajs.dom._
-import org.scalajs.dom.raw.WebSocket
+import org.scalajs.dom
+import org.scalajs.dom.raw._
+
+import scala.concurrent.Promise
+import scala.concurrent._
+import scala.util.Success
+
+trait Upstream {
+  def send(msg: String): Unit
+}
 
 object ApiConnection {
 
-  trait Upstream {
-    def send(msg: String): Unit
-  }
 
-  def apply(url: String, fn: MessageEvent => Unit): Upstream = {
+  def apply(url: String, fn: MessageEvent => Unit)(implicit ec: ExecutionContext): Future[Upstream] = {
 
-    var webSocket: Option[WebSocket] = None
-
-    //FIXME: implement reconnect and wait for `onopen` event before sending
     def createWebsocket: WebSocket = {
       val ws = new WebSocket(url)
-      ws.onmessage = (messageEvent: MessageEvent) => {
-        fn(messageEvent)
-      }
-      ws.onclose = (c: CloseEvent) => {
-        console.log(c)
-        webSocket = None
-      }
-      ws.onerror = (e: ErrorEvent) => {
-        console.log(e)
-        webSocket = None
-      }
-      webSocket = Some(ws)
       ws
     }
-    webSocket = Some(createWebsocket)
 
-    def getWs = webSocket.getOrElse(createWebsocket)
-
-    new Upstream {
-      //FIXME: need to wait for `onopen` before sending
-      override def send(msg: String): Unit = getWs.send(msg)
+    val wsPromise = Promise[WebSocket]()
+    val newWs = createWebsocket
+    newWs.onopen = { e: Event =>
+      wsPromise.success(newWs)
     }
+    newWs.onerror = { e: ErrorEvent =>
+      wsPromise.failure(new Exception(e.message))
+    }
+
+    val wsFuture: Future[WebSocket] = wsPromise.future
+
+    wsFuture
+      .andThen {
+        case Success(ws) =>
+          ws.onclose = { ce: CloseEvent => dom.console.log(ce) }
+          ws.onerror = { ee: ErrorEvent => dom.console.log(ee) }
+          ws.onmessage = fn
+      }.map(ws =>
+        new Upstream {
+          override def send(msg: String): Unit = ws.send(msg)
+      })
+
 
   }
 
