@@ -139,6 +139,7 @@ lazy val plugin = (project in file("plugin"))
   .settings(
     name := "sbt-akka-viz",
     scalaVersion := "2.10.6",
+    crossScalaVersions := Seq("2.10.6"),
     sbtPlugin := true,
     publishMavenStyle := false,
     buildInfoPackage := "akkaviz.sbt",
