@@ -12,8 +12,7 @@ cache:
 
 language: scala
 script:
-  - echo "user = ${BINTRAY_USER}" >> .bintray_credentials
-  - echo "password = ${BINTRAY_TOKEN}" >> .bintray_credentials
+  - ./.bintray_setup_credentials.sh
   - sbt clean compile test package scripted
 
 jdk:
