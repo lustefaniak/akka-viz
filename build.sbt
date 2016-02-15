@@ -50,12 +50,14 @@ val noPublish: Seq[sbt.Setting[_]] = Seq(
 )
 
 lazy val akkaviz =
-  Project("akkaviz", file(".")).disablePlugins(RevolverPlugin).enablePlugins(GitVersioning)
+  (project in file("."))
+    .disablePlugins(RevolverPlugin)
+    .enablePlugins(GitVersioning)
     .settings(commonSettings)
-    .aggregate(api, monitoring)
+    .aggregate(api, monitoring, plugin)
 
 lazy val frontend =
-  Project("frontend", file("frontend"))
+  (project in file("frontend"))
     .disablePlugins(RevolverPlugin, SbtScalariform)
     .enablePlugins(ScalaJSPlugin, GitVersioning)
     .settings(commonSettings)
@@ -75,7 +77,7 @@ lazy val frontend =
     )
 
 lazy val api =
-  Project("api", file("api"))
+  (project in file("api"))
     .enablePlugins(GitVersioning)
     .disablePlugins(RevolverPlugin)
     .settings(commonSettings)
@@ -85,7 +87,7 @@ lazy val api =
     )
 
 lazy val monitoring =
-  Project("monitoring", file("monitoring"))
+  (project in file("monitoring"))
     .disablePlugins(SbtScalariform, RevolverPlugin)
     .enablePlugins(GitVersioning)
     .settings(commonSettings)
@@ -111,7 +113,7 @@ lazy val monitoring =
     .dependsOn(api)
 
 lazy val demo =
-  Project("demo", file("demo"))
+  (project in file("demo"))
     .disablePlugins(SbtScalariform)
     .enablePlugins(GitVersioning, RevolverPlugin)
     .settings(commonSettings)
@@ -128,5 +130,33 @@ lazy val demo =
       )
     )
     .dependsOn(monitoring)
+
+lazy val plugin = (project in file("plugin"))
+  .enablePlugins(BuildInfoPlugin)
+  .disablePlugins(GitVersioning, SbtScalariform)
+  .settings(commonSettings)
+  .settings(scriptedSettings: _*)
+  .settings(
+    name := "sbt-akka-viz",
+    scalaVersion := "2.10.6",
+    sbtPlugin := true,
+    publishMavenStyle := false,
+    buildInfoPackage := "akkaviz.sbt",
+
+    addSbtPlugin("com.typesafe.sbt" % "sbt-aspectj" % "0.10.4"),
+
+    scriptedLaunchOpts := {
+      scriptedLaunchOpts.value ++
+        Seq(
+          "-Dproject.version=" + version.value,
+          "-Dscala.version=" + scalaVersion.value
+        )
+    },
+    scriptedDependencies := {
+      val a = (publishLocal in monitoring).value
+      val c = publishLocal.value
+    }
+  )
+
 
 addCommandAlias("formatAll", ";scalariformFormat;test:scalariformFormat")
