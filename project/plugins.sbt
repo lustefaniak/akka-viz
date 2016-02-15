@@ -1,5 +1,7 @@
 logLevel := Level.Warn
 
+resolvers += "sbt plugins" at "http://repo.scala-sbt.org/scalasbt/sbt-plugin-releases/"
+
 addSbtPlugin("com.typesafe.sbt" % "sbt-aspectj" % "0.10.4")
 
 addSbtPlugin("org.scoverage" %% "sbt-scoverage" % "1.3.5")
