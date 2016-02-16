@@ -5,7 +5,8 @@ import org.scalajs.dom.raw._
 
 import scala.concurrent.Promise
 import scala.concurrent._
-import scala.util.Success
+import scala.scalajs.js.JavaScriptException
+import scala.util.{Try, Success}
 
 trait Upstream {
   def send(msg: String): Unit
@@ -14,7 +15,7 @@ trait Upstream {
 object ApiConnection {
 
 
-  def apply(url: String, fn: MessageEvent => Unit)(implicit ec: ExecutionContext): Future[Upstream] = {
+  def apply(url: String, fn: MessageEvent => Unit, maxRetries: Int = 1)(implicit ec: ExecutionContext): Future[WebSocket] = {
 
     def createWebsocket: WebSocket = {
       val ws = new WebSocket(url)
@@ -23,25 +24,22 @@ object ApiConnection {
 
     val wsPromise = Promise[WebSocket]()
     val newWs = createWebsocket
+    newWs.onclose = { ce:CloseEvent =>
+      dom.setTimeout(() => wsPromise.failure(new JavaScriptException()), 2000) }
     newWs.onopen = { e: Event =>
+      dom.console.log("API websocket connection established")
+      newWs.onmessage = fn
       wsPromise.success(newWs)
-    }
-    newWs.onerror = { e: ErrorEvent =>
-      wsPromise.failure(new Exception(e.message))
     }
 
     val wsFuture: Future[WebSocket] = wsPromise.future
 
     wsFuture
-      .andThen {
-        case Success(ws) =>
-          ws.onclose = { ce: CloseEvent => dom.console.log(ce) }
-          ws.onerror = { ee: ErrorEvent => dom.console.log(ee) }
-          ws.onmessage = fn
-      }.map(ws =>
-        new Upstream {
-          override def send(msg: String): Unit = ws.send(msg)
-      })
+      .recoverWith {
+      case e: JavaScriptException if maxRetries > 0 =>
+        dom.console.log(s"failed to establish connection to $url, retrying ${maxRetries - 1} more times")
+        apply(url, fn, maxRetries - 1)
+    }
 
 
   }

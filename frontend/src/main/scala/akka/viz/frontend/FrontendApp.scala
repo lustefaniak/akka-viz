@@ -3,7 +3,8 @@ package akka.viz.frontend
 import akka.viz.frontend.FrontendUtil._
 import akka.viz.frontend.components.{ActorSelector, MessageFilter, MessagesPanel, OnOffPanel}
 import akka.viz.protocol._
-import org.scalajs.dom.raw.MessageEvent
+import org.scalajs.dom
+import org.scalajs.dom.raw.{ErrorEvent, CloseEvent, MessageEvent}
 import org.scalajs.dom.{console, document}
 import rx._
 import upickle.default._
@@ -131,32 +132,47 @@ object FrontendApp extends JSApp with Persistence
 
   def main(): Unit = {
 
-    val upstreamF = ApiConnection(
-      webSocketUrl("stream"),
-      handleDownstream(messagesPanel.messageReceived)
-    ).foreach { upstream =>
+    def setupApiConnection: Unit = {
+      ApiConnection(
+        webSocketUrl("stream"),
+        handleDownstream(messagesPanel.messageReceived),
+        maxRetries = 10
+      ).foreach { upstream => // todo warn user if couldn't establish connection at all
 
-      selectedMessages.triggerLater {
-        console.log(s"Will send allowedClasses: ${selectedMessages.now.mkString("[", ",", "]")}")
-        import upickle.default._
-        upstream.send(write(SetAllowedMessages(selectedMessages.now)))
-      }
+        selectedMessages.triggerLater {
+          console.log(s"Will send allowedClasses: ${selectedMessages.now.mkString("[", ",", "]")}")
+          import upickle.default._
+          upstream.send(write(SetAllowedMessages(selectedMessages.now)))
+        }
 
-      selectedActors.triggerLater {
-        console.log(s"Will send ObserveActors: ${selectedActors.now.mkString("[", ",", "]")}")
-        import upickle.default._
-        upstream.send(write(ObserveActors(selectedActors.now)))
-      }
+        selectedActors.trigger {
+          console.log(s"Will send ObserveActors: ${selectedActors.now.mkString("[", ",", "]")}")
+          import upickle.default._
+          upstream.send(write(ObserveActors(selectedActors.now)))
+        }
 
-      delayMillis.triggerLater {
-        import scala.concurrent.duration._
-        upstream.send(write(SetReceiveDelay(delayMillis.now.millis)))
-      }
+        delayMillis.triggerLater {
+          import scala.concurrent.duration._
+          upstream.send(write(SetReceiveDelay(delayMillis.now.millis)))
+        }
 
-      userIsEnabled.triggerLater {
-        upstream.send(write(SetEnabled(userIsEnabled.now)))
+        userIsEnabled.triggerLater {
+          upstream.send(write(SetEnabled(userIsEnabled.now)))
+        }
+
+        // todo warn user when retry is in progress
+        upstream.onclose = { ce: CloseEvent =>
+          console.log("ws closed, retrying in 2 seconds")
+          dom.setTimeout(() => setupApiConnection, 2000)
+        }
+        upstream.onerror = { ce: ErrorEvent =>
+          console.log("ws error, retrying in 2 seconds")
+          dom.setTimeout(() => setupApiConnection, 2000)
+        }
       }
     }
+
+    setupApiConnection
 
     document.querySelector("#actorselection").appendChild(actorSelector.render)
     document.querySelector("#messagefiltering").appendChild(messageFilter.render)
