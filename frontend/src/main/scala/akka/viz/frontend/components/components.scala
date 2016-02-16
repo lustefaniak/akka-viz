@@ -237,7 +237,7 @@ class MessagesPanel(selectedActors: Var[Set[String]]) extends Component with Pre
   }
 
   val showMoreRow = tr(cell, onclick := displayMoreMessages).render
-  lazy val cell = td(colspan := 3, fontStyle.italic).render
+  lazy val cell = td(colspan := 4, fontStyle.italic).render
 
   msgQueue.foreach { q =>
     if (q.headOption.exists(_.eventId > lastDisplayed))
