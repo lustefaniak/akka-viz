@@ -28,7 +28,7 @@ class Alert extends Component {
     connectionAlert.classList.add("in")
   }
 
-  def fadeOut(after: Duration = 2.seconds) = dom.setTimeout(() => DOMGlobalScope.$(connectionAlert).alert("close"), after.toMillis)
+  def fadeOut(after: Duration = 2.seconds) = dom.setTimeout(() => connectionAlert.classList.remove("in"), after.toMillis)
 
 
 }
