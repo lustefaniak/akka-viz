@@ -1,5 +1,6 @@
 import com.typesafe.sbt.SbtScalariform
 import com.typesafe.sbt.SbtScalariform.ScalariformKeys
+import sbtassembly.Assembly
 import scalariform.formatter.preferences._
 
 lazy val commonSettings: Seq[sbt.Setting[_]] = SbtScalariform.defaultScalariformSettings ++ Seq(
@@ -35,7 +36,8 @@ lazy val commonSettings: Seq[sbt.Setting[_]] = SbtScalariform.defaultScalariform
           <id>JJag</id>
           <url>https://github.com/JJag</url>
         </developer>
-      </developers>
+      </developers>,
+  libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.0-M15" % "test"
 ) ++ useJGit ++ bintraySettings
 
 
@@ -49,7 +51,7 @@ lazy val akkaviz =
     .disablePlugins(RevolverPlugin)
     .enablePlugins(GitVersioning)
     .settings(commonSettings)
-    .aggregate(api, monitoring, plugin)
+    .aggregate(api, monitoring, plugin, events, backend, `akka-aspects`)
 
 lazy val frontend =
   (project in file("frontend"))
@@ -64,8 +66,7 @@ lazy val frontend =
         "com.lihaoyi" %%% "upickle" % Dependencies.Versions.upickle,
         "com.lihaoyi" %%% "scalarx" % "0.3.0",
         "com.lihaoyi" %%% "scalatags" % "0.5.4",
-        "org.querki" %%% "jquery-facade" % "0.11",
-        "org.scalatest" %%% "scalatest" % Dependencies.Versions.scalatest % "test"
+        "org.querki" %%% "jquery-facade" % "0.11"
       ),
       jsDependencies += RuntimeDOM,
       unmanagedSourceDirectories in Compile += baseDirectory.value / ".." / "shared" / "src" / "main" / "scala"
@@ -86,7 +87,7 @@ lazy val monitoring =
     .disablePlugins(SbtScalariform, RevolverPlugin)
     .enablePlugins(GitVersioning)
     .settings(commonSettings)
-    .dependsOn(api, backend, events, `akka-aspects`)
+    .dependsOn(api, events, `akka-aspects`, backend)
 
 lazy val events =
   (project in file("events"))
@@ -110,10 +111,11 @@ lazy val `akka-aspects` =
 
 lazy val backend =
   (project in file("backend"))
+    .settings(packageBin := assembly.value)
     .disablePlugins(SbtScalariform, RevolverPlugin)
     .enablePlugins(GitVersioning)
     .settings(commonSettings)
-    .settings(aspectjSettings)
+    .settings(inConfig(Aspectj)(defaultAspectjSettings))
     .settings(
       unmanagedSourceDirectories in Compile += baseDirectory.value / ".." / "shared" / "src" / "main" / "scala",
       addCompilerPlugin("org.scalamacros" % "paradise" % "2.0.1" cross CrossVersion.full),
@@ -126,7 +128,16 @@ lazy val backend =
           .map((f1, f2, f3) => {
             Seq(f1.data, f2.data, f3)
           }),
-      watchSources <++= (watchSources in frontend)
+      watchSources <++= (watchSources in frontend),
+      assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeScala = false),
+      assemblyShadeRules in assembly := Seq(
+        ShadeRule.zap("com.wacai.**").inAll,
+        ShadeRule.zap("jline.**").inAll,
+        ShadeRule.rename("akka.**" -> "shadeakka.@1").inAll,
+        ShadeRule.rename("grizzled.**" -> "shadegrizzled.@1").inAll,
+        ShadeRule.rename("com.typesafe.**" -> "shadeconfig.@1").inAll
+      ),
+      assemblyJarName in assembly <<= (name, version) map { (name, version) => name + "_2.11-" +version + ".jar" }
     )
     .dependsOn(api, events)
 
