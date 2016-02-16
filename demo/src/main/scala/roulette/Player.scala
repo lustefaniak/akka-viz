@@ -26,5 +26,6 @@ class Player extends Actor with ActorLogging {
       Thread.sleep(2000)
       log.info("CLICK")
       nextGuy ! Revolver(x - 1)
+      nextGuy ! "Unhandled message"
   }
 }
