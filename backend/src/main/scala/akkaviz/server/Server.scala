@@ -16,7 +16,7 @@ object Server {
   private lazy val service = new Webservice()(materializer, system)
   private lazy val binding = Http(system).bindAndHandle(service.route, Config.interface, Config.port)(materializer)
 
-  def start() = {
+  def start(): Unit = {
     binding.onComplete {
       case Success(binding) ⇒
         val localAddress = binding.localAddress
