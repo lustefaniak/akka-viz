@@ -4,12 +4,13 @@ import akka.viz.frontend.FrontendUtil._
 import akka.viz.frontend.components._
 import akka.viz.protocol._
 import org.scalajs.dom
-import org.scalajs.dom.raw.{ErrorEvent, CloseEvent, MessageEvent}
+import org.scalajs.dom.raw.{WebSocket, ErrorEvent, CloseEvent, MessageEvent}
 import org.scalajs.dom.{console, document}
 import rx._
 import upickle.default._
 
 import scala.collection.mutable
+import scala.concurrent.Future
 import scala.scalajs.js
 import scala.scalajs.js.JSApp
 import scala.scalajs.js.annotation.JSExport
@@ -131,16 +132,20 @@ object FrontendApp extends JSApp with Persistence
   @JSExport("toggleActor")
   def toggleActor(name: String) = actorSelector.toggleActor(name)
 
+  val maxRetries = 10
+
   def main(): Unit = {
 
     def setupApiConnection: Unit = {
 
 
-      ApiConnection(
+      val connection: Future[WebSocket] = ApiConnection(
         webSocketUrl("stream"),
         handleDownstream(messagesPanel.messageReceived),
-        maxRetries = 10
-      ).foreach { upstream => // todo warn user if couldn't establish connection at all
+        maxRetries
+      )
+
+      connection.foreach { upstream =>
         connectionAlert.success("Connected!")
         connectionAlert.fadeOut()
 
@@ -165,7 +170,6 @@ object FrontendApp extends JSApp with Persistence
           upstream.send(write(SetEnabled(userIsEnabled.now)))
         }
 
-        // todo warn user when retry is in progress
         upstream.onclose = { ce: CloseEvent =>
           connectionAlert.warning("Reconnecting...")
           console.log("ws closed, retrying in 2 seconds")
@@ -176,6 +180,10 @@ object FrontendApp extends JSApp with Persistence
           console.log("ws error, retrying in 2 seconds")
           dom.setTimeout(() => setupApiConnection, 2000)
         }
+      }
+
+      connection.onFailure {
+        case _ => connectionAlert.error(s"Connection failed after $maxRetries retries. Try reloading the page.")
       }
     }
 
