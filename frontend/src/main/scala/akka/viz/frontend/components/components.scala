@@ -275,7 +275,7 @@ class MessagesPanel(selectedActors: Var[Set[String]]) extends Component with Pre
           val payload = row.getAttribute("data-message")
           val detailsRow = tr(
             td(
-              colspan := 3,
+              colspan := 4,
               div(pre(prettyPrintJson(payload)))
             )
           ).render
@@ -290,12 +290,19 @@ class MessagesPanel(selectedActors: Var[Set[String]]) extends Component with Pre
     tr(
       "data-message".attr := rcv.payload.getOrElse(""),
       `class` := "tgl",
+      td(if (!rcv.handled) unhandledIndicator else ""),
       td(actorComponent(rcv.sender)),
       td(actorComponent(rcv.receiver)),
       td(rcv.payloadClass),
       onclick := toggleMessageDetails
     )
   }
+
+  val unhandledIndicator = span(
+    style := "color: orange; vertical-align: middle",
+    `class` := "glyphicon glyphicon-exclamation-sign",
+    title := "Unhandled message"
+  )
 
   selectedActors.trigger {
     if (selectedActors.now.isEmpty) {
@@ -325,7 +332,7 @@ class MessagesPanel(selectedActors: Var[Set[String]]) extends Component with Pre
         table(
           cls := "table table-striped table-hover",
           thead(
-            tr(th("From"), th("To"), th("Class"))
+            tr(th(), th("From"), th("To"), th("Class"))
           ), messagesTbody, tfoot(showMoreRow)
         ))
     ).render
