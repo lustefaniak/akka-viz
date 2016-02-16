@@ -1,43 +1,46 @@
 package akka.viz.frontend
 
-import org.scalajs.dom._
-import org.scalajs.dom.raw.WebSocket
+import org.scalajs.dom
+import org.scalajs.dom.raw._
+
+import scala.concurrent.Promise
+import scala.concurrent._
+import scala.scalajs.js.JavaScriptException
+import scala.util.{Try, Success}
+
+trait Upstream {
+  def send(msg: String): Unit
+}
 
 object ApiConnection {
 
-  trait Upstream {
-    def send(msg: String): Unit
-  }
 
-  def apply(url: String, fn: MessageEvent => Unit): Upstream = {
+  def apply(url: String, fn: MessageEvent => Unit, maxRetries: Int = 1)(implicit ec: ExecutionContext): Future[WebSocket] = {
 
-    var webSocket: Option[WebSocket] = None
-
-    //FIXME: implement reconnect and wait for `onopen` event before sending
     def createWebsocket: WebSocket = {
       val ws = new WebSocket(url)
-      ws.onmessage = (messageEvent: MessageEvent) => {
-        fn(messageEvent)
-      }
-      ws.onclose = (c: CloseEvent) => {
-        console.log(c)
-        webSocket = None
-      }
-      ws.onerror = (e: ErrorEvent) => {
-        console.log(e)
-        webSocket = None
-      }
-      webSocket = Some(ws)
       ws
     }
-    webSocket = Some(createWebsocket)
 
-    def getWs = webSocket.getOrElse(createWebsocket)
-
-    new Upstream {
-      //FIXME: need to wait for `onopen` before sending
-      override def send(msg: String): Unit = getWs.send(msg)
+    val wsPromise = Promise[WebSocket]()
+    val newWs = createWebsocket
+    newWs.onclose = { ce:CloseEvent =>
+      dom.setTimeout(() => wsPromise.failure(new JavaScriptException()), 2000) }
+    newWs.onopen = { e: Event =>
+      dom.console.log("API websocket connection established")
+      newWs.onmessage = fn
+      wsPromise.success(newWs)
     }
+
+    val wsFuture: Future[WebSocket] = wsPromise.future
+
+    wsFuture
+      .recoverWith {
+      case e: JavaScriptException if maxRetries > 0 =>
+        dom.console.log(s"failed to establish connection to $url, retrying $maxRetries more times")
+        apply(url, fn, maxRetries - 1)
+    }
+
 
   }
 

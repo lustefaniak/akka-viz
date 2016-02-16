@@ -1,18 +1,22 @@
 package akka.viz.frontend
 
 import akka.viz.frontend.FrontendUtil._
-import akka.viz.frontend.components.{ActorSelector, MessageFilter, MessagesPanel, OnOffPanel}
+import akka.viz.frontend.components._
 import akka.viz.protocol._
-import org.scalajs.dom.raw.MessageEvent
+import org.scalajs.dom
+import org.scalajs.dom.raw.{WebSocket, ErrorEvent, CloseEvent, MessageEvent}
 import org.scalajs.dom.{console, document}
 import rx._
 import upickle.default._
 
 import scala.collection.mutable
+import scala.concurrent.Future
 import scala.scalajs.js
 import scala.scalajs.js.JSApp
 import scala.scalajs.js.annotation.JSExport
 import scalatags.JsDom.all._
+
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 case class FsmTransition(fromStateClass: String, toStateClass: String)
 
@@ -129,38 +133,69 @@ object FrontendApp extends JSApp with Persistence
   val messagesPanel = new MessagesPanel(selectedActors)
   val userIsEnabled = Var(false)
   val onOffPanel = new OnOffPanel(_eventsEnabled, userIsEnabled)
+  val connectionAlert = new Alert()
 
   @JSExport("toggleActor")
   def toggleActor(name: String) = actorSelector.toggleActor(name)
 
+  val maxRetries = 10
+
   def main(): Unit = {
 
-    val upstream = ApiConnection(
-      webSocketUrl("stream"),
-      handleDownstream(messagesPanel.messageReceived)
-    ) // fixme when this will need more callbacks?
+    def setupApiConnection: Unit = {
 
-    selectedMessages.triggerLater {
-      console.log(s"Will send allowedClasses: ${selectedMessages.now.mkString("[", ",", "]")}")
-      import upickle.default._
-      upstream.send(write(SetAllowedMessages(selectedMessages.now)))
+
+      val connection: Future[WebSocket] = ApiConnection(
+        webSocketUrl("stream"),
+        handleDownstream(messagesPanel.messageReceived),
+        maxRetries
+      )
+
+      connection.foreach { upstream =>
+        connectionAlert.success("Connected!")
+        connectionAlert.fadeOut()
+
+        selectedMessages.triggerLater {
+          console.log(s"Will send allowedClasses: ${selectedMessages.now.mkString("[", ",", "]")}")
+          import upickle.default._
+          upstream.send(write(SetAllowedMessages(selectedMessages.now)))
+        }
+
+        selectedActors.trigger {
+          console.log(s"Will send ObserveActors: ${selectedActors.now.mkString("[", ",", "]")}")
+          import upickle.default._
+          upstream.send(write(ObserveActors(selectedActors.now)))
+        }
+
+        delayMillis.triggerLater {
+          import scala.concurrent.duration._
+          upstream.send(write(SetReceiveDelay(delayMillis.now.millis)))
+        }
+
+        userIsEnabled.triggerLater {
+          upstream.send(write(SetEnabled(userIsEnabled.now)))
+        }
+
+        upstream.onclose = { ce: CloseEvent =>
+          connectionAlert.warning("Reconnecting...")
+          console.log("ws closed, retrying in 2 seconds")
+          dom.setTimeout(() => setupApiConnection, 2000)
+        }
+        upstream.onerror = { ce: ErrorEvent =>
+          connectionAlert.warning("Reconnecting...")
+          console.log("ws error, retrying in 2 seconds")
+          dom.setTimeout(() => setupApiConnection, 2000)
+        }
+      }
+
+      connection.onFailure {
+        case _ => connectionAlert.error(s"Connection failed after $maxRetries retries. Try reloading the page.")
+      }
     }
 
-    selectedActors.triggerLater {
-      console.log(s"Will send ObserveActors: ${selectedActors.now.mkString("[", ",", "]")}")
-      import upickle.default._
-      upstream.send(write(ObserveActors(selectedActors.now)))
-    }
+    setupApiConnection
 
-    delayMillis.triggerLater {
-      import scala.concurrent.duration._
-      upstream.send(write(SetReceiveDelay(delayMillis.now.millis)))
-    }
-
-    userIsEnabled.triggerLater {
-      upstream.send(write(SetEnabled(userIsEnabled.now)))
-    }
-
+    document.body.appendChild(connectionAlert.render)
     document.querySelector("#actorselection").appendChild(actorSelector.render)
     document.querySelector("#messagefiltering").appendChild(messageFilter.render)
     document.querySelector("#messagelist").appendChild(messagesPanel.render)
