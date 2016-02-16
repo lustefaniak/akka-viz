@@ -1,6 +1,7 @@
 package akka.viz.events
 
 import akka.actor._
+import akka.viz.events.types.EventActorRef
 
 import scala.util.Try
 
@@ -21,15 +22,8 @@ case class AllowedClasses(names: Set[String]) extends (Any => Boolean) {
   }
 }
 
-case class ActorRefFilter(actors: Set[String]) extends (ActorRef => Boolean) {
-  @transient private val paths = actors.flatMap {
-    path =>
-      Try {
-        ActorPath.fromString(path)
-      }.toOption
-  }
-
-  override def apply(v1: ActorRef): Boolean = {
-    paths(v1.path)
+case class ActorRefFilter(actors: Set[String]) extends (EventActorRef => Boolean) {
+  override def apply(v1: EventActorRef): Boolean = {
+    actors(v1.path)
   }
 }

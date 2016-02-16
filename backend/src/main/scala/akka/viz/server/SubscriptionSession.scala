@@ -1,12 +1,11 @@
 package akka.viz.server
 
-import akka.actor.ActorRef
 import akka.viz.events.types._
 import akka.viz.events.{ActorRefFilter, AllowedClasses}
 
 trait SubscriptionSession {
 
-  case class SubscriptionSettings(actorEventFilter: ActorRef => Boolean, messageFilter: Any => Boolean) {
+  case class SubscriptionSettings(actorEventFilter: EventActorRef => Boolean, messageFilter: Any => Boolean) {
     def eventAllowed(event: BackendEvent): Boolean = {
       event match {
         case r: ReceivedWithId      => actorEventFilter(r.actorRef) && messageFilter(r.message)

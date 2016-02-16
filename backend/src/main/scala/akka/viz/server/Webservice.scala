@@ -7,7 +7,6 @@ import akka.http.scaladsl.server.Directives
 import akka.stream.scaladsl._
 import akka.stream.{Materializer, OverflowStrategy}
 import akka.viz.config.Config
-import akka.viz.events.Helpers.actorRefToString
 import akka.viz.events._
 import akka.viz.events.types._
 import akka.viz.protocol
@@ -30,6 +29,8 @@ object ApiMessages {
 }
 
 class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directives with SubscriptionSession {
+
+  implicit def eventActorRef2String(eventActorRef: EventActorRef):String = eventActorRef.path
 
   def route: Flow[HttpRequest, HttpResponse, Any] = get {
     pathSingleSlash {

@@ -2,8 +2,6 @@ import com.typesafe.sbt.SbtScalariform
 import com.typesafe.sbt.SbtScalariform.ScalariformKeys
 import scalariform.formatter.preferences._
 
-cancelable in Global := true
-
 lazy val commonSettings: Seq[sbt.Setting[_]] = SbtScalariform.defaultScalariformSettings ++ Seq(
   ScalariformKeys.preferences := ScalariformKeys.preferences.value
     .setPreference(AlignSingleLineCaseStatements, true)
@@ -88,9 +86,36 @@ lazy val monitoring =
     .disablePlugins(SbtScalariform, RevolverPlugin)
     .enablePlugins(GitVersioning)
     .settings(commonSettings)
+    .dependsOn(api, backend, events, `akka-aspects`)
+
+lazy val events =
+  (project in file("events"))
+    .disablePlugins(SbtScalariform, RevolverPlugin)
+    .enablePlugins(GitVersioning)
+    .settings(commonSettings)
+
+lazy val `akka-aspects` =
+  (project in file("akka-aspects"))
+    .disablePlugins(SbtScalariform, RevolverPlugin)
+    .enablePlugins(GitVersioning)
+    .settings(commonSettings)
     .settings(aspectjSettings)
     .settings(
-      fork := true,
+      libraryDependencies += "com.typesafe.akka" %% "akka-actor" % "2.3.12",
+      AspectjKeys.compileOnly in Aspectj := true,
+      AspectjKeys.outXml in Aspectj := false,
+      products in Compile <++= products in Aspectj
+    )
+    .dependsOn(api, events, backend)
+
+lazy val backend =
+  (project in file("backend"))
+    .disablePlugins(SbtScalariform, RevolverPlugin)
+    .enablePlugins(GitVersioning)
+    .settings(commonSettings)
+    .settings(aspectjSettings)
+    .settings(
+      unmanagedSourceDirectories in Compile += baseDirectory.value / ".." / "shared" / "src" / "main" / "scala",
       addCompilerPlugin("org.scalamacros" % "paradise" % "2.0.1" cross CrossVersion.full),
       libraryDependencies += "com.wacai" %% "config-annotation" % "0.3.4" % "compile",
       libraryDependencies += "org.clapper" %% "classutil" % "1.0.6",
@@ -101,13 +126,10 @@ lazy val monitoring =
           .map((f1, f2, f3) => {
             Seq(f1.data, f2.data, f3)
           }),
-      watchSources <++= (watchSources in frontend),
-      AspectjKeys.compileOnly in Aspectj := true,
-      AspectjKeys.outXml in Aspectj := false,
-      products in Compile <++= products in Aspectj,
-      unmanagedSourceDirectories in Compile += baseDirectory.value / ".." / "shared" / "src" / "main" / "scala"
+      watchSources <++= (watchSources in frontend)
     )
-    .dependsOn(api)
+    .dependsOn(api, events)
+
 
 lazy val demo =
   (project in file("demo"))

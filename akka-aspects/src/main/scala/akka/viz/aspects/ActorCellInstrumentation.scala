@@ -3,6 +3,7 @@ package akka.viz.aspects
 import akka.actor.SupervisorStrategy.Directive
 import akka.actor._
 import akka.dispatch.MessageDispatcher
+import akka.viz.Helpers
 import akka.viz.config.Config
 import akka.viz.events.EventSystem
 import akka.viz.events.types._
@@ -11,6 +12,8 @@ import org.aspectj.lang.annotation._
 
 @Aspect
 class ActorCellInstrumentation {
+
+  import Helpers._
 
   private val internalSystemName = Config.internalSystemName
 
@@ -81,7 +84,7 @@ class ActorCellInstrumentation {
   @After("handleFailure(strategy, context, child, cause, decision)")
   def captureHandleFailure(strategy: SupervisorStrategy, context: ActorContext, child: ActorRef, cause: Throwable, decision: Directive): Unit = {
     if (context.system.name != internalSystemName) {
-      EventSystem.report(ActorFailure(child, cause, decision))
+      EventSystem.report(ActorFailure(child, cause, decision.toString))
     }
   }
 

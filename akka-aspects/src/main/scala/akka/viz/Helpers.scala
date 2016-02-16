@@ -1,12 +1,19 @@
-package akka.viz.events
+package akka.viz
 
 import akka.actor.ActorRef
+import akka.viz.events.types.EventActorRef
 
 trait Helpers {
   implicit def actorRefToString(ar: ActorRef): String = {
     val path = ar.path.toSerializationFormat
     val idPos = path.indexOf('#')
     if (idPos >= 0) path.substring(0, idPos) else path
+  }
+
+  implicit def actorRefToEventActorRef(ar: ActorRef): EventActorRef = {
+    val path = ar.path.toSerializationFormat
+    val idPos = path.indexOf('#')
+    EventActorRef(if (idPos >= 0) path.substring(0, idPos) else path)
   }
 
   implicit class IsUserActorRef(underlying: ActorRef) {
