@@ -21,7 +21,8 @@ class ActorCellInstrumentation {
   def message(jp: JoinPoint, msg: Any, me: ActorCell) {
     if (me.system.name != internalSystemName) {
       Thread.sleep(EventSystem.receiveDelay.toMillis)
-      EventSystem.report(Received(me.sender(), me.self, msg))
+      val canHandle = me.actor.receive.isDefinedAt(msg)
+      EventSystem.report(Received(me.sender(), me.self, msg, canHandle))
       EventSystem.report(MailboxStatus(me.self, me.mailbox.numberOfMessages))
     }
   }
@@ -84,5 +85,4 @@ class ActorCellInstrumentation {
       EventSystem.report(ActorFailure(child, cause, decision))
     }
   }
-
 }
