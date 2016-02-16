@@ -18,6 +18,7 @@ lazy val commonSettings: Seq[sbt.Setting[_]] = SbtScalariform.defaultScalariform
   scalaVersion := "2.11.7",
   homepage := Some(url("https://github.com/blstream/akka-viz")),
   description := "A visual debugger for Akka actor systems",
+  publishMavenStyle := true,
   pomExtra :=
     <scm>
       <url>git@github.com:blstream/akka-viz.git</url>
@@ -111,12 +112,12 @@ lazy val `akka-aspects` =
 
 lazy val backend =
   (project in file("backend"))
-    .settings(packageBin := assembly.value)
     .disablePlugins(SbtScalariform, RevolverPlugin)
     .enablePlugins(GitVersioning)
     .settings(commonSettings)
     .settings(inConfig(Aspectj)(defaultAspectjSettings))
     .settings(
+      exportJars := true,
       unmanagedSourceDirectories in Compile += baseDirectory.value / ".." / "shared" / "src" / "main" / "scala",
       addCompilerPlugin("org.scalamacros" % "paradise" % "2.0.1" cross CrossVersion.full),
       libraryDependencies += "com.wacai" %% "config-annotation" % "0.3.4" % "compile",
@@ -137,7 +138,7 @@ lazy val backend =
         ShadeRule.rename("grizzled.**" -> "shadegrizzled.@1").inAll,
         ShadeRule.rename("com.typesafe.**" -> "shadeconfig.@1").inAll
       ),
-      assemblyJarName in assembly <<= (name, version) map { (name, version) => name + "_2.11-" +version + ".jar" }
+      packagedArtifact in(Compile, packageBin) <<= ((artifact in(Compile, packageBin)), assembly) map { (a, j) => (a, j) }
     )
     .dependsOn(api, events)
 
@@ -172,6 +173,7 @@ lazy val plugin = (project in file("plugin"))
     crossScalaVersions := Seq("2.10.6"),
     sbtPlugin := true,
     buildInfoPackage := "akkaviz.sbt",
+    publishMavenStyle := false,
 
     addSbtPlugin("com.typesafe.sbt" % "sbt-aspectj" % "0.10.4"),
 
