@@ -1,7 +1,7 @@
 package akka.viz.frontend
 
 import akka.viz.frontend.FrontendUtil._
-import akka.viz.frontend.components.{ActorSelector, MessageFilter, MessagesPanel, OnOffPanel}
+import akka.viz.frontend.components._
 import akka.viz.protocol._
 import org.scalajs.dom
 import org.scalajs.dom.raw.{ErrorEvent, CloseEvent, MessageEvent}
@@ -126,6 +126,7 @@ object FrontendApp extends JSApp with Persistence
   val messagesPanel = new MessagesPanel(selectedActors)
   val userIsEnabled = Var(false)
   val onOffPanel = new OnOffPanel(_eventsEnabled, userIsEnabled)
+  val connectionAlert = new Alert()
 
   @JSExport("toggleActor")
   def toggleActor(name: String) = actorSelector.toggleActor(name)
@@ -133,11 +134,15 @@ object FrontendApp extends JSApp with Persistence
   def main(): Unit = {
 
     def setupApiConnection: Unit = {
+
+
       ApiConnection(
         webSocketUrl("stream"),
         handleDownstream(messagesPanel.messageReceived),
         maxRetries = 10
       ).foreach { upstream => // todo warn user if couldn't establish connection at all
+        connectionAlert.success("Connected!")
+        connectionAlert.fadeOut()
 
         selectedMessages.triggerLater {
           console.log(s"Will send allowedClasses: ${selectedMessages.now.mkString("[", ",", "]")}")
@@ -162,10 +167,12 @@ object FrontendApp extends JSApp with Persistence
 
         // todo warn user when retry is in progress
         upstream.onclose = { ce: CloseEvent =>
+          connectionAlert.warning("Reconnecting...")
           console.log("ws closed, retrying in 2 seconds")
           dom.setTimeout(() => setupApiConnection, 2000)
         }
         upstream.onerror = { ce: ErrorEvent =>
+          connectionAlert.warning("Reconnecting...")
           console.log("ws error, retrying in 2 seconds")
           dom.setTimeout(() => setupApiConnection, 2000)
         }
@@ -174,6 +181,7 @@ object FrontendApp extends JSApp with Persistence
 
     setupApiConnection
 
+    document.body.appendChild(connectionAlert.render)
     document.querySelector("#actorselection").appendChild(actorSelector.render)
     document.querySelector("#messagefiltering").appendChild(messageFilter.render)
     document.querySelector("#messagelist").appendChild(messagesPanel.render)
