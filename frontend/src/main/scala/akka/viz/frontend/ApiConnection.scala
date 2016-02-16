@@ -37,7 +37,7 @@ object ApiConnection {
     wsFuture
       .recoverWith {
       case e: JavaScriptException if maxRetries > 0 =>
-        dom.console.log(s"failed to establish connection to $url, retrying ${maxRetries - 1} more times")
+        dom.console.log(s"failed to establish connection to $url, retrying $maxRetries more times")
         apply(url, fn, maxRetries - 1)
     }
 
