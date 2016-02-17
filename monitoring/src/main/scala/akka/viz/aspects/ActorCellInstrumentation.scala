@@ -21,8 +21,6 @@ class ActorCellInstrumentation {
   def message(jp: JoinPoint, msg: Any, me: ActorCell) {
     if (me.system.name != internalSystemName) {
       Thread.sleep(EventSystem.receiveDelay.toMillis)
-      val canHandle = me.actor.receive.isDefinedAt(msg)
-      EventSystem.report(Received(me.sender(), me.self, msg, canHandle))
       EventSystem.report(MailboxStatus(me.self, me.mailbox.numberOfMessages))
     }
   }
@@ -82,6 +80,17 @@ class ActorCellInstrumentation {
   def captureHandleFailure(strategy: SupervisorStrategy, context: ActorContext, child: ActorRef, cause: Throwable, decision: Directive): Unit = {
     if (context.system.name != internalSystemName) {
       EventSystem.report(ActorFailure(child, cause, decision))
+    }
+  }
+
+  @Pointcut("execution(* akka.actor.Actor.aroundReceive(..)) && this(actor) && args(receive, msg)")
+  def aroundReceivePointcut(actor: Actor, receive: Actor.Receive, msg: Any): Unit = {}
+
+  @Before("aroundReceivePointcut(actor, receive, msg)")
+  def beforeAroundReceive(actor: Actor, receive: Actor.Receive, msg: Any): Unit = {
+    if (actor.context.system.name != internalSystemName) {
+      val canHandle = receive.isDefinedAt(msg)
+      EventSystem.report(Received(actor.sender(), actor.self, msg, canHandle))
     }
   }
 }
