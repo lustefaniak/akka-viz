@@ -28,7 +28,7 @@ object FrontendApp extends JSApp with Persistence
 
   private val _actorClasses: mutable.Map[String, Var[js.UndefOr[String]]] = mutable.Map()
   private val _currentActorState = mutable.Map[String, Var[js.UndefOr[String]]]()
-  private val _eventsEnabled = Var(false)
+  private val _eventsEnabled = Var[Option[Boolean]](None)
 
   def actorClasses(actor: String) = _actorClasses.getOrElseUpdate(actor, Var(js.undefined))
 
@@ -71,10 +71,13 @@ object FrontendApp extends JSApp with Persistence
         delayMillis() = duration.toMillis.toInt
 
       case ReportingEnabled =>
-        _eventsEnabled() = true
+        if(_eventsEnabled.now.isEmpty) userIsEnabled() = true
+        _eventsEnabled() = Some(true)
+
 
       case ReportingDisabled =>
-        _eventsEnabled() = false
+        if(_eventsEnabled.now.isEmpty) userIsEnabled() = false
+        _eventsEnabled() = Some(false)
 
       case Killed(ref) =>
         addActorsToSeen(ref)

@@ -1,30 +1,40 @@
 package akka.viz.frontend.components
 
 import akka.viz.frontend.PrettyJson
-import org.scalajs.dom.html._
+import org.scalajs.dom.html.{Option => DomOption, _}
 import org.scalajs.dom.{Element => domElement, Event}
-import rx.Var
+import rx.{Ctx, Rx, Var}
 
 import scalatags.JsDom.all._
 
-class OnOffPanel(serverIsEnabled: Var[Boolean], userIsEnabled: Var[Boolean]) extends Component with PrettyJson {
+class OnOffPanel(serverIsEnabled: Var[Option[Boolean]], userIsEnabled: Var[Boolean])(implicit ctx: Ctx.Owner) extends Component with PrettyJson {
 
   lazy val messagePanelTitle = div(cls := "panel-heading", id := "messagespaneltitle", "Toggle reporting").render
 
   lazy val lbl = span().render
   lazy val inp = input(tpe := "checkbox").render
-  serverIsEnabled.trigger {
-    inp.checked = serverIsEnabled.now
-    if (serverIsEnabled.now) {
-      lbl.innerHTML = "Monitoring <b>ENABLED</b> on the Server"
-    } else {
-      lbl.innerHTML = "Monitoring <b>DISABLED</b> on the Server"
-    }
-  }
+
   inp.onchange = (d: Event) => {
     userIsEnabled() = inp.checked
-    lbl.innerHTML = "Awaiting Server confirmation"
   }
+
+  val awaitingConfirmation = Rx((serverIsEnabled(), userIsEnabled())).foreach {
+    case (None, _) =>
+      lbl.innerHTML = "Awaiting Server status"
+      lbl.disabled = true
+    case (Some(srv), user) if srv != user =>
+      lbl.innerHTML = "Awaiting Server confirmation"
+      lbl.disabled = true
+    case (Some(srv), _) =>
+      inp.checked = srv
+      lbl.disabled = false
+      if (srv) {
+        lbl.innerHTML = "Monitoring <b>ENABLED</b> on the Server"
+      } else {
+        lbl.innerHTML = "Monitoring <b>DISABLED</b> on the Server"
+      }
+  }
+
 
   lazy val stateBtn = div(
     `class` := "togglebutton",
