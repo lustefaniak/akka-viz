@@ -52,7 +52,7 @@ lazy val akkaviz =
     .disablePlugins(RevolverPlugin)
     .enablePlugins(GitVersioning)
     .settings(commonSettings)
-    .aggregate(api, monitoring, plugin, events, backend, `akka-aspects`)
+    .aggregate(monitoring, plugin, events, backend, `akka-aspects`)
 
 lazy val frontend =
   (project in file("frontend"))
@@ -80,7 +80,8 @@ lazy val api =
     .settings(commonSettings)
     .settings(
       //FIXME: don't use AST from Js.Value, define one inside api module
-      libraryDependencies += "com.lihaoyi" %%% "upickle" % Dependencies.Versions.upickle
+      libraryDependencies += "com.lihaoyi" %%% "upickle" % Dependencies.Versions.upickle,
+        exportJars := true
     )
 
 lazy val monitoring =
@@ -95,6 +96,7 @@ lazy val events =
     .disablePlugins(SbtScalariform, RevolverPlugin)
     .enablePlugins(GitVersioning)
     .settings(commonSettings)
+      .settings(exportJars := true)
 
 lazy val `akka-aspects` =
   (project in file("akka-aspects"))
@@ -132,13 +134,37 @@ lazy val backend =
       watchSources <++= (watchSources in frontend),
       assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeScala = false),
       assemblyShadeRules in assembly := Seq(
-        ShadeRule.zap("com.wacai.**").inAll,
         ShadeRule.zap("jline.**").inAll,
+        ShadeRule.rename("com.wacai.**" -> "shadewacai.@1").inAll,
         ShadeRule.rename("akka.**" -> "shadeakka.@1").inAll,
         ShadeRule.rename("grizzled.**" -> "shadegrizzled.@1").inAll,
         ShadeRule.rename("com.typesafe.**" -> "shadeconfig.@1").inAll
       ),
-      packagedArtifact in(Compile, packageBin) <<= ((artifact in(Compile, packageBin)), assembly) map { (a, j) => (a, j) }
+      packagedArtifact in(Compile, packageBin) <<= ((artifact in(Compile, packageBin)), assembly) map { (a, j) => (a, j) },
+      {
+        import scala.xml.{Node => XmlNode, NodeSeq => XmlNodeSeq, _}
+        import scala.xml.transform.{RewriteRule, RuleTransformer}
+
+        def omitDep(e:Elem): XmlNodeSeq = {
+          val organization = e.child.filter(_.label == "groupId").flatMap(_.text).mkString
+          val artifact = e.child.filter(_.label == "artifactId").flatMap(_.text).mkString
+          val version = e.child.filter(_.label == "version").flatMap(_.text).mkString
+          Comment(s"dependency $organization#$artifact;$version has been omitted")
+        }
+
+        pomPostProcess := { (node: XmlNode) =>
+          new RuleTransformer(new RewriteRule {
+            override def transform(node: XmlNode): XmlNodeSeq = node match {
+              case e: Elem if e.label == "dependency" && e.child.exists(child => child.label == "scope" && (child.text == "provided" || child.text == "test")) =>
+                omitDep(e)
+              case e: Elem if e.label == "dependency" && e.child.exists(child => child.label == "groupId" && child.text == "com.typesafe.akka") =>
+                omitDep(e)
+              case _ => node
+            }
+          }).transform(node).head
+        }
+      }
+
     )
     .dependsOn(api, events)
 
