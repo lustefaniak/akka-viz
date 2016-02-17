@@ -20,7 +20,6 @@ class EventPublisherActor extends Actor with ActorLogging {
     case re @ ReportingEnabled =>
       broadcast(re)
       context.unbecome()
-
   }
 
   def monitoringReceive: Receive = collectForSnapshot andThen {

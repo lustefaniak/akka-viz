@@ -1,6 +1,7 @@
 package akka.viz.events
 
 import akka.actor.{SupervisorStrategy, Actor, ActorRef}
+import akka.dispatch.ControlMessage
 
 import scala.concurrent.duration.Duration
 
@@ -13,6 +14,8 @@ package object types {
   sealed trait InternalEvent
 
   sealed trait BackendEvent
+
+  sealed trait EventPublisherControlEvent extends ControlMessage { this: InternalEvent => }
 
   case class Received(sender: ActorRef, actorRef: ActorRef, message: Any) extends InternalEvent with FilteredActorEvent
 
@@ -46,9 +49,9 @@ package object types {
     decision: SupervisorStrategy.Directive
   ) extends InternalEvent with BackendEvent
 
-  case object ReportingEnabled extends InternalEvent with BackendEvent
+  case object ReportingEnabled extends InternalEvent with BackendEvent with EventPublisherControlEvent
 
-  case object ReportingDisabled extends InternalEvent with BackendEvent
+  case object ReportingDisabled extends InternalEvent with BackendEvent with EventPublisherControlEvent
 
   case class SnapshotAvailable(snapshot: LightSnapshot) extends BackendEvent
 
