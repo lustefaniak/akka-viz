@@ -41,7 +41,30 @@ lazy val commonSettings: Seq[sbt.Setting[_]] = SbtScalariform.defaultScalariform
           <id>JJag</id>
           <url>https://github.com/JJag</url>
         </developer>
-      </developers>
+      </developers>,
+  {
+    import scala.xml.{Node => XmlNode, NodeSeq => XmlNodeSeq, _}
+    import scala.xml.transform.{RewriteRule, RuleTransformer}
+
+    def omitDep(e:Elem): XmlNodeSeq = {
+      val organization = e.child.filter(_.label == "groupId").flatMap(_.text).mkString
+      val artifact = e.child.filter(_.label == "artifactId").flatMap(_.text).mkString
+      val version = e.child.filter(_.label == "version").flatMap(_.text).mkString
+      Comment(s"dependency $organization#$artifact;$version has been omitted")
+    }
+
+    pomPostProcess := { (node: XmlNode) =>
+      new RuleTransformer(new RewriteRule {
+        override def transform(node: XmlNode): XmlNodeSeq = node match {
+          case e: Elem if e.label == "dependency" && e.child.exists(child => child.label == "scope" && (child.text == "provided" || child.text == "test")) =>
+            omitDep(e)
+          //case e: Elem if e.label == "dependency" && e.child.exists(child => child.label == "groupId" && child.text == "com.typesafe.akka") =>
+          //  omitDep(e)
+          case _ => node
+        }
+      }).transform(node).head
+    }
+  }
 ) ++ useJGit ++ bintraySettings
 
 
