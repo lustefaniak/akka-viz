@@ -8,8 +8,13 @@ class Player extends Actor with ActorLogging {
 
   var nextGuy: ActorRef = _
 
-  override def receive = {
+  context.become(playerBehaviour)
 
+  override def receive = {
+    case _ => ???
+  }
+
+  def playerBehaviour: Receive = {
     case Next(ref) =>
       nextGuy = ref
 
