@@ -9,7 +9,10 @@ import scalatags.JsDom.all._
 
 
 class Alert extends Component {
-  lazy val connectionAlert = div(cls:="alert fade in", id:="connectionStatus", "Connecting...", position.fixed).render
+  lazy val connectionAlert = div("Connecting...",
+    cls:="alert fade in",
+    id:="connectionStatus",
+    position.fixed, right := 0.px).render
 
   override def render: Element = connectionAlert
 

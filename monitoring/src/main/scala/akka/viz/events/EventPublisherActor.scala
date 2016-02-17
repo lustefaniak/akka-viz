@@ -14,7 +14,19 @@ class EventPublisherActor extends Actor with ActorLogging {
   var snapshot: LightSnapshot = LightSnapshot()
   var snapshotQueue = immutable.Queue.empty[BackendEvent]
 
-  override def receive = collectForSnapshot andThen {
+  override def receive = monitoringReceive
+
+  def disabledReceive: Receive = {
+    case re @ ReportingEnabled =>
+      broadcast(re)
+      context.unbecome()
+  }
+
+  def monitoringReceive: Receive = collectForSnapshot andThen {
+    case rd @ ReportingDisabled =>
+      broadcast(rd)
+      context.become(disabledReceive)
+
     case r: ReceivedWithId =>
       trackMsgType(r.message)
       broadcast(r)

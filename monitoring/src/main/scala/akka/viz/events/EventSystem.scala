@@ -14,7 +14,8 @@ object EventSystem {
   private implicit val timeout = Timeout(100.millis)
   private implicit val system = ActorSystem(Config.internalSystemName)
 
-  private val publisher = system.actorOf(Props(classOf[EventPublisherActor]))
+  private val publisher = system.actorOf(Props(classOf[EventPublisherActor]).withDispatcher(
+    "control-aware-dispatcher"))
   private val globalSettings = system.actorOf(Props(classOf[GlobalSettingsActor]))
   private val autoStartReporting = Config.autoStartReporting
 
