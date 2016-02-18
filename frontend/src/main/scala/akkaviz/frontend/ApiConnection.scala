@@ -3,8 +3,9 @@ package akkaviz.frontend
 import org.scalajs.dom
 import org.scalajs.dom.raw._
 
+import scala.concurrent.duration._
 import scala.concurrent.{Promise, _}
-import scala.scalajs.js.JavaScriptException
+import scala.scalajs.js.{JavaScriptException, timers}
 
 trait Upstream {
   def send(msg: String): Unit
@@ -22,7 +23,9 @@ object ApiConnection {
     val wsPromise = Promise[WebSocket]()
     val newWs = createWebsocket
     newWs.onclose = { ce: CloseEvent =>
-      dom.setTimeout(() => wsPromise.failure(new JavaScriptException()), 2000)
+      timers.setTimeout(2.seconds) {
+        wsPromise.failure(new JavaScriptException())
+      }
     }
     newWs.onopen = { e: Event =>
       dom.console.log("API websocket connection established")

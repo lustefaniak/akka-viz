@@ -1,9 +1,9 @@
 package akkaviz.frontend.components
 
-import org.scalajs.dom
 import org.scalajs.dom.html.Element
 
 import scala.concurrent.duration._
+import scala.scalajs.js.timers
 import scalatags.JsDom.all._
 
 class Alert extends Component {
@@ -41,6 +41,8 @@ class Alert extends Component {
     connectionAlert.classList.add("in")
   }
 
-  def fadeOut(after: Duration = 2.seconds) = dom.setTimeout(() => connectionAlert.classList.remove("in"), after.toMillis)
+  def fadeOut(after: FiniteDuration = 2.seconds) = timers.setTimeout(after) {
+    connectionAlert.classList.remove("in")
+  }
 
 }

@@ -70,7 +70,7 @@ lazy val frontend =
       persistLauncher in Compile := true,
       persistLauncher in Test := false,
       libraryDependencies ++= Seq(
-        "org.scala-js" %%% "scalajs-dom" % "0.8.2",
+        "org.scala-js" %%% "scalajs-dom" % "0.9.0",
         "com.lihaoyi" %%% "upickle" % upickleVersion,
         "com.lihaoyi" %%% "scalarx" % "0.3.0",
         "com.lihaoyi" %%% "scalatags" % "0.5.4",
