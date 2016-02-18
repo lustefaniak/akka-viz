@@ -4,6 +4,10 @@ import scalariform.formatter.preferences._
 
 cancelable in Global := true
 
+val upickleVersion = "0.3.6"
+val akkaVersion = "2.4.2"
+val scalatestVersion = "3.0.0-M15"
+
 lazy val commonSettings: Seq[sbt.Setting[_]] = SbtScalariform.defaultScalariformSettings ++ Seq(
   ScalariformKeys.preferences := ScalariformKeys.preferences.value
     .setPreference(AlignSingleLineCaseStatements, true)
@@ -67,11 +71,11 @@ lazy val frontend =
       persistLauncher in Test := false,
       libraryDependencies ++= Seq(
         "org.scala-js" %%% "scalajs-dom" % "0.8.2",
-        "com.lihaoyi" %%% "upickle" % Dependencies.Versions.upickle,
+        "com.lihaoyi" %%% "upickle" % upickleVersion,
         "com.lihaoyi" %%% "scalarx" % "0.3.0",
         "com.lihaoyi" %%% "scalatags" % "0.5.4",
         "org.querki" %%% "jquery-facade" % "0.11",
-        "org.scalatest" %%% "scalatest" % Dependencies.Versions.scalatest % "test"
+        "org.scalatest" %%% "scalatest" % scalatestVersion % "test"
       ),
       jsDependencies += RuntimeDOM,
       unmanagedSourceDirectories in Compile += baseDirectory.value / ".." / "shared" / "src" / "main" / "scala",
@@ -85,8 +89,9 @@ lazy val api =
     .disablePlugins(RevolverPlugin)
     .settings(commonSettings)
     .settings(
+      exportJars := true,
       //FIXME: don't use AST from Js.Value, define one inside api module
-      libraryDependencies += "com.lihaoyi" %%% "upickle" % Dependencies.Versions.upickle
+      libraryDependencies += "com.lihaoyi" %% "upickle" % upickleVersion
     )
 
 lazy val monitoring =
@@ -100,9 +105,10 @@ lazy val monitoring =
       addCompilerPlugin("org.scalamacros" % "paradise" % "2.0.1" cross CrossVersion.full),
       libraryDependencies += "com.wacai" %% "config-annotation" % "0.3.4" % "compile",
       libraryDependencies += "org.clapper" %% "classutil" % "1.0.6",
-      libraryDependencies += "com.lihaoyi" %%% "upickle" % Dependencies.Versions.upickle,
+      libraryDependencies += "com.lihaoyi" %%% "upickle" % upickleVersion,
+      libraryDependencies += "com.typesafe.akka" %% "akka-http-experimental" % akkaVersion, // FIXME: shadow that dependency and hide it
+      libraryDependencies += "org.scalatest" %%% "scalatest" % scalatestVersion % "test",
       scalacOptions += "-Xmacro-settings:conf.output.dir=" + baseDirectory.value / "src/main/resources/",
-      libraryDependencies ++= Dependencies.backend,
       (resourceGenerators in Compile) <+=
         (fastOptJS in Compile in frontend, packageScalaJSLauncher in Compile in frontend, packageJSDependencies in Compile in frontend)
           .map((f1, f2, f3) => {
@@ -128,7 +134,7 @@ lazy val demo =
       javaOptions <++= AspectjKeys.weaverOptions in Aspectj,
       javaOptions in reStart <++= AspectjKeys.weaverOptions in Aspectj,
       libraryDependencies ++= Seq(
-        "com.typesafe.akka" %% "akka-actor" % Dependencies.Versions.akka,
+        "com.typesafe.akka" %% "akka-actor" % akkaVersion,
         "io.spray" %% "spray-can" % "1.3.3",
         "io.spray" %% "spray-routing" % "1.3.3"
       )

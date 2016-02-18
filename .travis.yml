@@ -24,4 +24,4 @@ notifications:
     - lukasz.stefaniak@blstream.com
 
 after_success:
-  - if [ -n "$TRAVIS_TAG" -o "$TRAVIS_BRANCH" == "master" ]; then sbt publish; fi
+  - if [ "${TRAVIS_PULL_REQUEST}" = "false" ] && [ -n "$TRAVIS_TAG" -o "$TRAVIS_BRANCH" == "master" ]; then sbt publish; fi
