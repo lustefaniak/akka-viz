@@ -17,9 +17,9 @@ package object types {
 
   sealed trait EventPublisherControlEvent extends ControlMessage { this: InternalEvent => }
 
-  case class Received(sender: ActorRef, actorRef: ActorRef, message: Any) extends InternalEvent with FilteredActorEvent
+  case class Received(sender: ActorRef, actorRef: ActorRef, message: Any, handled: Boolean) extends InternalEvent with FilteredActorEvent
 
-  case class ReceivedWithId(eventId: Long, sender: ActorRef, actorRef: ActorRef, message: Any) extends BackendEvent with FilteredActorEvent
+  case class ReceivedWithId(eventId: Long, sender: ActorRef, actorRef: ActorRef, message: Any, handled: Boolean) extends BackendEvent with FilteredActorEvent
 
   case class Spawned(actorRef: ActorRef, parent: ActorRef) extends InternalEvent with BackendEvent
 

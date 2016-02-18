@@ -77,9 +77,9 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directi
   private implicit val actorRefToString = akka.viz.events.Helpers.actorRefToString _
 
   def internalToApi: Flow[BackendEvent, protocol.ApiServerMessage, Any] = Flow[BackendEvent].map {
-    case ReceivedWithId(eventId, sender, receiver, message) =>
+    case ReceivedWithId(eventId, sender, receiver, message, handled) =>
       //FIXME: decide if content of payload should be added to message
-      protocol.Received(eventId, sender, receiver, message.getClass.getName, Some(MessageSerialization.render(message)))
+      protocol.Received(eventId, sender, receiver, message.getClass.getName, Some(MessageSerialization.render(message)), handled)
     case AvailableMessageTypes(types) =>
       protocol.AvailableClasses(types.map(_.getName))
     case Spawned(ref, parent) =>

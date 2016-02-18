@@ -292,10 +292,16 @@ class MessagesPanel(selectedActors: Var[Set[String]]) extends Component with Pre
       `class` := "tgl",
       td(actorComponent(rcv.sender)),
       td(actorComponent(rcv.receiver)),
-      td(rcv.payloadClass),
+      td(rcv.payloadClass, if (!rcv.handled) unhandledIndicator else ""),
       onclick := toggleMessageDetails
     )
   }
+
+  val unhandledIndicator = span(
+    style := "color: orange; vertical-align: middle",
+    `class` := "glyphicon glyphicon-exclamation-sign",
+    title := "Unhandled message"
+  )
 
   selectedActors.trigger {
     if (selectedActors.now.isEmpty) {
