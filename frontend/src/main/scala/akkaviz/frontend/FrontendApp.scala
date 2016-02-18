@@ -3,7 +3,6 @@ package akkaviz.frontend
 import akkaviz.frontend.components._
 import akkaviz.protocol
 import akkaviz.protocol._
-import org.scalajs.dom
 import org.scalajs.dom.raw.{CloseEvent, ErrorEvent, MessageEvent, WebSocket}
 import org.scalajs.dom.{console, document}
 import rx._
@@ -11,10 +10,11 @@ import upickle.default._
 
 import scala.collection.mutable
 import scala.concurrent.Future
+import scala.concurrent.duration._
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
-import scala.scalajs.js.JSApp
 import scala.scalajs.js.annotation.JSExport
+import scala.scalajs.js.{JSApp, timers}
 import scalatags.JsDom.all._
 
 case class FsmTransition(fromStateClass: String, toStateClass: String)
@@ -147,6 +147,10 @@ object FrontendApp extends JSApp with Persistence
 
       val connection: Future[WebSocket] = ApiConnection(
         FrontendUtil.webSocketUrl("stream"),
+        upstream => {
+          upstream.send(write(SetAllowedMessages(selectedMessages.now)))
+          upstream.send(write(ObserveActors(selectedActors.now)))
+        },
         handleDownstream(messagesPanel.messageReceived),
         maxRetries
       )
@@ -179,12 +183,16 @@ object FrontendApp extends JSApp with Persistence
         upstream.onclose = { ce: CloseEvent =>
           connectionAlert.warning("Reconnecting...")
           console.log("ws closed, retrying in 2 seconds")
-          dom.setTimeout(() => setupApiConnection, 2000)
+          timers.setTimeout(2.seconds) {
+            setupApiConnection
+          }
         }
         upstream.onerror = { ce: ErrorEvent =>
           connectionAlert.warning("Reconnecting...")
           console.log("ws error, retrying in 2 seconds")
-          dom.setTimeout(() => setupApiConnection, 2000)
+          timers.setTimeout(2.seconds) {
+            setupApiConnection
+          }
         }
       }
 

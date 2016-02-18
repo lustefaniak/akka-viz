@@ -60,7 +60,7 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directi
         Nil
     }
       .scan(defaultSettings)(updateSettings)
-      .expand(r => Iterator.apply(r))
+      .expand(r => Iterator.continually(r))
 
     val out = wsIn.zipMat(eventSrc)((_, m) => m)
       .collect {

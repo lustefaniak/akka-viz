@@ -3,8 +3,9 @@ package akkaviz.frontend
 import org.scalajs.dom
 import org.scalajs.dom.raw._
 
+import scala.concurrent.duration._
 import scala.concurrent.{Promise, _}
-import scala.scalajs.js.JavaScriptException
+import scala.scalajs.js.{JavaScriptException, timers}
 
 trait Upstream {
   def send(msg: String): Unit
@@ -12,7 +13,7 @@ trait Upstream {
 
 object ApiConnection {
 
-  def apply(url: String, fn: MessageEvent => Unit, maxRetries: Int = 1)(implicit ec: ExecutionContext): Future[WebSocket] = {
+  def apply(url: String, onWsOpen: WebSocket => Unit, fn: MessageEvent => Unit, maxRetries: Int = 1)(implicit ec: ExecutionContext): Future[WebSocket] = {
 
     def createWebsocket: WebSocket = {
       val ws = new WebSocket(url)
@@ -22,11 +23,14 @@ object ApiConnection {
     val wsPromise = Promise[WebSocket]()
     val newWs = createWebsocket
     newWs.onclose = { ce: CloseEvent =>
-      dom.setTimeout(() => wsPromise.failure(new JavaScriptException()), 2000)
+      timers.setTimeout(2.seconds) {
+        wsPromise.failure(new JavaScriptException())
+      }
     }
     newWs.onopen = { e: Event =>
       dom.console.log("API websocket connection established")
       newWs.onmessage = fn
+      onWsOpen(newWs)
       wsPromise.success(newWs)
     }
 
@@ -36,7 +40,7 @@ object ApiConnection {
       .recoverWith {
         case e: JavaScriptException if maxRetries > 0 =>
           dom.console.log(s"failed to establish connection to $url, retrying $maxRetries more times")
-          apply(url, fn, maxRetries - 1)
+          apply(url, onWsOpen, fn, maxRetries - 1)
       }
 
   }
