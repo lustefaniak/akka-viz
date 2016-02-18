@@ -1,5 +1,6 @@
 package akka.viz
 
+import scala.collection.immutable.{List, Set}
 import scala.concurrent.duration.{Duration, FiniteDuration}
 
 package object protocol {
@@ -46,7 +47,12 @@ package object protocol {
 
   case object Ping extends ApiServerMessage
 
-  case class SnapshotAvailable(live: List[String], dead: List[String], children: Map[String, Set[String]], receivedFrom: Set[(String, String)]) extends ApiServerMessage
+  case class SnapshotAvailable(
+    live: List[String],
+    dead: List[String],
+    children: Map[String, Set[String]],
+    receivedFrom: Set[(String, String)]
+  ) extends ApiServerMessage
 
   sealed trait ApiClientMessage
 
@@ -56,7 +62,28 @@ package object protocol {
 
   case class SetEnabled(isEnabled: Boolean) extends ApiClientMessage
 
-  type SerializedActorPath = String
-  case class ObserveActors(actors: Set[SerializedActorPath]) extends ApiClientMessage
+  case class ObserveActors(actors: Set[String]) extends ApiClientMessage
+
+  object IO {
+
+    def readServer(json: String): ApiServerMessage = {
+      upickle.default.read[ApiServerMessage](json)
+    }
+
+    def readClient(json: String): ApiClientMessage = {
+
+      upickle.default.read[ApiClientMessage](json)
+    }
+
+    def write(msg: ApiServerMessage): String = {
+      upickle.default.write[ApiServerMessage](msg)
+    }
+
+    def write(msg: ApiClientMessage): String = {
+      upickle.default.write[ApiClientMessage](msg)
+    }
+
+  }
 
 }
+

@@ -35,7 +35,6 @@ class OnOffPanel(serverIsEnabled: Var[Option[Boolean]], userIsEnabled: Var[Boole
       }
   }
 
-
   lazy val stateBtn = div(
     `class` := "togglebutton",
     label(

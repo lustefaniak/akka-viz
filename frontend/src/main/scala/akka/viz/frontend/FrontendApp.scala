@@ -2,26 +2,26 @@ package akka.viz.frontend
 
 import akka.viz.frontend.FrontendUtil._
 import akka.viz.frontend.components._
+import akka.viz.protocol
 import akka.viz.protocol._
 import org.scalajs.dom
-import org.scalajs.dom.raw.{WebSocket, ErrorEvent, CloseEvent, MessageEvent}
+import org.scalajs.dom.raw.{CloseEvent, ErrorEvent, MessageEvent, WebSocket}
 import org.scalajs.dom.{console, document}
 import rx._
 import upickle.default._
 
 import scala.collection.mutable
 import scala.concurrent.Future
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
 import scala.scalajs.js.JSApp
 import scala.scalajs.js.annotation.JSExport
 import scalatags.JsDom.all._
 
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-
 case class FsmTransition(fromStateClass: String, toStateClass: String)
 
 object FrontendApp extends JSApp with Persistence
-  with MailboxDisplay with PrettyJson with ManipulationsUI {
+    with MailboxDisplay with PrettyJson with ManipulationsUI {
 
   val createdLinks = scala.collection.mutable.Set[String]()
   val graph = DOMGlobalScope.graph
@@ -37,7 +37,7 @@ object FrontendApp extends JSApp with Persistence
   val deadActors = mutable.Set[String]()
 
   private def handleDownstream(messageReceived: (Received) => Unit)(messageEvent: MessageEvent): Unit = {
-    val message: ApiServerMessage = ApiMessages.read(messageEvent.data.asInstanceOf[String])
+    val message: ApiServerMessage = protocol.IO.readServer(messageEvent.data.asInstanceOf[String])
 
     message match {
       case rcv: Received =>
@@ -71,12 +71,11 @@ object FrontendApp extends JSApp with Persistence
         delayMillis() = duration.toMillis.toInt
 
       case ReportingEnabled =>
-        if(_eventsEnabled.now.isEmpty) userIsEnabled() = true
+        if (_eventsEnabled.now.isEmpty) userIsEnabled() = true
         _eventsEnabled() = Some(true)
 
-
       case ReportingDisabled =>
-        if(_eventsEnabled.now.isEmpty) userIsEnabled() = false
+        if (_eventsEnabled.now.isEmpty) userIsEnabled() = false
         _eventsEnabled() = Some(false)
 
       case Killed(ref) =>
@@ -146,7 +145,6 @@ object FrontendApp extends JSApp with Persistence
   def main(): Unit = {
 
     def setupApiConnection: Unit = {
-
 
       val connection: Future[WebSocket] = ApiConnection(
         webSocketUrl("stream"),

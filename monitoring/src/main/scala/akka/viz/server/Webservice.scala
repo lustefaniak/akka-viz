@@ -7,27 +7,12 @@ import akka.http.scaladsl.server.Directives
 import akka.stream.scaladsl._
 import akka.stream.{Materializer, OverflowStrategy}
 import akka.viz.config.Config
-import akka.viz.events.Helpers.actorRefToString
 import akka.viz.events._
 import akka.viz.events.types._
 import akka.viz.protocol
 import akka.viz.serialization.MessageSerialization
 
 import scala.concurrent.duration._
-
-object ApiMessages {
-
-  import upickle.default._
-
-  def read(str: String): protocol.ApiClientMessage = {
-    upickle.default.read[protocol.ApiClientMessage](str)
-  }
-
-  def write(msg: protocol.ApiServerMessage): String = {
-    upickle.default.write(msg)
-  }
-
-}
 
 class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directives with SubscriptionSession {
 
@@ -50,7 +35,7 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directi
 
     val wsIn = Flow[Message].mapConcat[ChangeSubscriptionSettings] {
       case TextMessage.Strict(msg) =>
-        val command = ApiMessages.read(msg)
+        val command = protocol.IO.readClient(msg)
         command match {
           case protocol.SetAllowedMessages(classNames) =>
             system.log.debug(s"Set allowed messages to $classNames")
@@ -88,6 +73,9 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directi
     out
   }
 
+  @inline
+  private implicit val actorRefToString = akka.viz.events.Helpers.actorRefToString _
+
   def internalToApi: Flow[BackendEvent, protocol.ApiServerMessage, Any] = Flow[BackendEvent].map {
     case ReceivedWithId(eventId, sender, receiver, message) =>
       //FIXME: decide if content of payload should be added to message
@@ -122,7 +110,8 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directi
       protocol.ActorFailure(
         ref,
         cause.toString,
-        decision.toString)
+        decision.toString
+      )
     case ReportingDisabled =>
       protocol.ReportingDisabled
     case ReportingEnabled =>
@@ -132,7 +121,7 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directi
   }
 
   def eventSerialization: Flow[protocol.ApiServerMessage, String, Any] = Flow[protocol.ApiServerMessage].map {
-    msg => ApiMessages.write(msg)
+    msg => protocol.IO.write(msg)
   }
 
 }

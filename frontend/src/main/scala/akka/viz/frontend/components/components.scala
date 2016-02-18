@@ -1,8 +1,8 @@
 package akka.viz.frontend.components
 
+import akka.viz.frontend.DOMGlobalScope.$
 import akka.viz.frontend.FrontendUtil.actorComponent
 import akka.viz.frontend.{DOMGlobalScope, FrontendUtil, PrettyJson}
-import DOMGlobalScope.$
 import akka.viz.protocol.{ActorFailure, Received}
 import org.scalajs.dom.html._
 import org.scalajs.dom.raw.MouseEvent
@@ -11,7 +11,7 @@ import rx.{Rx, Var}
 
 import scala.collection.immutable.Queue
 import scala.scalajs.js
-import scala.scalajs.js.{ThisFunction1, ThisFunction0}
+import scala.scalajs.js.{ThisFunction0, ThisFunction1}
 import scala.util.Try
 import scalatags.JsDom.all._
 trait Component {
@@ -19,11 +19,11 @@ trait Component {
 }
 
 class ActorSelector(
-  seenActors: Var[Set[String]],
-  selectedActors: Var[Set[String]],
-  currentActorState: (String) => Var[js.UndefOr[String]],
-  actorClasses: String => Var[js.UndefOr[String]],
-  actorFailures: Var[Seq[ActorFailure]]
+    seenActors: Var[Set[String]],
+    selectedActors: Var[Set[String]],
+    currentActorState: (String) => Var[js.UndefOr[String]],
+    actorClasses: String => Var[js.UndefOr[String]],
+    actorFailures: Var[Seq[ActorFailure]]
 ) extends PrettyJson with Component {
 
   val popoverContent: ThisFunction0[domElement, Node] = (that: domElement) => {
@@ -57,7 +57,8 @@ class ActorSelector(
       id := "failures-table",
       `class` := "table",
       thead(
-        tr(th("Exception"), th("Supervisor decision"))),
+        tr(th("Exception"), th("Supervisor decision"))
+      ),
       tbody(
         for (f <- failures)
           yield tr(td(f.cause), td(f.decision))
@@ -77,7 +78,7 @@ class ActorSelector(
     )
 
   def actorExceptionsIndicator(actorName: String, failures: Seq[ActorFailure]): _root_.scalatags.JsDom.Modifier =
-    if(failures.isEmpty) ""
+    if (failures.isEmpty) ""
     else span(b(s"${failures.length} "), exceptionsButton(actorName, failures))
 
   val actorsObs = Rx.unsafe {
@@ -245,7 +246,6 @@ class MessagesPanel(selectedActors: Var[Set[String]]) extends Component with Pre
     else cell.innerHTML = ""
   }
 
-
   def displayMoreMessages: ThisFunction1[TableRow, MouseEvent, Unit] = { (row: TableRow, ev: MouseEvent) =>
     ev.preventDefault()
     val (portion, q) = (msgQueue.now.take(ShowMoreLength), msgQueue.now.drop(ShowMoreLength))
@@ -331,6 +331,4 @@ class MessagesPanel(selectedActors: Var[Set[String]]) extends Component with Pre
     ).render
   }
 }
-
-
 
