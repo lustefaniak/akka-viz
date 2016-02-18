@@ -23,18 +23,18 @@ case class FsmTransition(fromStateClass: String, toStateClass: String)
 object FrontendApp extends JSApp with Persistence
     with MailboxDisplay with PrettyJson with ManipulationsUI {
 
-  val createdLinks = scala.collection.mutable.Set[String]()
-  val graph = DOMGlobalScope.graph
+  private val createdLinks = js.Dictionary[Unit]()
+  private val graph = DOMGlobalScope.graph
 
-  private val _actorClasses: mutable.Map[String, Var[js.UndefOr[String]]] = mutable.Map()
-  private val _currentActorState = mutable.Map[String, Var[js.UndefOr[String]]]()
+  private val _actorClasses = js.Dictionary[Var[js.UndefOr[String]]]()
+  private val _currentActorState = js.Dictionary[Var[js.UndefOr[String]]]()
   private val _eventsEnabled = Var[Option[Boolean]](None)
 
-  def actorClasses(actor: String) = _actorClasses.getOrElseUpdate(actor, Var(js.undefined))
+  private def actorClasses(actor: String) = _actorClasses.getOrElseUpdate(actor, Var(js.undefined))
 
-  def currentActorState(actor: String) = _currentActorState.getOrElseUpdate(actor, Var(js.undefined))
+  private def currentActorState(actor: String) = _currentActorState.getOrElseUpdate(actor, Var(js.undefined))
 
-  val deadActors = mutable.Set[String]()
+  private val deadActors = mutable.Set[String]()
 
   private def handleDownstream(messageReceived: (Received) => Unit)(messageEvent: MessageEvent): Unit = {
     val message: ApiServerMessage = protocol.IO.readServer(messageEvent.data.asInstanceOf[String])
@@ -101,21 +101,21 @@ object FrontendApp extends JSApp with Persistence
 
   private def ensureGraphLink(sender: String, receiver: String): Unit = {
     val linkId = s"${sender}->${receiver}"
-    if (!createdLinks(linkId)) {
-      createdLinks.add(linkId)
+    if (!createdLinks.contains(linkId)) {
+      createdLinks.update(linkId, ())
       graph.beginUpdate()
       graph.addLink(sender, receiver, linkId)
       graph.endUpdate()
     }
   }
 
-  val seenActors = Var[Set[String]](Set())
-  val selectedActors = persistedVar[Set[String]](Set(), "selectedActors")
-  val seenMessages = Var[Set[String]](Set())
-  val selectedMessages = persistedVar[Set[String]](Set(), "selectedMessages")
-  val thrownExceptions = Var[Seq[ActorFailure]](Seq())
+  private val seenActors = Var[Set[String]](Set())
+  private val selectedActors = persistedVar[Set[String]](Set(), "selectedActors")
+  private val seenMessages = Var[Set[String]](Set())
+  private val selectedMessages = persistedVar[Set[String]](Set(), "selectedMessages")
+  private val thrownExceptions = Var[Seq[ActorFailure]](Seq())
 
-  val addNodesObs = seenActors.trigger {
+  private val addNodesObs = seenActors.trigger {
     seenActors.now.foreach {
       actor =>
         val isDead = deadActors.contains(actor)
@@ -130,17 +130,17 @@ object FrontendApp extends JSApp with Persistence
       seenActors() = newSeen
   }
 
-  val actorSelector = new ActorSelector(seenActors, selectedActors, currentActorState, actorClasses, thrownExceptions)
-  val messageFilter = new MessageFilter(seenMessages, selectedMessages, selectedActors)
-  val messagesPanel = new MessagesPanel(selectedActors)
-  val userIsEnabled = Var(false)
-  val onOffPanel = new OnOffPanel(_eventsEnabled, userIsEnabled)
-  val connectionAlert = new Alert()
+  private val actorSelector = new ActorSelector(seenActors, selectedActors, currentActorState, actorClasses, thrownExceptions)
+  private val messageFilter = new MessageFilter(seenMessages, selectedMessages, selectedActors)
+  private val messagesPanel = new MessagesPanel(selectedActors)
+  private val userIsEnabled = Var(false)
+  private val onOffPanel = new OnOffPanel(_eventsEnabled, userIsEnabled)
+  private val connectionAlert = new Alert()
 
   @JSExport("toggleActor")
   def toggleActor(name: String) = actorSelector.toggleActor(name)
 
-  val maxRetries = 10
+  private val maxRetries = 10
 
   def main(): Unit = {
 
