@@ -13,7 +13,7 @@ trait Upstream {
 
 object ApiConnection {
 
-  def apply(url: String, fn: MessageEvent => Unit, maxRetries: Int = 1)(implicit ec: ExecutionContext): Future[WebSocket] = {
+  def apply(url: String, onWsOpen: WebSocket => Unit, fn: MessageEvent => Unit, maxRetries: Int = 1)(implicit ec: ExecutionContext): Future[WebSocket] = {
 
     def createWebsocket: WebSocket = {
       val ws = new WebSocket(url)
@@ -30,6 +30,7 @@ object ApiConnection {
     newWs.onopen = { e: Event =>
       dom.console.log("API websocket connection established")
       newWs.onmessage = fn
+      onWsOpen(newWs)
       wsPromise.success(newWs)
     }
 
@@ -39,7 +40,7 @@ object ApiConnection {
       .recoverWith {
         case e: JavaScriptException if maxRetries > 0 =>
           dom.console.log(s"failed to establish connection to $url, retrying $maxRetries more times")
-          apply(url, fn, maxRetries - 1)
+          apply(url, onWsOpen, fn, maxRetries - 1)
       }
 
   }

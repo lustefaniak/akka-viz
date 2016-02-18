@@ -147,6 +147,10 @@ object FrontendApp extends JSApp with Persistence
 
       val connection: Future[WebSocket] = ApiConnection(
         FrontendUtil.webSocketUrl("stream"),
+        upstream => {
+          upstream.send(write(SetAllowedMessages(selectedMessages.now)))
+          upstream.send(write(ObserveActors(selectedActors.now)))
+        },
         handleDownstream(messagesPanel.messageReceived),
         maxRetries
       )
