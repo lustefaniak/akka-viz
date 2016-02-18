@@ -24,7 +24,7 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directi
       path("frontend-fastopt.js")(getFromResource("frontend-fastopt.js")) ~
       path("frontend-jsdeps.js")(getFromResource("frontend-jsdeps.js")) ~
       path("stream") {
-        handleWebsocketMessages(tracingEventsFlow.mapMaterializedValue(EventSystem.subscribe))
+        handleWebSocketMessages(tracingEventsFlow.mapMaterializedValue(EventSystem.subscribe))
 
       }
   } ~
@@ -60,7 +60,7 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directi
         Nil
     }
       .scan(defaultSettings)(updateSettings)
-      .expand(identity)(r => (r, r))
+      .expand(r => Iterator.apply(r))
 
     val out = wsIn.zipMat(eventSrc)((_, m) => m)
       .collect {
