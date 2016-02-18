@@ -229,7 +229,7 @@ class MessagesPanel(selectedActors: Var[Set[String]]) extends Component with Pre
   def messageReceived(rcv: Received): Unit = {
     val selected = selectedActors.now
     if (selected.contains(rcv.sender) || selected.contains(rcv.receiver)) {
-      if (messagesTbody.childNodes.length < 20) {
+      if (messagesTbody.childNodes.length < 50) {
         messagesTbody.appendChild(messageRow(rcv).render)
         lastDisplayed = rcv.eventId
       } else {
@@ -328,7 +328,7 @@ class MessagesPanel(selectedActors: Var[Set[String]]) extends Component with Pre
     div(
       cls := "panel panel-default",
       messagePanelHeader,
-      div(cls := "panel-body", id := "messagespanelbody", overflowY.scroll, overflowX.scroll, maxHeight := 500.px,
+      div(cls := "panel-body", id := "messagespanelbody", overflowY.scroll, overflowX.scroll, maxHeight := 400.px,
         table(
           cls := "table table-striped table-hover",
           thead(
