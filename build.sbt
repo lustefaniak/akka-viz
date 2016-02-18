@@ -51,7 +51,11 @@ lazy val akkaviz =
     .disablePlugins(RevolverPlugin)
     .enablePlugins(GitVersioning)
     .settings(commonSettings)
-    .aggregate(api, monitoring, plugin)
+    .aggregate(api, frontend, monitoring, plugin)
+    .settings(
+        publish := {},
+        publishLocal := {}
+      )
 
 lazy val frontend =
   (project in file("frontend"))
@@ -70,7 +74,9 @@ lazy val frontend =
         "org.scalatest" %%% "scalatest" % Dependencies.Versions.scalatest % "test"
       ),
       jsDependencies += RuntimeDOM,
-      unmanagedSourceDirectories in Compile += baseDirectory.value / ".." / "shared" / "src" / "main" / "scala"
+      unmanagedSourceDirectories in Compile += baseDirectory.value / ".." / "shared" / "src" / "main" / "scala",
+      publish := {},
+      publishLocal := {}
     )
 
 lazy val api =
@@ -94,6 +100,7 @@ lazy val monitoring =
       addCompilerPlugin("org.scalamacros" % "paradise" % "2.0.1" cross CrossVersion.full),
       libraryDependencies += "com.wacai" %% "config-annotation" % "0.3.4" % "compile",
       libraryDependencies += "org.clapper" %% "classutil" % "1.0.6",
+      libraryDependencies += "com.lihaoyi" %%% "upickle" % Dependencies.Versions.upickle,
       scalacOptions += "-Xmacro-settings:conf.output.dir=" + baseDirectory.value / "src/main/resources/",
       libraryDependencies ++= Dependencies.backend,
       (resourceGenerators in Compile) <+=
