@@ -1,6 +1,7 @@
 package akkaviz.frontend.components
 
 import akkaviz.frontend.PrettyJson
+import org.scalajs.dom
 import org.scalajs.dom.html.{Option => DomOption, _}
 import org.scalajs.dom.{Element => domElement, Event}
 import rx.{Ctx, Rx, Var}
@@ -16,18 +17,17 @@ class OnOffPanel(serverIsEnabled: Var[Option[Boolean]], userIsEnabled: Var[Boole
 
   inp.onchange = (d: Event) => {
     userIsEnabled() = inp.checked
+    lbl.innerHTML = "Awaiting Server confirmation"
+    inp.disabled = true
   }
 
   val awaitingConfirmation = Rx((serverIsEnabled(), userIsEnabled())).foreach {
     case (None, _) =>
       lbl.innerHTML = "Awaiting Server status"
       lbl.disabled = true
-    case (Some(srv), user) if srv != user =>
-      lbl.innerHTML = "Awaiting Server confirmation"
-      lbl.disabled = true
     case (Some(srv), _) =>
       inp.checked = srv
-      lbl.disabled = false
+      inp.disabled = false
       if (srv) {
         lbl.innerHTML = "Monitoring <b>ENABLED</b> on the Server"
       } else {
