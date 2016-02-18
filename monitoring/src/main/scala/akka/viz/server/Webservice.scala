@@ -15,20 +15,6 @@ import akka.viz.serialization.MessageSerialization
 
 import scala.concurrent.duration._
 
-object ApiMessages {
-
-  import upickle.default._
-
-  def read(str: String): protocol.ApiClientMessage = {
-    upickle.default.read[protocol.ApiClientMessage](str)
-  }
-
-  def write(msg: protocol.ApiServerMessage): String = {
-    upickle.default.write(msg)
-  }
-
-}
-
 class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directives with SubscriptionSession {
 
   def route: Flow[HttpRequest, HttpResponse, Any] = get {
@@ -50,7 +36,7 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directi
 
     val wsIn = Flow[Message].mapConcat[ChangeSubscriptionSettings] {
       case TextMessage.Strict(msg) =>
-        val command = ApiMessages.read(msg)
+        val command = protocol.IO.readClient(msg)
         command match {
           case protocol.SetAllowedMessages(classNames) =>
             system.log.debug(s"Set allowed messages to $classNames")
@@ -122,7 +108,8 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directi
       protocol.ActorFailure(
         ref,
         cause.toString,
-        decision.toString)
+        decision.toString
+      )
     case ReportingDisabled =>
       protocol.ReportingDisabled
     case ReportingEnabled =>
@@ -132,7 +119,7 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directi
   }
 
   def eventSerialization: Flow[protocol.ApiServerMessage, String, Any] = Flow[protocol.ApiServerMessage].map {
-    msg => ApiMessages.write(msg)
+    msg => protocol.IO.write(msg)
   }
 
 }

@@ -2,6 +2,7 @@ package akka.viz.frontend
 
 import akka.viz.frontend.FrontendUtil._
 import akka.viz.frontend.components._
+import akka.viz.protocol
 import akka.viz.protocol._
 import org.scalajs.dom
 import org.scalajs.dom.raw.{WebSocket, ErrorEvent, CloseEvent, MessageEvent}
@@ -37,7 +38,7 @@ object FrontendApp extends JSApp with Persistence
   val deadActors = mutable.Set[String]()
 
   private def handleDownstream(messageReceived: (Received) => Unit)(messageEvent: MessageEvent): Unit = {
-    val message: ApiServerMessage = ApiMessages.read(messageEvent.data.asInstanceOf[String])
+    val message: ApiServerMessage = protocol.IO.readServer(messageEvent.data.asInstanceOf[String])
 
     message match {
       case rcv: Received =>
