@@ -237,7 +237,7 @@ class MessagesPanel(selectedActors: Var[Set[String]]) extends Component with Pre
   }
 
   val showMoreRow = tr(cell, onclick := displayMoreMessages).render
-  lazy val cell = td(colspan := 4, fontStyle.italic).render
+  lazy val cell = td(colspan := 3, fontStyle.italic).render
 
   msgQueue.foreach { q =>
     if (q.headOption.exists(_.eventId > lastDisplayed))
@@ -275,7 +275,7 @@ class MessagesPanel(selectedActors: Var[Set[String]]) extends Component with Pre
           val payload = row.getAttribute("data-message")
           val detailsRow = tr(
             td(
-              colspan := 4,
+              colspan := 3,
               div(pre(prettyPrintJson(payload)))
             )
           ).render
@@ -290,10 +290,9 @@ class MessagesPanel(selectedActors: Var[Set[String]]) extends Component with Pre
     tr(
       "data-message".attr := rcv.payload.getOrElse(""),
       `class` := "tgl",
-      td(if (!rcv.handled) unhandledIndicator else ""),
       td(actorComponent(rcv.sender)),
       td(actorComponent(rcv.receiver)),
-      td(rcv.payloadClass),
+      td(rcv.payloadClass, if (!rcv.handled) unhandledIndicator else ""),
       onclick := toggleMessageDetails
     )
   }
@@ -332,7 +331,7 @@ class MessagesPanel(selectedActors: Var[Set[String]]) extends Component with Pre
         table(
           cls := "table table-striped table-hover",
           thead(
-            tr(th(), th("From"), th("To"), th("Class"))
+            tr(th("From"), th("To"), th("Class"))
           ), messagesTbody, tfoot(showMoreRow)
         ))
     ).render
