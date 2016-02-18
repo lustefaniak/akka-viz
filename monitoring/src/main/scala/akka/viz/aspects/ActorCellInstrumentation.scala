@@ -74,7 +74,6 @@ class ActorCellInstrumentation {
     }
   }
 
-
   @Pointcut("execution(* akka.actor.SupervisorStrategy.logFailure(..)) && this(strategy) && args(context, child, cause, decision)")
   def handleFailure(strategy: SupervisorStrategy, context: ActorContext, child: ActorRef, cause: Throwable, decision: Directive): Unit = {}
 

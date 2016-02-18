@@ -1,6 +1,6 @@
 package akka.viz.events
 
-import akka.actor.{SupervisorStrategy, Actor, ActorRef}
+import akka.actor.{Actor, ActorRef, SupervisorStrategy}
 import akka.dispatch.ControlMessage
 
 import scala.concurrent.duration.Duration

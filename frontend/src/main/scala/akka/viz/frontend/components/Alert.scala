@@ -1,18 +1,18 @@
 package akka.viz.frontend.components
 
-import akka.viz.frontend.DOMGlobalScope
 import org.scalajs.dom
 import org.scalajs.dom.html.Element
 
 import scala.concurrent.duration._
 import scalatags.JsDom.all._
 
-
 class Alert extends Component {
-  lazy val connectionAlert = div("Connecting...",
-    cls:="alert fade in",
-    id:="connectionStatus",
-    position.fixed, right := 0.px).render
+  lazy val connectionAlert = div(
+    "Connecting...",
+    cls := "alert fade in",
+    id := "connectionStatus",
+    position.fixed, right := 0.px
+  ).render
 
   override def render: Element = connectionAlert
 
@@ -42,6 +42,5 @@ class Alert extends Component {
   }
 
   def fadeOut(after: Duration = 2.seconds) = dom.setTimeout(() => connectionAlert.classList.remove("in"), after.toMillis)
-
 
 }
