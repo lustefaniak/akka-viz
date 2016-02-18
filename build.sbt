@@ -114,7 +114,8 @@ lazy val api =
     .settings(
       exportJars := true,
       //FIXME: don't use AST from Js.Value, define one inside api module
-      libraryDependencies += "com.lihaoyi" %% "upickle" % upickleVersion
+      libraryDependencies += "com.lihaoyi" %% "upickle" % upickleVersion,
+      autoScalaLibrary := false
     )
 
 lazy val monitoring =
