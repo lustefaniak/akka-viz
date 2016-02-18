@@ -1,5 +1,5 @@
-package  akka.viz.aspects;
-import akka.viz.server.Server;
+package  akkaviz.aspects;
+import akkaviz.server.Server;
 
 public aspect BeforeMain {
     private pointcut mainMethod () :
