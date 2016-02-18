@@ -1,6 +1,7 @@
 package akka.viz.frontend
 
 import akka.viz.frontend.FrontendUtil._
+import akka.viz.frontend.Types._
 import akka.viz.frontend.components._
 import akka.viz.protocol
 import akka.viz.protocol._
@@ -10,7 +11,6 @@ import org.scalajs.dom.{console, document}
 import rx._
 import upickle.default._
 
-import scala.collection.mutable
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
@@ -21,9 +21,9 @@ import scalatags.JsDom.all._
 case class FsmTransition(fromStateClass: String, toStateClass: String)
 
 object FrontendApp extends JSApp with Persistence
-    with MailboxDisplay with PrettyJson with ManipulationsUI {
+  with MailboxDisplay with PrettyJson with ManipulationsUI {
 
-  private val createdLinks = js.Dictionary[Unit]()
+  private val createdLinks = emptyStringSet()
   private val graph = DOMGlobalScope.graph
 
   private val _actorClasses = js.Dictionary[Var[js.UndefOr[String]]]()
@@ -34,7 +34,7 @@ object FrontendApp extends JSApp with Persistence
 
   private def currentActorState(actor: String) = _currentActorState.getOrElseUpdate(actor, Var(js.undefined))
 
-  private val deadActors = mutable.Set[String]()
+  private val deadActors: FastStringSet = js.Dictionary()
 
   private def handleDownstream(messageReceived: (Received) => Unit)(messageEvent: MessageEvent): Unit = {
     val message: ApiServerMessage = protocol.IO.readServer(messageEvent.data.asInstanceOf[String])
@@ -48,7 +48,7 @@ object FrontendApp extends JSApp with Persistence
         ensureGraphLink(sender, receiver)
 
       case ac: AvailableClasses =>
-        seenMessages() = ac.availableClasses.toSet
+        seenMessages() = ac.availableClasses.toFastStringSet
 
       case Spawned(child, parent) =>
         deadActors -= child
@@ -80,7 +80,7 @@ object FrontendApp extends JSApp with Persistence
 
       case Killed(ref) =>
         addActorsToSeen(ref)
-        deadActors += ref
+        deadActors.update(ref, ())
         seenActors.recalc()
 
       case af: ActorFailure =>
@@ -89,7 +89,7 @@ object FrontendApp extends JSApp with Persistence
 
       case SnapshotAvailable(live, dead, childrenOf, rcv) =>
         addActorsToSeen(live: _*)
-        deadActors ++= dead
+        deadActors ++= dead.toFastStringSet
         for {
           (from, to) <- rcv
         } ensureGraphLink(from, to)
@@ -109,23 +109,23 @@ object FrontendApp extends JSApp with Persistence
     }
   }
 
-  private val seenActors = Var[Set[String]](Set())
+  private val seenActors = Var(emptyStringSet())
   private val selectedActors = persistedVar[Set[String]](Set(), "selectedActors")
-  private val seenMessages = Var[Set[String]](Set())
+  private val seenMessages = Var(emptyStringSet())
   private val selectedMessages = persistedVar[Set[String]](Set(), "selectedMessages")
-  private val thrownExceptions = Var[Seq[ActorFailure]](Seq())
+  private val thrownExceptions = Var[js.Array[ActorFailure]](js.Array())
 
   private val addNodesObs = seenActors.trigger {
     seenActors.now.foreach {
-      actor =>
+      case (actor, _) =>
         val isDead = deadActors.contains(actor)
         graph.addNode(actor, js.Dictionary(("dead", isDead)))
     }
   }
 
-  private def addActorsToSeen(actorName: String*): Unit = {
+  private def addActorsToSeen(actorNames: String*): Unit = {
     val previouslySeen = seenActors.now
-    val newSeen = previouslySeen ++ actorName.filterNot(previouslySeen(_))
+    val newSeen: FastStringSet = actorNames.foldLeft(previouslySeen) { (seen, actor) => seen.update(actor, ()); seen }
     if (previouslySeen.size != newSeen.size)
       seenActors() = newSeen
   }

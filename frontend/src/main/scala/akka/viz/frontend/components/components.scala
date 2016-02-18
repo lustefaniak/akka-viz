@@ -2,6 +2,7 @@ package akka.viz.frontend.components
 
 import akka.viz.frontend.DOMGlobalScope.$
 import akka.viz.frontend.FrontendUtil.actorComponent
+import akka.viz.frontend.Types.FastStringSet
 import akka.viz.frontend.{DOMGlobalScope, FrontendUtil, PrettyJson}
 import akka.viz.protocol.{ActorFailure, Received}
 import org.scalajs.dom.html._
@@ -19,11 +20,11 @@ trait Component {
 }
 
 class ActorSelector(
-    seenActors: Var[Set[String]],
+    seenActors: Var[FastStringSet],
     selectedActors: Var[Set[String]],
     currentActorState: (String) => Var[js.UndefOr[String]],
     actorClasses: String => Var[js.UndefOr[String]],
-    actorFailures: Var[Seq[ActorFailure]]
+    actorFailures: Var[js.Array[ActorFailure]]
 ) extends PrettyJson with Component {
 
   val popoverContent: ThisFunction0[domElement, Node] = (that: domElement) => {
@@ -88,7 +89,7 @@ class ActorSelector(
     val selected = selectedActors.now
 
     val content = seen.map {
-      actorName =>
+      case (actorName,_) =>
         val isSelected = selected.contains(actorName)
         val element = tr(
           td(input(`type` := "checkbox", if (isSelected) checked else (),
@@ -124,13 +125,13 @@ class ActorSelector(
   }
 
   def selectAllActorFilters: ThisFunction0[domElement, Unit] = { self: domElement =>
-    selectedActors() = seenActors.now
+    selectedActors() = seenActors.now.keys.toSet[String]
   }
 
   def regexActorFilter: ThisFunction0[domElement, Unit] = { self: domElement =>
     val input = self.asInstanceOf[Input].value
     Try(input.r).foreach { r =>
-      selectedActors() = seenActors.now.filter(_.matches(r.regex))
+      selectedActors() = seenActors.now.keys.filter(_.matches(r.regex)).toSet[String]
     }
   }
 
@@ -153,15 +154,15 @@ class ActorSelector(
 }
 
 class MessageFilter(
-    seenMessages: Var[Set[String]],
-    selectedMessages: Var[Set[String]],
-    selectedActors: Var[Set[String]]
+                     seenMessages: Var[FastStringSet],
+                     selectedMessages: Var[Set[String]],
+                     selectedActors: Var[Set[String]]
 ) extends Component {
   val messagesObs = Rx.unsafe {
     (seenMessages(), selectedMessages())
   }.triggerLater {
 
-    val seen = seenMessages.now.toList.sorted
+    val seen = seenMessages.now.keys.toList.sorted
     val selected = selectedMessages.now
 
     val content = seen.map {
@@ -206,13 +207,13 @@ class MessageFilter(
   }
 
   def selectAllMessageFilters: ThisFunction0[domElement, Unit] = { _: domElement =>
-    selectedMessages() = seenMessages.now
+    selectedMessages() = seenMessages.now.keys.toSet
   }
 
   def regexMessageFilter(): ThisFunction0[Input, Unit] = { self: Input =>
     val input = self.value
     Try(input.r).foreach { r =>
-      selectedMessages() = seenMessages.now.filter(_.matches(r.regex))
+      selectedMessages() = seenMessages.now.keys.filter(_.matches(r.regex)).toSet
     }
   }
 
