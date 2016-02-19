@@ -20,6 +20,17 @@ class EventPublisherActor extends Actor with ActorLogging {
     case re @ ReportingEnabled =>
       broadcast(re)
       context.unbecome()
+    case EventPublisherActor.Subscribe =>
+      val s = sender()
+      subscribers += s
+      context.watch(s)
+      s ! (if (EventSystem.isEnabled()) ReportingEnabled else ReportingDisabled)
+
+    case EventPublisherActor.Unsubscribe =>
+      unsubscribe(sender())
+
+    case Terminated(s) =>
+      unsubscribe(s)
   }
 
   def monitoringReceive: Receive = collectForSnapshot andThen {
