@@ -27,13 +27,13 @@ object FrontendApp extends JSApp with Persistence
 
   private val _actorClasses = js.Dictionary[Var[js.UndefOr[String]]]()
   private val _currentActorState = js.Dictionary[Var[js.UndefOr[String]]]()
-  private val _eventsEnabled = Var[Option[Boolean]](None)
 
   private def actorClasses(actor: String) = _actorClasses.getOrElseUpdate(actor, Var(js.undefined))
 
   private def currentActorState(actor: String) = _currentActorState.getOrElseUpdate(actor, Var(js.undefined))
 
   private val deadActors = mutable.Set[String]()
+  private val monitoringStatus = Var[MonitoringStatus](UnknownYet)
 
   private def handleDownstream(messageReceived: (Received) => Unit)(messageEvent: MessageEvent): Unit = {
     val message: ApiServerMessage = protocol.IO.readServer(messageEvent.data.asInstanceOf[String])
@@ -70,12 +70,10 @@ object FrontendApp extends JSApp with Persistence
         delayMillis() = duration.toMillis.toInt
 
       case ReportingEnabled =>
-        if (_eventsEnabled.now.isEmpty) userIsEnabled() = true
-        _eventsEnabled() = Some(true)
+        monitoringStatus() = On
 
       case ReportingDisabled =>
-        if (_eventsEnabled.now.isEmpty) userIsEnabled() = false
-        _eventsEnabled() = Some(false)
+        monitoringStatus() = Off
 
       case Killed(ref) =>
         addActorsToSeen(ref)
@@ -132,8 +130,7 @@ object FrontendApp extends JSApp with Persistence
   private val actorSelector = new ActorSelector(seenActors, selectedActors, currentActorState, actorClasses, thrownExceptions)
   private val messageFilter = new MessageFilter(seenMessages, selectedMessages, selectedActors)
   private val messagesPanel = new MessagesPanel(selectedActors)
-  private val userIsEnabled = Var(false)
-  private val onOffPanel = new OnOffPanel(_eventsEnabled, userIsEnabled)
+  private val onOffPanel = new OnOffPanel(monitoringStatus)
   private val connectionAlert = new Alert()
 
   @JSExport("toggleActor")
@@ -176,8 +173,16 @@ object FrontendApp extends JSApp with Persistence
           upstream.send(write(SetReceiveDelay(delayMillis.now.millis)))
         }
 
-        userIsEnabled.triggerLater {
-          upstream.send(write(SetEnabled(userIsEnabled.now)))
+        monitoringStatus.triggerLater {
+          monitoringStatus.now match {
+            case Awaiting(s) =>
+              console.log("monitoring status: ", monitoringStatus.now.toString)
+                val write1: String = write(SetEnabled(s.asBoolean))
+              console.log(write1)
+              upstream.send(write1)
+            case _ =>
+              console.log("monitoring status: ", monitoringStatus.now.toString)
+          }
         }
 
         upstream.onclose = { ce: CloseEvent =>
