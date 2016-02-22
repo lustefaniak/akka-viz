@@ -20,6 +20,7 @@ class EventPublisherActor extends Actor with ActorLogging {
     case re @ ReportingEnabled =>
       broadcast(re)
       context.become(monitoringReceive)
+
     case EventPublisherActor.Subscribe =>
       val s = sender()
       addSubscriberAndInit(s)

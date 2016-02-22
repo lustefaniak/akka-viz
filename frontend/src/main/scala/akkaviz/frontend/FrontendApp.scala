@@ -177,7 +177,7 @@ object FrontendApp extends JSApp with Persistence
           monitoringStatus.now match {
             case Awaiting(s) =>
               console.log("monitoring status: ", monitoringStatus.now.toString)
-                val write1: String = write(SetEnabled(s.asBoolean))
+              val write1: String = write(SetEnabled(s.asBoolean))
               console.log(write1)
               upstream.send(write1)
             case _ =>
