@@ -7,9 +7,9 @@ import spray.SprayDemo
 import scala.util.Random
 
 object Main extends App {
-  DiningHakkersOnFsm.run(ActorSystem("fsm"))
-  PostOffice.run(ActorSystem("post-office"))
-  SprayDemo.run(ActorSystem("spray"))
+  //DiningHakkersOnFsm.run(ActorSystem("fsm"))
+  //PostOffice.run(ActorSystem("post-office"))
+  //SprayDemo.run(ActorSystem("spray"))
   new RussianRoulette(5).run(ActorSystem("russian-roulette"))
 
   val system = ActorSystem("small-demos")
