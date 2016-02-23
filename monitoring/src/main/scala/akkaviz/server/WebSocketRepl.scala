@@ -39,10 +39,12 @@ trait WebSocketRepl {
         Environment.withEnvironment(replSessionEnv) {
           try {
             blocking {
-              val predef = defaultReplPredef + "\n" + replPredef
-              val repl = new Repl(in, sshOut, sshOut, Ref(Storage(homePath, None)), predef, replArgs)
-              repl.run()
-              repl
+              withConsoleRedirection {
+                val predef = defaultReplPredef + "\n" + replPredef
+                val repl = new Repl(in, sshOut, sshOut, Ref(Storage(homePath, None)), predef, replArgs)
+                repl.run()
+                repl
+              }
             }
           } catch {
             case any: Throwable =>
@@ -55,6 +57,15 @@ trait WebSocketRepl {
         }
       }
 
+      def withConsoleRedirection(fun: => Any): Unit = {
+        Console.withIn(in) {
+          Console.withOut(sshOut) {
+            Console.withErr(sshOut) {
+              fun
+            }
+          }
+        }
+      }
     }
 
     val wsFlow: Flow[Message, Message, _] = {
