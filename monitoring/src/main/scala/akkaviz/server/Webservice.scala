@@ -11,10 +11,11 @@ import akkaviz.events._
 import akkaviz.events.types._
 import akkaviz.protocol
 import akkaviz.serialization.MessageSerialization
+import ammonite.repl.Bind
 
 import scala.concurrent.duration._
 
-class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directives with SubscriptionSession {
+class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directives with SubscriptionSession with WebSocketRepl {
 
   def route: Flow[HttpRequest, HttpResponse, Any] = get {
     pathSingleSlash {
@@ -25,7 +26,9 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directi
       path("frontend-jsdeps.js")(getFromResource("frontend-jsdeps.js")) ~
       path("stream") {
         handleWebSocketMessages(tracingEventsFlow.mapMaterializedValue(EventSystem.subscribe))
-
+      } ~
+      path("repl") {
+        replWebSocket
       }
   } ~
     getFromResourceDirectory("web")
@@ -124,4 +127,7 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directi
     msg => protocol.IO.write(msg)
   }
 
+  override def replArgs: Seq[Bind[_]] = Nil
+
+  override def replPredef: String = ""
 }
