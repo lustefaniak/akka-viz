@@ -55,3 +55,7 @@ div.terminal {
     font-family: Inconsolata, 'DejaVu Sans Mono', monospace;
     padding: 10px;
 }
+
+.modal-dialog.modal-large {
+    width: 900px;
+}
