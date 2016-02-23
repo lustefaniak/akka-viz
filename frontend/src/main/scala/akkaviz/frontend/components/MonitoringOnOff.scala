@@ -1,19 +1,12 @@
 package akkaviz.frontend.components
 
-import akkaviz.frontend.PrettyJson
-import org.scalajs.dom
-import org.scalajs.dom.html.{Option => DomOption, _}
-import org.scalajs.dom.{Element => domElement, Event}
-import rx.{Ctx, Rx, Var}
+import org.scalajs.dom.html._
+import org.scalajs.dom.Event
+import rx.{Ctx, Var}
 
 import scalatags.JsDom.all._
 
-class OnOffPanel(status: Var[MonitoringStatus])(implicit ctx: Ctx.Owner) extends Component with PrettyJson {
-
-  lazy val messagePanelTitle = div(cls := "panel-heading", id := "messagespaneltitle", "Toggle reporting").render
-
-  lazy val lbl = span().render
-  lazy val inp = input(tpe := "checkbox").render
+class MonitoringOnOff(status: Var[MonitoringStatus])(implicit ctx: Ctx.Owner) extends Component with OnOffWithLabel {
 
   inp.onchange = (d: Event) => {
     status() = Awaiting(Synced(inp.checked))
@@ -36,12 +29,6 @@ class OnOffPanel(status: Var[MonitoringStatus])(implicit ctx: Ctx.Owner) extends
 
   }
 
-  lazy val stateBtn = div(
-    `class` := "togglebutton",
-    label(
-      inp, lbl
-    )
-  )
 
   override def render: Element = {
     Seq(

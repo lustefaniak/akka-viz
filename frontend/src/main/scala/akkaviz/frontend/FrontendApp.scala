@@ -4,7 +4,7 @@ import akkaviz.frontend.components._
 import akkaviz.protocol
 import akkaviz.protocol._
 import org.scalajs.dom.raw.{CloseEvent, ErrorEvent, MessageEvent, WebSocket}
-import org.scalajs.dom.{console, document}
+import org.scalajs.dom.{Node, console, document}
 import rx._
 import upickle.default._
 
@@ -111,12 +111,17 @@ object FrontendApp extends JSApp with Persistence
   private val seenMessages = Var[Set[String]](Set())
   private val selectedMessages = persistedVar[Set[String]](Set(), "selectedMessages")
   private val thrownExceptions = Var[Seq[ActorFailure]](Seq())
+  private val showUnconnected = Var[Boolean](false)
 
-  private val addNodesObs = seenActors.trigger {
+  private val addNodesObs = Rx((showUnconnected(), seenActors())).trigger {
     seenActors.now.foreach {
       actor =>
-        val isDead = deadActors.contains(actor)
-        graph.addNode(actor, js.Dictionary(("dead", isDead)))
+        if(showUnconnected.now || createdLinks.exists(_._1.split("->").contains(actor))) {
+          val isDead = deadActors.contains(actor)
+          graph.addNode(actor, js.Dictionary(("dead", isDead)))
+        } else {
+          graph.removeNode(actor)
+        }
     }
   }
 
@@ -130,8 +135,9 @@ object FrontendApp extends JSApp with Persistence
   private val actorSelector = new ActorSelector(seenActors, selectedActors, currentActorState, actorClasses, thrownExceptions)
   private val messageFilter = new MessageFilter(seenMessages, selectedMessages, selectedActors)
   private val messagesPanel = new MessagesPanel(selectedActors)
-  private val onOffPanel = new OnOffPanel(monitoringStatus)
+  private val monitoringOnOff = new MonitoringOnOff(monitoringStatus)
   private val connectionAlert = new Alert()
+  private val unconnectedOnOff = new UnconnectedOnOff(showUnconnected)
 
   @JSExport("toggleActor")
   def toggleActor(name: String) = actorSelector.toggleActor(name)
@@ -209,13 +215,17 @@ object FrontendApp extends JSApp with Persistence
     setupApiConnection
 
     document.body.appendChild(connectionAlert.render)
-    document.querySelector("#actorselection").appendChild(actorSelector.render)
-    document.querySelector("#messagefiltering").appendChild(messageFilter.render)
-    document.querySelector("#messagelist").appendChild(messagesPanel.render)
-    document.querySelector("#receivedelay").appendChild(receiveDelayPanel.render)
-    document.querySelector("#onoffsettings").appendChild(onOffPanel.render)
-
+    insertComponent("#actorselection", actorSelector.render)
+    insertComponent("#messagefiltering", messageFilter.render)
+    insertComponent("#messagelist", messagesPanel.render)
+    insertComponent("#receivedelay", receiveDelayPanel.render)
+    insertComponent("#onoffsettings", monitoringOnOff.render)
+    insertComponent("#graphsettings", unconnectedOnOff.render)
     DOMGlobalScope.$.material.init()
 
+  }
+
+  def insertComponent(parentSelector: String, component: Node): Node = {
+    document.querySelector(parentSelector).appendChild(component)
   }
 }
