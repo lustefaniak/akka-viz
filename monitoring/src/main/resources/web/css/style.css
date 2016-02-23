@@ -51,4 +51,7 @@ span.terminal-cursor {
     margin-left: -2px;
 }
 
+div.terminal {
+    font-family: Inconsolata, 'DejaVu Sans Mono', monospace;
+    padding: 10px;
 }
