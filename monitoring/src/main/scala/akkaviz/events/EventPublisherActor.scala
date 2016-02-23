@@ -16,38 +16,46 @@ class EventPublisherActor extends Actor with ActorLogging {
 
   override def receive = monitoringReceive
 
-  def disabledReceive: Receive = {
+  def disabledReceive: Receive = handleSubscribe orElse {
     case re @ ReportingEnabled =>
       broadcast(re)
-      context.unbecome()
+      context.become(monitoringReceive)
   }
 
-  def monitoringReceive: Receive = collectForSnapshot andThen {
-    case rd @ ReportingDisabled =>
-      broadcast(rd)
-      context.become(disabledReceive)
+  def monitoringReceive: Receive = handleSubscribe orElse {
+    collectForSnapshot andThen {
+      case rd @ ReportingDisabled =>
+        broadcast(rd)
+        context.become(disabledReceive)
 
-    case r: ReceivedWithId =>
-      trackMsgType(r.message)
-      broadcast(r)
+      case r: ReceivedWithId =>
+        trackMsgType(r.message)
+        broadcast(r)
 
-    case be: BackendEvent =>
-      broadcast(be)
+      case be: BackendEvent =>
+        broadcast(be)
+    }
+  }
 
+  def handleSubscribe: PartialFunction[Any, Unit] = {
     case EventPublisherActor.Subscribe =>
       val s = sender()
-      subscribers += s
-      context.watch(s)
-      s ! (if (EventSystem.isEnabled()) ReportingEnabled else ReportingDisabled)
-      s ! AvailableMessageTypes(availableTypes.toList)
-      s ! SnapshotAvailable(snapshot)
-      snapshotQueue.foreach(s ! _)
+      addSubscriberAndInit(s)
 
     case EventPublisherActor.Unsubscribe =>
       unsubscribe(sender())
 
     case Terminated(s) =>
       unsubscribe(s)
+  }
+
+  def addSubscriberAndInit(s: ActorRef): Unit = {
+    subscribers += s
+    context.watch(s)
+    s ! (if (EventSystem.isEnabled()) ReportingEnabled else ReportingDisabled)
+    s ! AvailableMessageTypes(availableTypes.toList)
+    s ! SnapshotAvailable(snapshot)
+    snapshotQueue.foreach(s ! _)
   }
 
   def broadcast(backendEvent: BackendEvent): Unit = {

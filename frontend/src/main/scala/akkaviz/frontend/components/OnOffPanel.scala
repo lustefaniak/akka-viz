@@ -8,7 +8,7 @@ import rx.{Ctx, Rx, Var}
 
 import scalatags.JsDom.all._
 
-class OnOffPanel(serverIsEnabled: Var[Option[Boolean]], userIsEnabled: Var[Boolean])(implicit ctx: Ctx.Owner) extends Component with PrettyJson {
+class OnOffPanel(status: Var[MonitoringStatus])(implicit ctx: Ctx.Owner) extends Component with PrettyJson {
 
   lazy val messagePanelTitle = div(cls := "panel-heading", id := "messagespaneltitle", "Toggle reporting").render
 
@@ -16,23 +16,24 @@ class OnOffPanel(serverIsEnabled: Var[Option[Boolean]], userIsEnabled: Var[Boole
   lazy val inp = input(tpe := "checkbox").render
 
   inp.onchange = (d: Event) => {
-    userIsEnabled() = inp.checked
-    lbl.innerHTML = "Awaiting Server confirmation"
-    inp.disabled = true
+    status() = Awaiting(Synced(inp.checked))
   }
 
-  val awaitingConfirmation = Rx((serverIsEnabled(), userIsEnabled())).foreach {
-    case (None, _) =>
-      lbl.innerHTML = "Awaiting Server status"
-      lbl.disabled = true
-    case (Some(srv), _) =>
-      inp.checked = srv
+  val statusTrigger = status.foreach {
+    case UnknownYet =>
+      lbl.innerHTML = "Awaiting server status"
+      inp.disabled = true
+
+    case Awaiting(s) =>
+      lbl.innerHTML = s"Awaiting server confirmation for $s"
+      inp.disabled = true
+      inp.checked = s.asBoolean
+
+    case synced: Synced =>
+      inp.checked = synced.asBoolean
       inp.disabled = false
-      if (srv) {
-        lbl.innerHTML = "Monitoring <b>ENABLED</b> on the Server"
-      } else {
-        lbl.innerHTML = "Monitoring <b>DISABLED</b> on the Server"
-      }
+      lbl.innerHTML = s"Monitoring is <b>$synced</b>"
+
   }
 
   lazy val stateBtn = div(
@@ -49,3 +50,14 @@ class OnOffPanel(serverIsEnabled: Var[Option[Boolean]], userIsEnabled: Var[Boole
   }
 }
 
+sealed trait MonitoringStatus
+sealed trait Synced extends MonitoringStatus { def asBoolean: Boolean }
+
+object Synced {
+  def apply(b: Boolean) = if (b) On else Off
+}
+
+case object On extends Synced { val asBoolean = true }
+case class Awaiting(target: Synced) extends MonitoringStatus
+case object Off extends Synced { val asBoolean = false }
+case object UnknownYet extends MonitoringStatus
