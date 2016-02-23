@@ -4,7 +4,7 @@ import scalariform.formatter.preferences._
 
 cancelable in Global := true
 
-val upickleVersion = "0.3.6"
+val upickleVersion = "0.3.8"
 val akkaVersion = "2.4.2"
 val scalatestVersion = "3.0.0-M15"
 
