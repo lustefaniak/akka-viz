@@ -1,6 +1,6 @@
 
     function frontendApp() {
-        return akka.viz.frontend.FrontendApp()
+        return akkaviz.frontend.FrontendApp()
     }
 
     var graph = Viva.Graph.graph();
