@@ -1,4 +1,5 @@
 import akka.actor.{Actor, ActorSystem, Props}
+import ama.AskDemo
 import fsm.DiningHakkersOnFsm
 import postoffice.PostOffice
 import roulette.RussianRoulette
@@ -13,6 +14,7 @@ object Main extends App {
   SprayDemo.run(ActorSystem("spray"))
   TreeDemo.run(ActorSystem("tree"))
   new RussianRoulette(5).run(ActorSystem("russianroulette"))
+  AskDemo.run(ActorSystem("ask"))
 
   val system = ActorSystem("smalldemos")
 
