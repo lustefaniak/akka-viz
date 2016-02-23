@@ -1,15 +1,15 @@
-package akkaviz.frontend
-
-import java.nio.ByteBuffer
+package akkaviz.frontend.components
 
 import akkaviz.frontend.terminal._
-import org.scalajs.dom.raw.{ErrorEvent, CloseEvent, Element, WebSocket}
-import org.scalajs.dom.{Event, MessageEvent, console, window}
+import akkaviz.frontend.{DOMGlobalScope, FrontendUtil}
+import org.scalajs.dom.raw.{CloseEvent, Element, ErrorEvent, WebSocket}
+import org.scalajs.dom.{html, Event, MessageEvent}
 
 import scala.scalajs.js
-import scala.scalajs.js.typedarray.{Uint8Array, ArrayBuffer}
+import scala.scalajs.js.typedarray.ArrayBuffer
+import scalatags.JsDom.all._
 
-trait ReplTerminal {
+class ReplTerminal extends Component {
 
   private def options = js.Dynamic.literal(
     cols = 120,
@@ -18,9 +18,9 @@ trait ReplTerminal {
 
   private var ws: js.UndefOr[WebSocket] = js.undefined
 
-  lazy val terminal = new Terminal(options)
+  private lazy val terminal = new Terminal(options)
 
-  def setupWebsocket(): Unit = {
+  private def setupWebsocket(): Unit = {
 
     def writeToTerminal(s: String): Unit = {
       terminal.write(s)
@@ -68,8 +68,14 @@ trait ReplTerminal {
     ws = _ws
   }
 
-  def setupReplTerminal(element: Element): Unit = {
+  private def setupReplTerminal(element: Element): Unit = {
     setupWebsocket()
     terminal.open(element)
+  }
+
+  override def render: html.Element = {
+    val d = div().render
+    setupReplTerminal(d)
+    d
   }
 }

@@ -20,8 +20,7 @@ import scalatags.JsDom.all._
 case class FsmTransition(fromStateClass: String, toStateClass: String)
 
 object FrontendApp extends JSApp with Persistence
-    with MailboxDisplay with PrettyJson with ManipulationsUI
-    with ReplTerminal {
+    with MailboxDisplay with PrettyJson with ManipulationsUI {
 
   private val createdLinks = js.Dictionary[Unit]()
   private val graph = DOMGlobalScope.graph
@@ -139,6 +138,7 @@ object FrontendApp extends JSApp with Persistence
   private val monitoringOnOff = new MonitoringOnOff(monitoringStatus)
   private val connectionAlert = new Alert()
   private val unconnectedOnOff = new UnconnectedOnOff(showUnconnected)
+  private val replTerminal = new ReplTerminal()
 
   @JSExport("toggleActor")
   def toggleActor(name: String) = actorSelector.toggleActor(name)
@@ -215,8 +215,6 @@ object FrontendApp extends JSApp with Persistence
 
     setupApiConnection
 
-    setupReplTerminal(document.getElementById("repl"))
-
     document.body.appendChild(connectionAlert.render)
     insertComponent("#actorselection", actorSelector.render)
     insertComponent("#messagefiltering", messageFilter.render)
@@ -224,6 +222,8 @@ object FrontendApp extends JSApp with Persistence
     insertComponent("#receivedelay", receiveDelayPanel.render)
     insertComponent("#onoffsettings", monitoringOnOff.render)
     insertComponent("#graphsettings", unconnectedOnOff.render)
+    insertComponent("#repl", replTerminal.render)
+
     DOMGlobalScope.$.material.init()
 
   }
