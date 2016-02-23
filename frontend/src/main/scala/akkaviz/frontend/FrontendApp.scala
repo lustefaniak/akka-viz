@@ -20,7 +20,8 @@ import scalatags.JsDom.all._
 case class FsmTransition(fromStateClass: String, toStateClass: String)
 
 object FrontendApp extends JSApp with Persistence
-    with MailboxDisplay with PrettyJson with ManipulationsUI {
+    with MailboxDisplay with PrettyJson with ManipulationsUI
+    with ReplTerminal {
 
   private val createdLinks = js.Dictionary[Unit]()
   private val graph = DOMGlobalScope.graph
@@ -116,7 +117,7 @@ object FrontendApp extends JSApp with Persistence
   private val addNodesObs = Rx((showUnconnected(), seenActors())).trigger {
     seenActors.now.foreach {
       actor =>
-        if(showUnconnected.now || createdLinks.exists(_._1.split("->").contains(actor))) {
+        if (showUnconnected.now || createdLinks.exists(_._1.split("->").contains(actor))) {
           val isDead = deadActors.contains(actor)
           graph.addNode(actor, js.Dictionary(("dead", isDead)))
         } else {
@@ -213,6 +214,8 @@ object FrontendApp extends JSApp with Persistence
     }
 
     setupApiConnection
+
+    setupReplTerminal(document.getElementById("repl"))
 
     document.body.appendChild(connectionAlert.render)
     insertComponent("#actorselection", actorSelector.render)
