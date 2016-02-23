@@ -6,12 +6,13 @@
     var graph = Viva.Graph.graph();
 
     var nodeSize = 40;
-    var idealLength = 5 * nodeSize;
+    var idealLength = 5.5 * nodeSize;
     var layout = Viva.Graph.Layout.forceDirected(graph, {
         springLength: idealLength,
-        springCoeff: 0.0008,
-        dragCoeff: 0.02,
-        gravity: -1.2
+        springCoeff: 0.001,
+        dragCoeff: 0.09,
+        gravity: -2.5,
+        stableThreshold: 0.1
     });
 
     var graphics = Viva.Graph.View.svgGraphics();
