@@ -43,3 +43,12 @@ html {
 .tgl {
     cursor: pointer;
 }
+
+span.terminal-cursor {
+    border-left-color: #04663e;
+    border-left-width: 2px;
+    border-left-style: solid;
+    margin-left: -2px;
+}
+
+}
