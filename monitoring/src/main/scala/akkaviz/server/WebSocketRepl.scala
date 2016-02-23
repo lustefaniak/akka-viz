@@ -7,6 +7,7 @@ import akka.http.scaladsl.model.ws._
 import akka.http.scaladsl.server.{Directives, Route}
 import akka.stream.scaladsl._
 import akka.util.ByteString
+import ammonite.ops.Path
 import ammonite.repl._
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -24,7 +25,7 @@ trait WebSocketRepl {
   def replWebSocket: Route = {
 
     def runRepl(replServerClassLoader: ClassLoader, in: InputStream, out: OutputStream) = {
-      val homePath = Main.defaultAmmoniteHome
+      val homePath = Path(Path.makeTmp)
       val sshOut = new SshOutputStream(out)
 
       Future {
