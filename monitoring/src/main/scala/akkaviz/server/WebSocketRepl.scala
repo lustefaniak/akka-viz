@@ -20,6 +20,12 @@ trait WebSocketRepl {
 
   def replArgs: Seq[Bind[_]]
 
+  def defaultReplPredef =
+    """
+      |import Predef.{println => _}
+      |import pprint.{pprintln => println}
+    """.stripMargin
+
   implicit val ec = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(4))
 
   def replWebSocket: Route = {
@@ -33,7 +39,8 @@ trait WebSocketRepl {
         Environment.withEnvironment(replSessionEnv) {
           try {
             blocking {
-              val repl = new Repl(in, sshOut, sshOut, Ref(Storage(homePath, None)), replPredef, replArgs)
+              val predef = defaultReplPredef + "\n" + replPredef
+              val repl = new Repl(in, sshOut, sshOut, Ref(Storage(homePath, None)), predef, replArgs)
               repl.run()
               repl
             }
