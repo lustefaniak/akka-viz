@@ -35,24 +35,24 @@ trait WebSocketRepl {
       val sshOut = new SshOutputStream(out)
 
       Future {
-        val replSessionEnv = Environment(replServerClassLoader, in, sshOut)
-        Environment.withEnvironment(replSessionEnv) {
-          try {
-            blocking {
+        blocking {
+          val replSessionEnv = Environment(replServerClassLoader, in, sshOut)
+          Environment.withEnvironment(replSessionEnv) {
+            try {
               withConsoleRedirection {
                 val predef = defaultReplPredef + "\n" + replPredef
                 val repl = new Repl(in, sshOut, sshOut, Ref(Storage(homePath, None)), predef, replArgs)
                 repl.run()
                 repl
               }
+            } catch {
+              case any: Throwable =>
+                val sshClientOutput = new PrintStream(sshOut)
+                sshClientOutput.println("What a terrible failure, the REPL just blow up!")
+                any.printStackTrace(sshClientOutput)
+                sshOut.flush()
+                sshOut.close()
             }
-          } catch {
-            case any: Throwable =>
-              val sshClientOutput = new PrintStream(sshOut)
-              sshClientOutput.println("What a terrible failure, the REPL just blow up!")
-              any.printStackTrace(sshClientOutput)
-              sshOut.flush()
-              sshOut.close()
           }
         }
       }
