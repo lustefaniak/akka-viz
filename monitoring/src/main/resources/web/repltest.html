@@ -13,54 +13,55 @@
 
 <script>
 
-function ab2str(buf) {
-    return String.fromCharCode.apply(null, new Uint8Array(buf));
-}
-
-function str2ab(str) {
-    var buf = new ArrayBuffer(str.length); // 2 bytes for each char
-    var bufView = new Uint8Array(buf);
-    for (var i=0, strLen=str.length; i<strLen; i++) {
-        bufView[i] = str.charCodeAt(i);
+    function ab2str(buf) {
+        return String.fromCharCode.apply(null, new Uint8Array(buf));
     }
-    return buf;
-}
+
+    function str2ab(str) {
+        var buf = new ArrayBuffer(str.length); // 2 bytes for each char
+        var bufView = new Uint8Array(buf);
+        for (var i = 0, strLen = str.length; i < strLen; i++) {
+            bufView[i] = str.charCodeAt(i);
+        }
+        return buf;
+    }
 
     var ws = null;
     var term = null;
-    var setupWs = function(){
+    var setupWs = function () {
         term = new Terminal({
             cols: 80,
             rows: 24,
-            screenKeys: true
+            cursorBlink: true,
+            debug: true
         });
 
         ws = new WebSocket("ws://localhost:8888/repl");
         ws.binaryType = 'arraybuffer';
-        ws.onerror = function() {
+        ws.onerror = function () {
             term.destroy();
             window.setTimeout(setupWs, 1000)
         }
 
-        ws.onclose = function() {
+        ws.onclose = function () {
             term.destroy();
             window.setTimeout(setupWs, 1000)
         }
 
-        ws.onopen = function(){
+        ws.onopen = function () {
 
-            term.on('data', function(data) {
+            term.on('data', function (data) {
                 console.log(data)
                 ws.send(str2ab(data))
             });
 
-            term.on('title', function(title) {
+            term.on('title', function (title) {
                 document.title = title;
             });
 
             term.open(document.body);
 
-            ws.onmessage = function(data){
+            ws.onmessage = function (data) {
                 var decoded = ab2str(data.data)
                 console.log(decoded);
                 term.write(decoded);
