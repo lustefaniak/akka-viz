@@ -1,5 +1,8 @@
 package akkaviz.server
 
+import java.text.SimpleDateFormat
+import java.time.{ZoneOffset, LocalDateTime}
+
 import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.ws.{Message, TextMessage}
@@ -111,11 +114,12 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directi
       protocol.ReceiveDelaySet(current)
     case Killed(ref) =>
       protocol.Killed(ref)
-    case ActorFailure(ref, cause, decision) =>
+    case ActorFailure(ref, cause, decision, ts) =>
       protocol.ActorFailure(
         ref,
         cause.toString,
-        decision.toString
+        decision.toString,
+        java.time.Instant.ofEpochMilli(ts).toString
       )
     case ReportingDisabled =>
       protocol.ReportingDisabled
