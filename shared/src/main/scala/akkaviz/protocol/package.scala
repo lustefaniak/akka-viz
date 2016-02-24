@@ -45,6 +45,17 @@ package object protocol {
     ts: IsoTs
   ) extends ApiServerMessage
 
+  case class Question(
+    id: Long,
+    sender: Option[String],
+    actorRef: String,
+    message: String
+  ) extends ApiServerMessage
+
+  case class Answer(questionId: Long, message: String) extends ApiServerMessage
+
+  case class AnswerFailed(questionId: Long, ex: String) extends ApiServerMessage
+
   case object ReportingEnabled extends ApiServerMessage
 
   case object ReportingDisabled extends ApiServerMessage

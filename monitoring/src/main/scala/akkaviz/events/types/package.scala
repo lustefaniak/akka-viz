@@ -60,6 +60,17 @@ package object types {
     timestamp: EventTs = System.currentTimeMillis()
   ) extends InternalEvent with BackendEvent with TimestampedEvent
 
+  case class Question(
+    id: Long,
+    sender: Option[ActorRef],
+    actorRef: ActorRef,
+    message: Any
+  ) extends InternalEvent with BackendEvent with FilteredActorEvent
+
+  case class Answer(questionId: Long, message: Any) extends InternalEvent with BackendEvent
+
+  case class AnswerFailed(questionId: Long, ex: Throwable) extends InternalEvent with BackendEvent
+
   case object ReportingEnabled extends InternalEvent with BackendEvent with EventPublisherControlEvent
 
   case object ReportingDisabled extends InternalEvent with BackendEvent with EventPublisherControlEvent
