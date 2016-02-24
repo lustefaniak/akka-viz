@@ -131,5 +131,11 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directi
 
   override def replArgs: Seq[Bind[_]] = Nil
 
-  override def replPredef: String = ""
+  override def replPredef: String =
+    """
+      |import akkaviz.events.ActorSystems.systems
+      |import scala.concurrent.duration._
+      |import akka.actor._
+      |import akka.pattern._
+    """.stripMargin
 }
