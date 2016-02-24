@@ -17,8 +17,7 @@ class ActorCellInstrumentation {
   @Pointcut(value = "execution (* akka.actor.ActorCell.receiveMessage(..)) && args(msg)", argNames = "msg")
   def receiveMessagePointcut(msg: Any): Unit = {}
 
-  @Before(value = "receiveMe" +
-    "ssagePointcut(msg) && this(me)", argNames = "jp,msg,me")
+  @Before(value = "receiveMessagePointcut(msg) && this(me)", argNames = "jp,msg,me")
   def message(jp: JoinPoint, msg: Any, me: ActorCell) {
     if (me.system.name != internalSystemName) {
       Thread.sleep(EventSystem.receiveDelay.toMillis)

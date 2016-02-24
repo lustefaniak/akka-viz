@@ -2,6 +2,7 @@
     <aspects>
         <aspect name="akkaviz.aspects.BeforeMain"/>
         <aspect name="akka.viz.ActorCellInstrumentation"/>
+        <aspect name="akka.viz.ActorSystemInstrumentation"/>
     </aspects>
     <weaver options="">
         <!-- Weaving with ByteString included throws a VerifyError -->
