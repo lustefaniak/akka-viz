@@ -87,6 +87,8 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directi
       protocol.AvailableClasses(types.map(_.getName))
     case Spawned(ref, parent) =>
       protocol.Spawned(ref, parent)
+    case ActorSystemCreated(system) =>
+      protocol.ActorSystemCreated(system.name)
     case Instantiated(ref, clazz) =>
       protocol.Instantiated(ref, clazz.getClass.getName)
     case FSMTransition(ref, currentState, currentData, nextState, nextData) =>

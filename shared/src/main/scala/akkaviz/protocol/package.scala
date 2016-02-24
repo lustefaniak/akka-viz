@@ -13,6 +13,8 @@ package object protocol {
 
   case class Spawned(ref: String, parent: String) extends ApiServerMessage
 
+  case class ActorSystemCreated(systemName: String) extends ApiServerMessage
+
   case class Instantiated(ref: String, clazz: String) extends ApiServerMessage
 
   case class MailboxStatus(owner: String, size: Int) extends ApiServerMessage

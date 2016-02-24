@@ -53,7 +53,9 @@ object FrontendApp extends JSApp with Persistence
         deadActors -= child
         addActorsToSeen(child, parent)
 
-      case fsm: FSMTransition =>
+      case ActorSystemCreated(system) =>
+
+      case fsm: FSMTransition         =>
       //TODO: handle in UI
 
       case i: Instantiated =>
