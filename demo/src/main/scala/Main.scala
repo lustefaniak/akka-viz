@@ -3,18 +3,22 @@ import fsm.DiningHakkersOnFsm
 import postoffice.PostOffice
 import roulette.RussianRoulette
 import spray.SprayDemo
+import tree.TreeDemo
 
 import scala.util.Random
 
 object Main extends App {
   DiningHakkersOnFsm.run(ActorSystem("fsm"))
-  PostOffice.run(ActorSystem("post-office"))
+  PostOffice.run(ActorSystem("postoffice"))
   SprayDemo.run(ActorSystem("spray"))
-  new RussianRoulette(5).run(ActorSystem("russian-roulette"))
+  TreeDemo.run(ActorSystem("tree"))
+  new RussianRoulette(5).run(ActorSystem("russianroulette"))
 
-  val system = ActorSystem("small-demos")
+  val system = ActorSystem("smalldemos")
+
   val lazyActorProps = Props(new Actor {
     var counter = 0
+
     override def receive: Receive = {
       case msg =>
         Thread.sleep(Random.nextInt(2000))
@@ -28,4 +32,5 @@ object Main extends App {
   for (i <- 0 to 1000) {
     lazyActor1.tell("doit", lazyActor2)
   }
+
 }

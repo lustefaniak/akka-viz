@@ -87,6 +87,8 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directi
       protocol.AvailableClasses(types.map(_.getName))
     case Spawned(ref, parent) =>
       protocol.Spawned(ref, parent)
+    case ActorSystemCreated(system) =>
+      protocol.ActorSystemCreated(system.name)
     case Instantiated(ref, clazz) =>
       protocol.Instantiated(ref, clazz.getClass.getName)
     case FSMTransition(ref, currentState, currentData, nextState, nextData) =>
@@ -129,5 +131,11 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directi
 
   override def replArgs: Seq[Bind[_]] = Nil
 
-  override def replPredef: String = ""
+  override def replPredef: String =
+    """
+      |import akkaviz.events.ActorSystems.systems
+      |import scala.concurrent.duration._
+      |import akka.actor._
+      |import akka.pattern._
+    """.stripMargin
 }
