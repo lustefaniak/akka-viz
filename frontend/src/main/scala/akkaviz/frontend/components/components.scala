@@ -19,11 +19,9 @@ trait Component {
   def render: Element
 }
 
-
 trait OnOffWithLabel {
   lazy val lbl = span().render
   lazy val inp = input(tpe := "checkbox").render
-
 
   lazy val stateBtn = div(
     `class` := "togglebutton",

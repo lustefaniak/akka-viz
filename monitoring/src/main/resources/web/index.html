@@ -10,6 +10,7 @@
     <!-- Material Design fonts -->
     <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto:300,400,500,700" type="text/css">
     <link href="//fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href='https://fonts.googleapis.com/css?family=Inconsolata:400,700' rel='stylesheet' type='text/css'>
 
     <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css"
@@ -19,6 +20,7 @@
 
     <script src="frontend-jsdeps.js"></script>
     <script src="js/vivagraph.js"></script>
+    <script src="js/term.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-material-design/0.5.7/js/material.min.js"></script>
     <script src="frontend-fastopt.js"></script>
@@ -31,6 +33,7 @@
         <li class="active"><a href="#actorselection" data-toggle="tab">Actor filter</a></li>
         <li><a href="#messagefiltering" data-toggle="tab">Message filter</a></li>
         <li><a href="#globalsettings" data-toggle="tab">Global settings</a></li>
+        <li style="float:right"><a href="#terminal" data-toggle="modal" data-target="#repl-modal">REPL</a></li>
     </ul>
     <div class="tab-content">
         <div class="tab-pane fade active in panel panel-default" id="actorselection"></div>
@@ -50,6 +53,17 @@
                 Failures for <span id="actor-name"></span>
             </div>
             <div id="actor-failures" class="modal-body">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal in" id="repl-modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-large" role="document">
+        <div class="modal-content">
+            <div id="repl" class="modal-body">
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>

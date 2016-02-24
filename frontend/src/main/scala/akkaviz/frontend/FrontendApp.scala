@@ -116,7 +116,7 @@ object FrontendApp extends JSApp with Persistence
   private val addNodesObs = Rx((showUnconnected(), seenActors())).trigger {
     seenActors.now.foreach {
       actor =>
-        if(showUnconnected.now || createdLinks.exists(_._1.split("->").contains(actor))) {
+        if (showUnconnected.now || createdLinks.exists(_._1.split("->").contains(actor))) {
           val isDead = deadActors.contains(actor)
           graph.addNode(actor, js.Dictionary(("dead", isDead)))
         } else {
@@ -138,6 +138,7 @@ object FrontendApp extends JSApp with Persistence
   private val monitoringOnOff = new MonitoringOnOff(monitoringStatus)
   private val connectionAlert = new Alert()
   private val unconnectedOnOff = new UnconnectedOnOff(showUnconnected)
+  private val replTerminal = new ReplTerminal()
 
   @JSExport("toggleActor")
   def toggleActor(name: String) = actorSelector.toggleActor(name)
@@ -221,6 +222,8 @@ object FrontendApp extends JSApp with Persistence
     insertComponent("#receivedelay", receiveDelayPanel.render)
     insertComponent("#onoffsettings", monitoringOnOff.render)
     insertComponent("#graphsettings", unconnectedOnOff.render)
+    insertComponent("#repl", replTerminal.render)
+
     DOMGlobalScope.$.material.init()
 
   }

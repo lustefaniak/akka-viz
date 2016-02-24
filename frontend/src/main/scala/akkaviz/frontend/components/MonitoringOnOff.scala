@@ -29,7 +29,6 @@ class MonitoringOnOff(status: Var[MonitoringStatus])(implicit ctx: Ctx.Owner) ex
 
   }
 
-
   override def render: Element = {
     Seq(
       div(`class` := "panel-body", stateBtn)
