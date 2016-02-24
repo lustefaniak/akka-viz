@@ -7,6 +7,8 @@ import scala.concurrent.duration.Duration
 
 package object types {
 
+  type EventTs = Long
+
   sealed trait FilteredActorEvent {
     def actorRef: ActorRef
   }
@@ -17,6 +19,10 @@ package object types {
 
   sealed trait EventPublisherControlEvent extends ControlMessage {
     this: InternalEvent =>
+  }
+
+  sealed trait TimestampedEvent {
+    def timestamp: EventTs
   }
 
   case class Received(sender: ActorRef, actorRef: ActorRef, message: Any, handled: Boolean) extends InternalEvent with FilteredActorEvent
@@ -50,8 +56,9 @@ package object types {
   case class ActorFailure(
     actorRef: ActorRef,
     cause: Throwable,
-    decision: SupervisorStrategy.Directive
-  ) extends InternalEvent with BackendEvent
+    decision: SupervisorStrategy.Directive,
+    timestamp: EventTs = System.currentTimeMillis()
+  ) extends InternalEvent with BackendEvent with TimestampedEvent
 
   case object ReportingEnabled extends InternalEvent with BackendEvent with EventPublisherControlEvent
 

@@ -4,6 +4,7 @@ import scala.collection.immutable.{List, Set}
 import scala.concurrent.duration.{Duration, FiniteDuration}
 
 package object protocol {
+  type IsoTs = String
 
   sealed trait ApiServerMessage
 
@@ -40,7 +41,8 @@ package object protocol {
   case class ActorFailure(
     actorRef: String,
     cause: String,
-    decision: String
+    decision: String,
+    ts: IsoTs
   ) extends ApiServerMessage
 
   case object ReportingEnabled extends ApiServerMessage

@@ -70,11 +70,11 @@ class ActorSelector(
       id := "failures-table",
       `class` := "table",
       thead(
-        tr(th("Exception"), th("Supervisor decision"))
+        tr(th("Exception", cls := "col-md-6"), th("Supervisor decision", cls:="col-md-1"), th("Time", cls:="col-md-5"))
       ),
       tbody(
         for (f <- failures)
-          yield tr(td(f.cause), td(f.decision))
+          yield tr(td(f.cause), td(f.decision), td(f.ts))
       )
     ).render
 
