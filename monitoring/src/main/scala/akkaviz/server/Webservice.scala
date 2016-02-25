@@ -116,7 +116,7 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directi
         ref,
         cause.toString,
         decision.toString,
-        java.time.Instant.ofEpochMilli(ts).toString
+        tsToIsoTs(ts)
       )
     case ReportingDisabled =>
       protocol.ReportingDisabled
@@ -124,6 +124,16 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directi
       protocol.ReportingEnabled
     case SnapshotAvailable(s) =>
       protocol.SnapshotAvailable(s.liveActors.toList, s.dead.toList, s.receivedFrom)
+    case ThroughputMeasurement(ref, value, ts) =>
+      protocol.ThroughputMeasurement(
+        ref,
+        value,
+        tsToIsoTs(ts)
+      )
+  }
+
+  def tsToIsoTs(ts: EventTs): String = {
+    java.time.Instant.ofEpochMilli(ts).toString
   }
 
   def eventSerialization: Flow[protocol.ApiServerMessage, ByteString, Any] = Flow[protocol.ApiServerMessage].map {
