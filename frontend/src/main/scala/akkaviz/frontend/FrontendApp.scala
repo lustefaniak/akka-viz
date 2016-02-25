@@ -146,21 +146,22 @@ object FrontendApp extends JSApp with Persistence
       connection.foreach { upstream =>
         connectionAlert.success("Connected!")
         connectionAlert.fadeOut()
+        val triggers = Seq(
 
         selectedMessages.triggerLater {
           console.log(s"Will send allowedClasses: ${selectedMessages.now.mkString("[", ",", "]")}")
           upstream.send(SetAllowedMessages(selectedMessages.now))
-        }
+        },
 
         selectedActors.trigger {
           console.log(s"Will send ObserveActors: ${selectedActors.now.mkString("[", ",", "]")}")
           upstream.send(ObserveActors(selectedActors.now))
-        }
+        },
 
         delayMillis.triggerLater {
           import scala.concurrent.duration._
           upstream.send(SetReceiveDelay(delayMillis.now.millis))
-        }
+        },
 
         monitoringStatus.triggerLater {
           monitoringStatus.now match {
@@ -170,18 +171,23 @@ object FrontendApp extends JSApp with Persistence
             case _ =>
               console.log("monitoring status: ", monitoringStatus.now.toString)
           }
-        }
+        },
+        )
+
 
         upstream.onclose = { ce: CloseEvent =>
           connectionAlert.warning("Reconnecting...")
           console.log("ws closed, retrying in 2 seconds")
-          timers.setTimeout(2.seconds) {
-            setupApiConnection
-          }
+          cleanUpAndRetry(triggers)
         }
         upstream.onerror = { ce: ErrorEvent =>
           connectionAlert.warning("Reconnecting...")
           console.log("ws error, retrying in 2 seconds")
+          cleanUpAndRetry(triggers)
+        }
+
+        def cleanUpAndRetry(triggers: Seq[Obs]): Unit = {
+          triggers.foreach(_.kill())
           timers.setTimeout(2.seconds) {
             setupApiConnection
           }
