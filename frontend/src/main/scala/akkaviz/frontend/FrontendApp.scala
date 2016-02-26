@@ -102,6 +102,11 @@ object FrontendApp extends JSApp with Persistence
 
       case Ping => {}
 
+      case t @ ThroughputMeasurement(ref, msgPerSecond, ts) =>
+        console.log(t.toString)
+    }
+  }
+
     }
   }
 
