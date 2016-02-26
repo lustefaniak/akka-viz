@@ -22,9 +22,6 @@ case class FsmTransition(fromStateClass: String, toStateClass: String)
 object FrontendApp extends JSApp with Persistence
     with MailboxDisplay with PrettyJson with ManipulationsUI {
 
-  private val createdLinks = js.Dictionary[Unit]()
-  private val graph = DOMGlobalScope.graph
-
   private val _actorClasses = js.Dictionary[Var[js.UndefOr[String]]]()
   private val _currentActorState = js.Dictionary[Var[js.UndefOr[String]]]()
 
@@ -44,7 +41,7 @@ object FrontendApp extends JSApp with Persistence
         val receiver = rcv.receiver
         addActorsToSeen(sender, receiver)
         messageReceived(rcv)
-        ensureGraphLink(sender, receiver)
+        graphView.ensureGraphLink(sender, receiver, FrontendUtil.shortActorName)
 
       case ac: AvailableClasses =>
         seenMessages() = ac.availableClasses.toSet
@@ -91,20 +88,10 @@ object FrontendApp extends JSApp with Persistence
         deadActors ++= dead
         for {
           (from, to) <- rcv
-        } ensureGraphLink(from, to)
+        } graphView.ensureGraphLink(from, to, FrontendUtil.shortActorName)
         seenActors.recalc()
 
       case Ping => {}
-    }
-  }
-
-  private def ensureGraphLink(sender: String, receiver: String): Unit = {
-    val linkId = s"${sender}->${receiver}"
-    if (!createdLinks.contains(linkId)) {
-      createdLinks.update(linkId, ())
-      graph.beginUpdate()
-      graph.addLink(sender, receiver, linkId)
-      graph.endUpdate()
     }
   }
 
@@ -115,15 +102,12 @@ object FrontendApp extends JSApp with Persistence
   private val thrownExceptions = Var[Seq[ActorFailure]](Seq())
   private val showUnconnected = Var[Boolean](false)
 
-  private val addNodesObs = Rx((showUnconnected(), seenActors())).trigger {
+  private val addNodesObs = seenActors.trigger {
     seenActors.now.foreach {
       actor =>
-        if (showUnconnected.now || createdLinks.exists(_._1.split("->").contains(actor))) {
-          val isDead = deadActors.contains(actor)
-          graph.addNode(actor, js.Dictionary(("dead", isDead)))
-        } else {
-          graph.removeNode(actor)
-        }
+        val isDead = deadActors.contains(actor)
+        val label = FrontendUtil.shortActorName(actor)
+        graphView.ensureNodeExists(actor, label, js.Dictionary(("dead", isDead)))
     }
   }
 
@@ -141,6 +125,7 @@ object FrontendApp extends JSApp with Persistence
   private val connectionAlert = new Alert()
   private val unconnectedOnOff = new UnconnectedOnOff(showUnconnected)
   private val replTerminal = new ReplTerminal()
+  private val graphView = new GraphView(showUnconnected)
 
   @JSExport("toggleActor")
   def toggleActor(name: String) = actorSelector.toggleActor(name)
@@ -225,6 +210,7 @@ object FrontendApp extends JSApp with Persistence
     insertComponent("#onoffsettings", monitoringOnOff.render)
     insertComponent("#graphsettings", unconnectedOnOff.render)
     insertComponent("#repl", replTerminal.render)
+    //FIXME: insert GraphView here when it gets ported to scala
 
     DOMGlobalScope.$.material.init()
 

@@ -41,9 +41,16 @@
     };
 
     graphics.node(function (node) {
+
+        node.data = node.data || {};
+        node.data.label = node.data.label || node.id;
+        node.data.mailboxSize = node.data.mailboxSize || 0;
+        node.data.dead = node.data.dead || false;
+
+        //console.log(node)
+
         var ui = Viva.Graph.svg('g');
-        var svgText = Viva.Graph.svg('text').attr('y', '-4px').text(node.id);
-        if (!node.data) node.data = {}; // fixme refactor scala code to ensure this is created
+        var svgText = Viva.Graph.svg('text').attr('y', '-4px').text(node.data.label);
         var imgLink = node.data.dead ? '/img/dead_actor.png' : '/img/actor.png'
         var img = Viva.Graph.svg('image')
                 .attr('width', nodeSize)

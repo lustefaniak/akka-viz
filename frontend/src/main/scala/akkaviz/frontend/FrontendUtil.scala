@@ -24,12 +24,15 @@ object FrontendUtil {
       findParentWithAttribute(elem.parentNode.asInstanceOf[Element], attributeName)
   }
 
+  @inline
   def actorComponent(actorRef: String): Element = {
     def isUser(ref: String): Boolean = ref.contains("user")
-    val shortActorName = actorRef.split('/').drop(3).mkString("/")
     span(
-      "data-toggle".attr := "tooltip", "data-placement".attr := "top", title := actorRef, shortActorName
+      "data-toggle".attr := "tooltip", "data-placement".attr := "top", title := actorRef, shortActorName(actorRef)
     ).render
   }
+
+  @inline
+  def shortActorName(actorRef: String) = actorRef.split('/').drop(3).mkString("/")
 
 }
