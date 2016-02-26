@@ -16,6 +16,8 @@ case class FsmTransition(fromStateClass: String, toStateClass: String)
 
 object FrontendApp extends JSApp with Persistence with PrettyJson with ManipulationsUI {
 
+  val MaxThroughputLogLen = 100
+
   private[this] val repo = new ActorRepository()
 
   private[this] def handleDownstream(messageReceived: (Received) => Unit)(message: protocol.ApiServerMessage): Unit = {
@@ -113,7 +115,11 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
       case Ping => {}
 
       case t @ ThroughputMeasurement(ref, msgPerSecond, ts) =>
-        console.log(t.toString)
+        repo.mutateActor(ref) { s =>
+          s.throughputLog.push(js.Dictionary("x" -> ts, "y" -> msgPerSecond))
+          if(s.throughputLog.length > MaxThroughputLogLen) s.throughputLog.shift()
+          s
+        }
     }
   }
 
