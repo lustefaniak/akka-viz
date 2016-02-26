@@ -153,6 +153,8 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directi
         s.dead.map(ref => ref -> s.classNameFor(ref))(breakOut),
         s.receivedFrom
       )
+    case ThroughputMeasurement(ref, msgs, ts) =>
+      protocol.ThroughputMeasurement(ref, msgs, tsToIsoTs(ts))
   }
 
   private[this] def tsToIsoTs(ts: EventTs): String = {
