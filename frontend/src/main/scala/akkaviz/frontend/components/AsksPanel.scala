@@ -60,7 +60,7 @@ class AsksPanel(selectedActors: Var[Set[String]]) extends Component with PrettyJ
     tableRow(question, Some(answer))
 
   private def tableRowAnswerFailed(question: Question, ansFailed: AnswerFailed) =
-    tableRow(question, Some(ansFailed))
+    tableRow(question, Some(ansFailed)).apply(cls := "danger")
 
   private def tableRow(question: Question, result: Option[AskResult]) = {
     val details = detailsView(question, result)
