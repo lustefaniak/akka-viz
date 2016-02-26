@@ -112,6 +112,8 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
 
       case Ping => {}
 
+      case t @ ThroughputMeasurement(ref, msgPerSecond, ts) =>
+        console.log(t.toString)
     }
   }
 
