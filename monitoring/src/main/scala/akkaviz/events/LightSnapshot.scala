@@ -9,7 +9,6 @@ import scala.language.implicitConversions
 
 case class LightSnapshot(
     liveActors: Set[String] = Set(),
-    children: Map[String, Set[String]] = Map(),
     receivedFrom: Set[(String, String)] = Set()
 ) {
 
@@ -19,7 +18,7 @@ case class LightSnapshot(
   }
 
   def dead: Set[String] = {
-    liveActors diff (children.values.flatten ++ receivedFrom.flatMap(p => Seq(p._1, p._2))).toSet
+    liveActors diff (receivedFrom.flatMap(p => Seq(p._1, p._2))).toSet
   }
 
   def update(ev: BackendEvent): LightSnapshot = ev match {
@@ -27,11 +26,9 @@ case class LightSnapshot(
       val live: Set[String] = liveActors ++ Set[ActorRef](from, to).filter(_.isUserActor).map(actorRefToString)
       val recv = receivedFrom + (from -> to)
       copy(liveActors = live, receivedFrom = recv)
-    case Spawned(ref, parent) =>
+    case Spawned(ref) =>
       if (ref.isUserActor) {
-        val live = liveActors + ref
-        val childr = children.updated(parent, children.getOrElse(parent, Set()) + ref)
-        copy(liveActors = live, children = childr)
+        copy(liveActors = liveActors + ref)
       } else {
         this
       }

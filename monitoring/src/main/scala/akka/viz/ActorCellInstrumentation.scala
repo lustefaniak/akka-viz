@@ -33,13 +33,13 @@ class ActorCellInstrumentation {
     }
   }
 
-  @Pointcut("execution(akka.actor.ActorCell.new(..)) && this(cell) && args(system, self, props, dispatcher, parent)")
-  def actorCellCreation(cell: ActorCell, system: ActorSystemImpl, self: InternalActorRef, props: Props, dispatcher: MessageDispatcher, parent: InternalActorRef): Unit = {}
+  @Pointcut("execution(akka.actor.ActorCell.new(..)) && this(cell) && args(system, self, props, dispatcher)")
+  def actorCellCreation(cell: ActorCell, system: ActorSystemImpl, self: InternalActorRef, props: Props, dispatcher: MessageDispatcher): Unit = {}
 
-  @After("actorCellCreation(cell, system, self, props, dispatcher, parent)")
-  def captureCellCreation(cell: ActorCell, system: ActorSystemImpl, self: InternalActorRef, props: Props, dispatcher: MessageDispatcher, parent: InternalActorRef): Unit = {
+  @After("actorCellCreation(cell, system, self, props, dispatcher)")
+  def captureCellCreation(cell: ActorCell, system: ActorSystemImpl, self: InternalActorRef, props: Props, dispatcher: MessageDispatcher): Unit = {
     if (cell.system.name != internalSystemName)
-      EventSystem.report(Spawned(self, parent))
+      EventSystem.report(Spawned(self))
   }
 
   @Pointcut("execution(* akka.actor.ActorCell.newActor()) && this(cell)")
