@@ -47,6 +47,7 @@ class ActorSelector(
       val state = stateVar.now
       val renderedState = Seq[Frag](
         div(strong("Class: "), state.className.getOrElse[String]("Unknown class")),
+        div(strong("Is dead: "), state.isDead.toString),
         div(strong("Internal state: "), pre(state.internalState.map(prettyPrintJson).getOrElse[String]("Internal state unknown"))),
         div(strong("Is FSM: "), state.fsmState.isDefined.toString),
         state.fsmState.map[Frag] {
