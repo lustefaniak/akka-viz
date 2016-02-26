@@ -13,6 +13,8 @@ cache:
 language: scala
 script:
   - ./.bintray_setup_credentials.sh
+  - sbt formatAll
+  - if [[ -n $(git status -s) ]]; then echo 'You need to format your code!' && exit 1; fi
   - sbt clean compile test package scripted
   - rm -r -f $HOME/.ivy2/local/
 
