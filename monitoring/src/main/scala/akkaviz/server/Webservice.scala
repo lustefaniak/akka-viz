@@ -133,7 +133,7 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directi
       protocol.Answer(questionId, MessageSerialization.render(msg))
 
     case AnswerFailed(questionId, ex) =>
-      protocol.Answer(questionId, ex.toString)
+      protocol.AnswerFailed(questionId, ex.toString)
 
     case ReportingDisabled =>
       protocol.ReportingDisabled
