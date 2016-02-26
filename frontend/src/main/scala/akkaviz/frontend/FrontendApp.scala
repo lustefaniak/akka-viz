@@ -23,10 +23,10 @@ case class FsmTransition(fromStateClass: String, toStateClass: String)
 object FrontendApp extends JSApp with Persistence
     with MailboxDisplay with PrettyJson with ManipulationsUI {
 
-  private val repo = new ActorRepository()
-
   @JSExport("toggleActor")
   def toggleActor(name: String) = actorSelector.toggleActor(name)
+
+  private val repo = new ActorRepository()
 
   private def handleDownstream(messageReceived: (Received) => Unit)(messageEvent: MessageEvent): Unit = {
     val message: ApiServerMessage = protocol.IO.readServer(messageEvent.data.asInstanceOf[String])
@@ -121,6 +121,14 @@ object FrontendApp extends JSApp with Persistence
   private val maxRetries = 10
 
   def main(): Unit = {
+
+    repo.seenActors.triggerLater {
+      repo.seenActors.now.foreach {
+        actor =>
+          val actorState = repo.state(actor).now
+          graphView.ensureNodeExists(actor, actorState.label, js.Dictionary(("dead", actorState.isDead)))
+      }
+    }
 
     def setupApiConnection: Unit = {
 
