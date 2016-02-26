@@ -353,7 +353,7 @@ class MessagesPanel(selectedActors: Var[Set[String]]) extends Component with Pre
     div(
       cls := "panel panel-default",
       messagePanelHeader,
-      div(cls := "panel-body", id := "messagespanelbody", overflowY.scroll, overflowX.scroll, maxHeight := 400.px,
+      div(cls := "panel-body", id := "messagespanelbody",
         table(
           cls := "table table-striped table-hover",
           thead(
