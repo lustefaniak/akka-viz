@@ -1,5 +1,5 @@
 import akka.actor.{Actor, ActorSystem, Props}
-import ama.AskDemo
+import ask.AskDemo
 import fsm.DiningHakkersOnFsm
 import postoffice.PostOffice
 import roulette.RussianRoulette
