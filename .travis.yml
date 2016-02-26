@@ -12,6 +12,7 @@ cache:
 
 language: scala
 script:
+  - git rebase origin/master
   - ./.bintray_setup_credentials.sh
   - sbt formatAll
   - if [[ -n $(git status -s) ]]; then echo 'You need to format your code!' && exit 1; fi
