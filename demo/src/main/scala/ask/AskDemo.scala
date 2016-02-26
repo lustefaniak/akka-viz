@@ -14,13 +14,9 @@ object AskDemo {
     val askActor = system.actorOf(Props[AskActor])
     implicit val timeout = Timeout(2 seconds)
 
-    system.scheduler.schedule(1 second, 3 seconds, new Runnable {
-      def run(): Unit = {
-        askActor ? 42
-        askActor.ask("Hello")(timeout, Actor.noSender)
-        askActor ? Nil
-      }
-    })
+    system.scheduler.schedule(0 second, 10 seconds, toRunnable(askActor ? 42))
+    system.scheduler.schedule(0 second, 10 seconds, toRunnable(askActor ? Nil))
+    system.scheduler.schedule(5 second, 10 seconds, toRunnable(askActor.ask("Hello")(timeout, Actor.noSender)))
   }
 
   class AskActor extends Actor {
@@ -31,5 +27,8 @@ object AskDemo {
     }
   }
 
+  private def toRunnable(thunk: => Any) = new Runnable {
+    override def run(): Unit = thunk
+  }
 }
 
