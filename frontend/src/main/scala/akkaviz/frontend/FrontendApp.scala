@@ -1,5 +1,6 @@
 package akkaviz.frontend
 
+import akkaviz.frontend.ActorRepository.FSMState
 import akkaviz.frontend.components._
 import akkaviz.protocol
 import akkaviz.protocol._
@@ -22,48 +23,72 @@ case class FsmTransition(fromStateClass: String, toStateClass: String)
 object FrontendApp extends JSApp with Persistence
     with MailboxDisplay with PrettyJson with ManipulationsUI {
 
-  private val _actorClasses = js.Dictionary[Var[js.UndefOr[String]]]()
-  private val _currentActorState = js.Dictionary[Var[js.UndefOr[String]]]()
+  private val repo = new ActorRepository()
 
-  private def actorClasses(actor: String) = _actorClasses.getOrElseUpdate(actor, Var(js.undefined))
-
-  private def currentActorState(actor: String) = _currentActorState.getOrElseUpdate(actor, Var(js.undefined))
-
-  private val deadActors = mutable.Set[String]()
-  private val monitoringStatus = Var[MonitoringStatus](UnknownYet)
+  @JSExport("toggleActor")
+  def toggleActor(name: String) = actorSelector.toggleActor(name)
 
   private def handleDownstream(messageReceived: (Received) => Unit)(messageEvent: MessageEvent): Unit = {
     val message: ApiServerMessage = protocol.IO.readServer(messageEvent.data.asInstanceOf[String])
 
     message match {
+      case ActorSystemCreated(system) =>
+
       case rcv: Received =>
         val sender = rcv.sender
         val receiver = rcv.receiver
-        addActorsToSeen(sender, receiver)
+        repo.addActorsToSeen(sender, receiver)
         messageReceived(rcv)
         graphView.ensureGraphLink(sender, receiver, FrontendUtil.shortActorName)
 
       case ac: AvailableClasses =>
         seenMessages() = ac.availableClasses.toSet
 
-      case Spawned(child, parent) =>
-        deadActors -= child
-        addActorsToSeen(child, parent)
+      case Spawned(child) =>
+        repo.mutateActor(child) {
+          _.copy(isDead = false)
+        }
 
-      case ActorSystemCreated(system) =>
-
-      case fsm: FSMTransition         =>
-      //TODO: handle in UI
+      case fsm: FSMTransition =>
+        repo.mutateActor(fsm.ref) {
+          _.copy(fsmState = FSMState(fsm.nextState, fsm.nextData))
+        }
 
       case i: Instantiated =>
-        val actor = i.ref
-        actorClasses(actor)() = i.clazz
+        repo.mutateActor(i.ref) {
+          _.copy(className = i.clazz)
+        }
 
       case CurrentActorState(ref, state) =>
-        currentActorState(ref)() = state
+        repo.mutateActor(ref) {
+          _.copy(internalState = state)
+        }
 
       case mb: MailboxStatus =>
-        handleMailboxStatus(mb)
+        repo.mutateActor(mb.owner) {
+          _.copy(mailboxSize = mb.size)
+        }
+        handleMailboxStatus(mb, graphView)
+
+      case Killed(ref) =>
+        repo.mutateActor(ref) {
+          _.copy(isDead = true)
+        }
+
+      case af: ActorFailure =>
+        thrownExceptions() = af +: thrownExceptions.now
+
+      case SnapshotAvailable(live, deadActors, rcv) =>
+        repo.addActorsToSeen(live: _*)
+        deadActors.foreach {
+          dead =>
+            repo.mutateActor(dead) {
+              _.copy(isDead = true)
+            }
+        }
+        rcv.foreach {
+          case (from, to) => graphView.ensureGraphLink(from, to, FrontendUtil.shortActorName)
+        }
 
       case ReceiveDelaySet(duration) =>
         delayMillis() = duration.toMillis.toInt
@@ -74,51 +99,18 @@ object FrontendApp extends JSApp with Persistence
       case ReportingDisabled =>
         monitoringStatus() = Off
 
-      case Killed(ref) =>
-        addActorsToSeen(ref)
-        deadActors += ref
-        seenActors.recalc()
-
-      case af: ActorFailure =>
-        addActorsToSeen(af.actorRef)
-        thrownExceptions() = af +: thrownExceptions.now
-
-      case SnapshotAvailable(live, dead, childrenOf, rcv) =>
-        addActorsToSeen(live: _*)
-        deadActors ++= dead
-        for {
-          (from, to) <- rcv
-        } graphView.ensureGraphLink(from, to, FrontendUtil.shortActorName)
-        seenActors.recalc()
-
       case Ping => {}
+
     }
   }
 
-  private val seenActors = Var[Set[String]](Set())
+  private val monitoringStatus = Var[MonitoringStatus](UnknownYet)
   private val selectedActors = persistedVar[Set[String]](Set(), "selectedActors")
   private val seenMessages = Var[Set[String]](Set())
   private val selectedMessages = persistedVar[Set[String]](Set(), "selectedMessages")
   private val thrownExceptions = Var[Seq[ActorFailure]](Seq())
   private val showUnconnected = Var[Boolean](false)
-
-  private val addNodesObs = seenActors.trigger {
-    seenActors.now.foreach {
-      actor =>
-        val isDead = deadActors.contains(actor)
-        val label = FrontendUtil.shortActorName(actor)
-        graphView.ensureNodeExists(actor, label, js.Dictionary(("dead", isDead)))
-    }
-  }
-
-  private def addActorsToSeen(actorName: String*): Unit = {
-    val previouslySeen = seenActors.now
-    val newSeen = previouslySeen ++ actorName.filterNot(previouslySeen(_))
-    if (previouslySeen.size != newSeen.size)
-      seenActors() = newSeen
-  }
-
-  private val actorSelector = new ActorSelector(seenActors, selectedActors, currentActorState, actorClasses, thrownExceptions)
+  private val actorSelector = new ActorSelector(repo.seenActors, selectedActors, repo.state, thrownExceptions)
   private val messageFilter = new MessageFilter(seenMessages, selectedMessages, selectedActors)
   private val messagesPanel = new MessagesPanel(selectedActors)
   private val monitoringOnOff = new MonitoringOnOff(monitoringStatus)
@@ -126,10 +118,6 @@ object FrontendApp extends JSApp with Persistence
   private val unconnectedOnOff = new UnconnectedOnOff(showUnconnected)
   private val replTerminal = new ReplTerminal()
   private val graphView = new GraphView(showUnconnected)
-
-  @JSExport("toggleActor")
-  def toggleActor(name: String) = actorSelector.toggleActor(name)
-
   private val maxRetries = 10
 
   def main(): Unit = {
