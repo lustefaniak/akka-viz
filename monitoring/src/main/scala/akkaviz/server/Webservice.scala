@@ -84,12 +84,11 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directi
 
   def internalToApi: Flow[BackendEvent, protocol.ApiServerMessage, Any] = Flow[BackendEvent].map {
     case ReceivedWithId(eventId, sender, receiver, message, handled) =>
-      //FIXME: decide if content of payload should be added to message
       protocol.Received(eventId, sender, receiver, message.getClass.getName, Some(MessageSerialization.render(message)), handled)
     case AvailableMessageTypes(types) =>
       protocol.AvailableClasses(types.map(_.getName))
-    case Spawned(ref, parent) =>
-      protocol.Spawned(ref, parent)
+    case Spawned(ref) =>
+      protocol.Spawned(ref)
     case ActorSystemCreated(system) =>
       protocol.ActorSystemCreated(system.name)
     case Instantiated(ref, clazz) =>
@@ -126,7 +125,7 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directi
     case ReportingEnabled =>
       protocol.ReportingEnabled
     case SnapshotAvailable(s) =>
-      protocol.SnapshotAvailable(s.liveActors.toList, s.dead.toList, s.children, s.receivedFrom)
+      protocol.SnapshotAvailable(s.liveActors.toList, s.dead.toList, s.receivedFrom)
   }
 
   def eventSerialization: Flow[protocol.ApiServerMessage, String, Any] = Flow[protocol.ApiServerMessage].map {

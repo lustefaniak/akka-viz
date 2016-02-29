@@ -29,7 +29,7 @@ package object types {
 
   case class ReceivedWithId(eventId: Long, sender: ActorRef, actorRef: ActorRef, message: Any, handled: Boolean) extends BackendEvent with FilteredActorEvent
 
-  case class Spawned(actorRef: ActorRef, parent: ActorRef) extends InternalEvent with BackendEvent
+  case class Spawned(actorRef: ActorRef) extends InternalEvent with BackendEvent
 
   case class ActorSystemCreated(system: ActorSystem) extends InternalEvent with BackendEvent
 

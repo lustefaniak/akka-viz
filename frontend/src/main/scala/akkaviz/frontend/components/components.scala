@@ -1,5 +1,6 @@
 package akkaviz.frontend.components
 
+import akkaviz.frontend.ActorRepository.ActorState
 import akkaviz.frontend.DOMGlobalScope.$
 import akkaviz.frontend.FrontendUtil.actorComponent
 import akkaviz.frontend.{DOMGlobalScope, FrontendUtil, PrettyJson}
@@ -34,28 +35,40 @@ trait OnOffWithLabel {
 class ActorSelector(
     seenActors: Var[Set[String]],
     selectedActors: Var[Set[String]],
-    currentActorState: (String) => Var[js.UndefOr[String]],
-    actorClasses: String => Var[js.UndefOr[String]],
+    currentActorState: (String) => Var[ActorState],
     actorFailures: Var[Seq[ActorFailure]]
 ) extends PrettyJson with Component {
 
   val popoverContent: ThisFunction0[domElement, Node] = (that: domElement) => {
     val actor: String = that.getAttribute("data-actor")
+    val content = div().render
     val stateVar = currentActorState(actor)
-    def stateVarFormatted = stateVar.now.map(prettyPrintJson).getOrElse("Internal state unknown")
-    val actorState: String = stateVarFormatted
-    val stateElem = pre(actorState).render
-    stateVar.triggerLater {
-      stateElem.innerHTML = stateVarFormatted
-    }
-    val popover = Seq[Frag](
-      h5(actor),
-      h6("Class: " + actorClasses(actor).now.getOrElse("")),
-      stateElem
-    )
+    stateVar.trigger {
+      val state = stateVar.now
+      val renderedState = Seq[Frag](
+        div(strong("Class: "), state.className.getOrElse[String]("Unknown class")),
+        div(strong("Is dead: "), state.isDead.toString),
+        div(strong("Internal state: "), pre(state.internalState.map(prettyPrintJson).getOrElse[String]("Internal state unknown"))),
+        div(strong("Is FSM: "), state.fsmState.isDefined.toString),
+        state.fsmState.map[Frag] {
+          fsm =>
+            Seq(
+              div(strong("FSM State: "), pre(prettyPrintJson(fsm.currentState))),
+              div(strong("FSM Data: "), pre(prettyPrintJson(fsm.currentData)))
+            )
+        }.getOrElse(()),
+        div(strong("Mailbox size: "), state.mailboxSize.map(_.toString).getOrElse[String]("Unknown")),
+        div(strong("Last updated: "), state.lastUpdatedAt.toISOString())
+      ).render
 
-    val elem = popover.render
-    elem
+      content.innerHTML = ""
+      content.appendChild(renderedState)
+    }
+
+    Seq[Frag](
+      h5(actor),
+      content
+    ).render
   }
 
   val popoverOptions = js.Dictionary(

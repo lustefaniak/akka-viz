@@ -12,7 +12,7 @@ package object protocol {
 
   case class AvailableClasses(availableClasses: List[String]) extends ApiServerMessage
 
-  case class Spawned(ref: String, parent: String) extends ApiServerMessage
+  case class Spawned(ref: String) extends ApiServerMessage
 
   case class ActorSystemCreated(systemName: String) extends ApiServerMessage
 
@@ -54,7 +54,6 @@ package object protocol {
   case class SnapshotAvailable(
     live: List[String],
     dead: List[String],
-    children: Map[String, Set[String]],
     receivedFrom: Set[(String, String)]
   ) extends ApiServerMessage
 
