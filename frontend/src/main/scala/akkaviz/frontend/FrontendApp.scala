@@ -106,7 +106,7 @@ object FrontendApp extends JSApp with Persistence
 
       case t @ ThroughputMeasurement(ref, msgPerSecond, ts) =>
         repo.mutateActor(ref) { s =>
-          s.throughputLog.push(js.Dictionary("x" -> new Date(ts).valueOf(), "y" -> msgPerSecond))
+          s.throughputLog.push(js.Dictionary("x" -> new Date(ts).valueOf()/1000, "y" -> msgPerSecond))
           if (s.throughputLog.length > MaxThroughputLogLen) s.throughputLog.shift()
           s
         }
