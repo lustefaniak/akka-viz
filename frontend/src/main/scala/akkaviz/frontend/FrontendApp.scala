@@ -28,6 +28,8 @@ object FrontendApp extends JSApp with Persistence
 
   private val repo = new ActorRepository()
 
+  val MaxThroughputLogLen = 30
+
   private def handleDownstream(messageReceived: (Received) => Unit)(messageEvent: MessageEvent): Unit = {
     val bb = TypedArrayBuffer.wrap(messageEvent.data.asInstanceOf[ArrayBuffer])
     val message: ApiServerMessage = protocol.IO.readServer(bb)
@@ -103,10 +105,11 @@ object FrontendApp extends JSApp with Persistence
       case Ping => {}
 
       case t @ ThroughputMeasurement(ref, msgPerSecond, ts) =>
-        console.log(t.toString)
-    }
-  }
-
+        repo.mutateActor(ref) { s =>
+          s.throughputLog.push(js.Dictionary("x" -> ts, "y" -> msgPerSecond))
+          if(s.throughputLog.length > MaxThroughputLogLen) s.throughputLog.shift()
+          s
+        }
     }
   }
 

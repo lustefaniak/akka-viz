@@ -12,7 +12,7 @@ import rx.{Rx, Var}
 
 import scala.collection.immutable.Queue
 import scala.scalajs.js
-import scala.scalajs.js.{ThisFunction0, ThisFunction1}
+import scala.scalajs.js.{JSON, ThisFunction0, ThisFunction1}
 import scala.util.Try
 import scalatags.JsDom.all._
 
@@ -58,7 +58,8 @@ class ActorSelector(
             )
         }.getOrElse(()),
         div(strong("Mailbox size: "), state.mailboxSize.map(_.toString).getOrElse[String]("Unknown")),
-        div(strong("Last updated: "), state.lastUpdatedAt.toISOString())
+        div(strong("Last updated: "), state.lastUpdatedAt.toISOString()),
+        div(strong("Throughput:"), pre(JSON.stringify(state.throughputLog)))
       ).render
 
       content.innerHTML = ""
