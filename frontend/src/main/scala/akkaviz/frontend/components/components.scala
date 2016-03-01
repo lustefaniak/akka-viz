@@ -50,6 +50,7 @@ class ActorSelector(
       val graphElem = pre().render
       val graph = jsNew(Rickshaw.Graph)(js.Dynamic.literal(
         element = graphElem,
+        height = 150,
         series = js.Array(
           js.Dynamic.literal(
             color = "lightblue",
