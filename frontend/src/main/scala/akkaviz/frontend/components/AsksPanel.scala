@@ -1,8 +1,9 @@
 package akkaviz.frontend.components
 
 import akkaviz.frontend.DOMGlobalScope._
+import akkaviz.frontend.FrontendUtil.shortActorName
 import akkaviz.frontend.PrettyJson
-import akkaviz.protocol.{AskResult, AnswerFailed, Answer, Question}
+import akkaviz.protocol.{Answer, AnswerFailed, AskResult, Question}
 import rx.Var
 
 import scala.collection.mutable
@@ -69,8 +70,8 @@ class AsksPanel(selectedActors: Var[Set[String]]) extends Component with PrettyJ
       "data-toggle".attr := "modal",
       "data-target".attr := "#ask-modal",
       id := s"question-${question.id}",
-      td(question.sender.getOrElse("No sender"): String),
-      td(question.actorRef),
+      td(question.sender.map(shortActorName).getOrElse("No sender"): String),
+      td(shortActorName(question.actorRef)),
       td(status),
       onclick := { () =>
         $("#ask-modal-body").html(details.render)
