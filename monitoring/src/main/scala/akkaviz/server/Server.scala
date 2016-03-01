@@ -18,10 +18,10 @@ object Server {
 
   def start(): Unit = {
     binding.onComplete {
-      case Success(binding) ⇒
+      case Success(binding) =>
         val localAddress = binding.localAddress
         println(s"Server is listening on http://${localAddress.getHostName}:${localAddress.getPort}")
-      case Failure(e) ⇒
+      case Failure(e) =>
         println(s"Binding failed with ${e.getMessage}")
         sys.exit(1)
     }(system.dispatcher)
