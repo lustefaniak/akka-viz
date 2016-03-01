@@ -1,20 +1,20 @@
 package akkaviz.frontend
 
 import akkaviz.frontend.ActorRepository.FSMState
+import akkaviz.frontend.ApiConnection.ApiUpstream
 import akkaviz.frontend.components._
 import akkaviz.protocol
 import akkaviz.protocol._
-import org.scalajs.dom.raw.{CloseEvent, ErrorEvent, MessageEvent, WebSocket}
+import org.scalajs.dom.raw.{CloseEvent, ErrorEvent, MessageEvent}
 import org.scalajs.dom.{Node, console, document}
 import rx._
-import upickle.default._
 
-import scala.collection.mutable
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSExport
+import scala.scalajs.js.typedarray.{ArrayBuffer, TypedArrayBuffer}
 import scala.scalajs.js.{JSApp, timers}
 import scalatags.JsDom.all._
 
@@ -29,7 +29,8 @@ object FrontendApp extends JSApp with Persistence
   private val repo = new ActorRepository()
 
   private def handleDownstream(messageReceived: (Received) => Unit)(messageEvent: MessageEvent): Unit = {
-    val message: ApiServerMessage = protocol.IO.readServer(messageEvent.data.asInstanceOf[String])
+    val bb = TypedArrayBuffer.wrap(messageEvent.data.asInstanceOf[ArrayBuffer])
+    val message: ApiServerMessage = protocol.IO.readServer(bb)
 
     message match {
       case ActorSystemCreated(system) =>
@@ -132,11 +133,11 @@ object FrontendApp extends JSApp with Persistence
 
     def setupApiConnection: Unit = {
 
-      val connection: Future[WebSocket] = ApiConnection(
+      val connection: Future[ApiUpstream] = ApiConnection(
         FrontendUtil.webSocketUrl("stream"),
         upstream => {
-          upstream.send(write(SetAllowedMessages(selectedMessages.now)))
-          upstream.send(write(ObserveActors(selectedActors.now)))
+          upstream.send(SetAllowedMessages(selectedMessages.now))
+          upstream.send(ObserveActors(selectedActors.now))
         },
         handleDownstream(messagesPanel.messageReceived),
         maxRetries
@@ -148,28 +149,24 @@ object FrontendApp extends JSApp with Persistence
 
         selectedMessages.triggerLater {
           console.log(s"Will send allowedClasses: ${selectedMessages.now.mkString("[", ",", "]")}")
-          import upickle.default._
-          upstream.send(write(SetAllowedMessages(selectedMessages.now)))
+          upstream.send(SetAllowedMessages(selectedMessages.now))
         }
 
         selectedActors.trigger {
           console.log(s"Will send ObserveActors: ${selectedActors.now.mkString("[", ",", "]")}")
-          import upickle.default._
-          upstream.send(write(ObserveActors(selectedActors.now)))
+          upstream.send(ObserveActors(selectedActors.now))
         }
 
         delayMillis.triggerLater {
           import scala.concurrent.duration._
-          upstream.send(write(SetReceiveDelay(delayMillis.now.millis)))
+          upstream.send(SetReceiveDelay(delayMillis.now.millis))
         }
 
         monitoringStatus.triggerLater {
           monitoringStatus.now match {
             case Awaiting(s) =>
               console.log("monitoring status: ", monitoringStatus.now.toString)
-              val write1: String = write(SetEnabled(s.asBoolean))
-              console.log(write1)
-              upstream.send(write1)
+              upstream.send(SetEnabled(s.asBoolean))
             case _ =>
               console.log("monitoring status: ", monitoringStatus.now.toString)
           }
