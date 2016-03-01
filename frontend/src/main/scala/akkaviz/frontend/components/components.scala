@@ -17,7 +17,6 @@ import scala.util.Try
 import scalatags.JsDom.all._
 import js.Dynamic.{newInstance => jsNew, literal}
 
-
 trait Component {
   def render: Element
 }
@@ -56,7 +55,8 @@ class ActorSelector(
             color = "lightblue",
             data = state.throughputLog
           )
-        )))
+        )
+      ))
 
       val xAxis = jsNew(Rickshaw.Graph.Axis.Time)(literal(
         graph = graph
@@ -65,9 +65,6 @@ class ActorSelector(
       val yAxis = jsNew(Rickshaw.Graph.Axis.Y)(literal(
         graph = graph
       ))
-
-
-
 
       val renderedState = Seq[Frag](
         div(strong("Class: "), state.className.getOrElse[String]("Unknown class")),
