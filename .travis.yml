@@ -18,7 +18,8 @@ script:
   - sbt formatAll
   - if [[ -n $(git status -s) ]]; then git status && echo 'You need to format your code!' && exit 1; fi
   - ./.bintray_setup_credentials.sh
-  - sbt clean compile test package scripted
+  - sbt clean compile package
+  - sbt test scripted
   - rm -r -f $HOME/.ivy2/local/
 
 jdk:
