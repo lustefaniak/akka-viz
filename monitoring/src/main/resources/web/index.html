@@ -44,7 +44,15 @@
             <div id="receivedelay" class="panel panel-default"></div>
         </div>
     </div>
-    <div id="messagelist"></div>
+
+    <ul class="nav nav-tabs">
+        <li class="active"><a href="#messagelist" data-toggle="tab">Messages</a></li>
+        <li><a href="#asklist" data-toggle="tab">Asks</a></li>
+    </ul>
+    <div class="tab-content">
+        <div id="messagelist" class="tab-pane fade active in panel panel-default"></div>
+        <div id="asklist" class="tab-pane fade panel panel-default"></div>
+    </div>
 </div>
 <div class="modal fade" id="failures-modal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
@@ -64,6 +72,17 @@
     <div class="modal-dialog modal-large" role="document">
         <div class="modal-content">
             <div id="repl" class="modal-body">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="ask-modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div id="ask-modal-body" class="modal-body">
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>

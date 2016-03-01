@@ -118,6 +118,21 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directi
         decision.toString,
         java.time.Instant.ofEpochMilli(ts).toString
       )
+
+    case Question(id, senderOpt, ref, msg) =>
+      protocol.Question(
+        id,
+        senderOpt.map(x => actorRefToString(x)),
+        ref,
+        MessageSerialization.render(msg)
+      )
+
+    case Answer(questionId, msg) =>
+      protocol.Answer(questionId, MessageSerialization.render(msg))
+
+    case AnswerFailed(questionId, ex) =>
+      protocol.AnswerFailed(questionId, ex.toString)
+
     case ReportingDisabled =>
       protocol.ReportingDisabled
     case ReportingEnabled =>

@@ -79,6 +79,15 @@ object FrontendApp extends JSApp with Persistence
       case af: ActorFailure =>
         thrownExceptions() = af +: thrownExceptions.now
 
+      case q: Question =>
+        asksPanel.receivedQuestion(q)
+
+      case a: Answer =>
+        asksPanel.receivedAnswer(a)
+
+      case af: AnswerFailed =>
+        asksPanel.receivedAnswerFailed(af)
+
       case SnapshotAvailable(live, deadActors, rcv) =>
         repo.addActorsToSeen(live: _*)
         deadActors.foreach {
@@ -114,6 +123,7 @@ object FrontendApp extends JSApp with Persistence
   private val actorSelector = new ActorSelector(repo.seenActors, selectedActors, repo.state, thrownExceptions)
   private val messageFilter = new MessageFilter(seenMessages, selectedMessages, selectedActors)
   private val messagesPanel = new MessagesPanel(selectedActors)
+  private val asksPanel = new AsksPanel(selectedActors)
   private val monitoringOnOff = new MonitoringOnOff(monitoringStatus)
   private val connectionAlert = new Alert()
   private val unconnectedOnOff = new UnconnectedOnOff(showUnconnected)
@@ -199,6 +209,7 @@ object FrontendApp extends JSApp with Persistence
     insertComponent("#actorselection", actorSelector.render)
     insertComponent("#messagefiltering", messageFilter.render)
     insertComponent("#messagelist", messagesPanel.render)
+    insertComponent("#asklist", asksPanel.render)
     insertComponent("#receivedelay", receiveDelayPanel.render)
     insertComponent("#onoffsettings", monitoringOnOff.render)
     insertComponent("#graphsettings", unconnectedOnOff.render)
