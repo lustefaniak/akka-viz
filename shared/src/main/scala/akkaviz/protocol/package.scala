@@ -1,5 +1,7 @@
 package akkaviz
 
+import java.nio.ByteBuffer
+
 import scala.collection.immutable.{List, Set}
 import scala.concurrent.duration.{Duration, FiniteDuration}
 
@@ -69,21 +71,25 @@ package object protocol {
 
   object IO {
 
-    def readServer(json: String): ApiServerMessage = {
-      upickle.default.read[ApiServerMessage](json)
+    import boopickle.Default._
+
+    implicit val serverPickler: Pickler[ApiServerMessage] = generatePickler[ApiServerMessage]
+    implicit val clientPickler: Pickler[ApiClientMessage] = generatePickler[ApiClientMessage]
+
+    def readServer(bytes: ByteBuffer): ApiServerMessage = {
+      Unpickle[ApiServerMessage].fromBytes(bytes)
     }
 
-    def readClient(json: String): ApiClientMessage = {
-
-      upickle.default.read[ApiClientMessage](json)
+    def readClient(bytes: ByteBuffer): ApiClientMessage = {
+      Unpickle[ApiClientMessage].fromBytes(bytes)
     }
 
-    def write(msg: ApiServerMessage): String = {
-      upickle.default.write[ApiServerMessage](msg)
+    def write(msg: ApiServerMessage): ByteBuffer = {
+      Pickle.intoBytes(msg)
     }
 
-    def write(msg: ApiClientMessage): String = {
-      upickle.default.write[ApiClientMessage](msg)
+    def write(msg: ApiClientMessage): ByteBuffer = {
+      Pickle.intoBytes(msg)
     }
 
   }
