@@ -27,11 +27,12 @@ class GraphView(showUnconnected: Var[Boolean]) extends Component {
 
   private var scheduler: js.UndefOr[SetTimeoutHandle] = js.undefined
 
+  private def isNodeConnected(node: String): Boolean = {
+    connectedNodes.contains(node)
+  }
+
   showUnconnected.triggerLater {
     val show = showUnconnected.now
-    def isConnected(node: String): Boolean = {
-      connectedNodes.contains(node)
-    }
     if (show) {
       nodes.foreach {
         case (node, data) =>
@@ -39,7 +40,7 @@ class GraphView(showUnconnected: Var[Boolean]) extends Component {
       }
     } else {
       nodes.foreach {
-        case (node, data) if !isConnected(node) =>
+        case (node, data) if !isNodeConnected(node) =>
           enqueueOperation(GraphView.RemoveNode(node))
         case _ => //do nothing
       }
@@ -92,7 +93,8 @@ class GraphView(showUnconnected: Var[Boolean]) extends Component {
   def ensureNodeExists(node: String, label: String, data: js.Dictionary[js.Any] = js.Dictionary()): Unit = {
     data.update("label", label)
     nodes.update(node, data)
-    enqueueOperation(GraphView.AddNode(node, data))
+    if (showUnconnected.now || isNodeConnected(node))
+      enqueueOperation(GraphView.AddNode(node, data))
   }
 
 }
