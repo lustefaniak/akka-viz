@@ -1,14 +1,12 @@
 package akkaviz.server
 
-import java.text.SimpleDateFormat
-import java.time.{ZoneOffset, LocalDateTime}
-
 import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.model._
-import akka.http.scaladsl.model.ws.{Message, TextMessage}
+import akka.http.scaladsl.model.ws.{BinaryMessage, Message}
 import akka.http.scaladsl.server.Directives
 import akka.stream.scaladsl._
 import akka.stream.{Materializer, OverflowStrategy}
+import akka.util.ByteString
 import akkaviz.config.Config
 import akkaviz.events._
 import akkaviz.events.types._
@@ -40,8 +38,8 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directi
     val eventSrc = Source.actorRef[BackendEvent](Config.bufferSize, OverflowStrategy.dropNew)
 
     val wsIn = Flow[Message].mapConcat[ChangeSubscriptionSettings] {
-      case TextMessage.Strict(msg) =>
-        val command = protocol.IO.readClient(msg)
+      case BinaryMessage.Strict(msg) =>
+        val command = protocol.IO.readClient(msg.asByteBuffer)
         command match {
           case protocol.SetAllowedMessages(classNames) =>
             system.log.debug(s"Set allowed messages to $classNames")
@@ -74,7 +72,7 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directi
       }.via(internalToApi)
       .keepAlive(10.seconds, () => protocol.Ping)
       .via(eventSerialization)
-      .map(TextMessage(_))
+      .map(BinaryMessage.Strict(_))
 
     out
   }
@@ -128,8 +126,8 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directi
       protocol.SnapshotAvailable(s.liveActors.toList, s.dead.toList, s.receivedFrom)
   }
 
-  def eventSerialization: Flow[protocol.ApiServerMessage, String, Any] = Flow[protocol.ApiServerMessage].map {
-    msg => protocol.IO.write(msg)
+  def eventSerialization: Flow[protocol.ApiServerMessage, ByteString, Any] = Flow[protocol.ApiServerMessage].map {
+    msg => ByteString(protocol.IO.write(msg))
   }
 
   override def replArgs: Seq[Bind[_]] = Nil
