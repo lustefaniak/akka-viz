@@ -15,6 +15,8 @@ import scala.scalajs.js
 import scala.scalajs.js.{JSON, ThisFunction0, ThisFunction1}
 import scala.util.Try
 import scalatags.JsDom.all._
+import js.Dynamic.{newInstance => jsNew, literal}
+
 
 trait Component {
   def render: Element
@@ -44,7 +46,29 @@ class ActorSelector(
     val content = div().render
     val stateVar = currentActorState(actor)
     stateVar.trigger {
+      import DOMGlobalScope.Rickshaw
       val state = stateVar.now
+      val graphElem = pre().render
+      val graph = jsNew(Rickshaw.Graph)(js.Dynamic.literal(
+        element = graphElem,
+        series = js.Array(
+          js.Dynamic.literal(
+            color = "lightblue",
+            data = state.throughputLog
+          )
+        )))
+
+      val xAxis = jsNew(Rickshaw.Graph.Axis.Time)(literal(
+        graph = graph
+      ))
+
+      val yAxis = jsNew(Rickshaw.Graph.Axis.Y)(literal(
+        graph = graph
+      ))
+
+
+
+
       val renderedState = Seq[Frag](
         div(strong("Class: "), state.className.getOrElse[String]("Unknown class")),
         div(strong("Is dead: "), state.isDead.toString),
@@ -59,11 +83,14 @@ class ActorSelector(
         }.getOrElse(()),
         div(strong("Mailbox size: "), state.mailboxSize.map(_.toString).getOrElse[String]("Unknown")),
         div(strong("Last updated: "), state.lastUpdatedAt.toISOString()),
-        div(strong("Throughput:"), pre(JSON.stringify(state.throughputLog)))
+        div(strong("Throughput:"), graphElem)
       ).render
 
       content.innerHTML = ""
       content.appendChild(renderedState)
+      graph.render()
+      xAxis.render()
+      yAxis.render()
     }
 
     Seq[Frag](

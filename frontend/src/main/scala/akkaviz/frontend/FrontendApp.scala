@@ -15,7 +15,7 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSExport
 import scala.scalajs.js.typedarray.{ArrayBuffer, TypedArrayBuffer}
-import scala.scalajs.js.{JSApp, timers}
+import scala.scalajs.js.{Date, JSApp, timers}
 import scalatags.JsDom.all._
 
 case class FsmTransition(fromStateClass: String, toStateClass: String)
@@ -106,7 +106,7 @@ object FrontendApp extends JSApp with Persistence
 
       case t @ ThroughputMeasurement(ref, msgPerSecond, ts) =>
         repo.mutateActor(ref) { s =>
-          s.throughputLog.push(js.Dictionary("x" -> ts, "y" -> msgPerSecond))
+          s.throughputLog.push(js.Dictionary("x" -> new Date(ts).valueOf(), "y" -> msgPerSecond))
           if(s.throughputLog.length > MaxThroughputLogLen) s.throughputLog.shift()
           s
         }
@@ -179,7 +179,6 @@ object FrontendApp extends JSApp with Persistence
             case _ =>
               console.log("monitoring status: ", monitoringStatus.now.toString)
           }
-        },
         )
 
 
