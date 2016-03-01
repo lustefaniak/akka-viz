@@ -8,7 +8,7 @@ case class SerializationContextImpl(depth: Int = 0) extends SerializationContext
 object MessageSerialization extends SerializerFinder with ReflectiveSerialization {
 
   def preload() = {
-
+    serializers.size
   }
 
   def render(message: Any): String = {
@@ -35,9 +35,9 @@ object MessageSerialization extends SerializerFinder with ReflectiveSerializatio
     }
   }
 
-  private val serializers: List[AkkaVizSerializer] = findSerializers
+  private lazy val serializers: List[AkkaVizSerializer] = findSerializers
 
-  private val mappers = DefaultSerializers.mappers
+  private lazy val mappers = DefaultSerializers.mappers
 
   private def getSerializerFor(obj: Any): AkkaVizSerializer = {
     def findSerializerForObject: AkkaVizSerializer = {
