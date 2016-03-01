@@ -179,6 +179,7 @@ object FrontendApp extends JSApp with Persistence
             case _ =>
               console.log("monitoring status: ", monitoringStatus.now.toString)
           }
+        }
         )
 
 
