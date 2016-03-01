@@ -5,6 +5,7 @@ import scalariform.formatter.preferences._
 cancelable in Global := true
 
 val upickleVersion = "0.3.8"
+val boopickleVersion = "1.1.2"
 val akkaVersion = "2.4.2"
 val scalatestVersion = "3.0.0-M15"
 
@@ -95,6 +96,7 @@ lazy val frontend =
       libraryDependencies ++= Seq(
         "org.scala-js" %%% "scalajs-dom" % "0.9.0",
         "com.lihaoyi" %%% "upickle" % upickleVersion,
+        "me.chrons" %%% "boopickle" % boopickleVersion,
         "com.lihaoyi" %%% "scalarx" % "0.3.0",
         "com.lihaoyi" %%% "scalatags" % "0.5.4",
         "org.querki" %%% "jquery-facade" % "0.11",
@@ -129,7 +131,7 @@ lazy val monitoring =
       addCompilerPlugin("org.scalamacros" % "paradise" % "2.0.1" cross CrossVersion.full),
       libraryDependencies += "com.wacai" %% "config-annotation" % "0.3.4" % "compile",
       libraryDependencies += "org.clapper" %% "classutil" % "1.0.6",
-      libraryDependencies += "com.lihaoyi" %%% "upickle" % upickleVersion,
+      libraryDependencies += "me.chrons" %%% "boopickle" % boopickleVersion,
       libraryDependencies += "com.lihaoyi" % "ammonite-repl" % "0.5.5" cross CrossVersion.full,
       libraryDependencies += "com.typesafe.akka" %% "akka-http-experimental" % akkaVersion, // FIXME: shadow that dependency and hide it
       libraryDependencies += "org.scalatest" %%% "scalatest" % scalatestVersion % "test",
