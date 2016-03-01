@@ -19,17 +19,21 @@ class AskInstrumentation {
   private val internalSystemName = Config.internalSystemName
 
   @Pointcut("execution (* akka.pattern..*.internalAsk$extension(..)) && args(recipient, msg, timeout, sender)")
-  def internalAskPointcut(recipient: ActorRef,
-                          msg: Any,
-                          timeout: Timeout,
-                          sender: ActorRef): Unit = {}
+  def internalAskPointcut(
+    recipient: ActorRef,
+    msg: Any,
+    timeout: Timeout,
+    sender: ActorRef
+  ): Unit = {}
 
   @AfterReturning(pointcut = "internalAskPointcut(recipient, msg, timeout, sender)", returning = "future")
-  def afterInternalAsk(future: Future[Any],
-                       recipient: ActorRef,
-                       msg: Any,
-                       timeout: Timeout,
-                       sender: ActorRef): Unit = {
+  def afterInternalAsk(
+    future: Future[Any],
+    recipient: ActorRef,
+    msg: Any,
+    timeout: Timeout,
+    sender: ActorRef
+  ): Unit = {
     if (!isSystemActor(recipient)) {
       val questionId = askCounter.incrementAndGet()
       publishQuestion(questionId, Option(sender), recipient, msg)
@@ -40,10 +44,12 @@ class AskInstrumentation {
   private def isSystemActor(ref: ActorRef) =
     ref.path.address.system == internalSystemName
 
-  def publishQuestion(questionId: Long,
-                      from: Option[ActorRef],
-                      to: ActorRef,
-                      msg: Any): Unit = {
+  def publishQuestion(
+    questionId: Long,
+    from: Option[ActorRef],
+    to: ActorRef,
+    msg: Any
+  ): Unit = {
     EventSystem.report(Question(questionId, from, to, msg))
   }
 
@@ -51,7 +57,7 @@ class AskInstrumentation {
     implicit val ec = scala.concurrent.ExecutionContext.global
     answerFuture.onComplete {
       case Success(msg) => EventSystem.report(Answer(questionId, msg))
-      case Failure(ex) => EventSystem.report(AnswerFailed(questionId, ex))
+      case Failure(ex)  => EventSystem.report(AnswerFailed(questionId, ex))
     }
   }
 }

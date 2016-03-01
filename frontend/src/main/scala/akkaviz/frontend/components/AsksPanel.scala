@@ -80,14 +80,14 @@ class AsksPanel(selectedActors: Var[Set[String]]) extends Component with PrettyJ
   }
 
   def detailsView(question: Question, result: Option[AskResult]) = result match {
-    case None => unansweredQuestionDetails(question)
-    case Some(ans: Answer) => answeredQuestionDetails(question, ans)
+    case None                          => unansweredQuestionDetails(question)
+    case Some(ans: Answer)             => answeredQuestionDetails(question, ans)
     case Some(ansFailed: AnswerFailed) => failedAnswerDetails(question, ansFailed)
   }
 
   def statusText(result: Option[AskResult]) = result match {
-    case None => "Waiting for answer"
-    case Some(ans: Answer) => "Answered"
+    case None                          => "Waiting for answer"
+    case Some(ans: Answer)             => "Answered"
     case Some(ansFailed: AnswerFailed) => "Failed to answer"
   }
 
@@ -116,7 +116,7 @@ class AsksPanel(selectedActors: Var[Set[String]]) extends Component with PrettyJ
 
   def questionHeader(q: Question) = q.sender match {
     case Some(s) => h3(s"Question from $s")
-    case None => h3("Question(no sender)")
+    case None    => h3("Question(no sender)")
   }
 
 }
