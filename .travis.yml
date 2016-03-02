@@ -14,7 +14,7 @@ language: scala
 script:
   - git config --global user.email "travis@example.com"
   - git config --global user.name "Travis CI"
-  - git rebase origin/master
+  - if [[ -z $(git rebase origin/master) ]]; then echo "Can't be cleanly merged with origin/master" && exit 1 ; fi
   - sbt formatAll
   - if [[ -n $(git status -s) ]]; then git status && echo 'You need to format your code!' && exit 1; fi
   - ./.bintray_setup_credentials.sh
