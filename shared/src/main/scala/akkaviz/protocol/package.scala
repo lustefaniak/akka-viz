@@ -67,8 +67,8 @@ package object protocol {
   case object Ping extends ApiServerMessage
 
   case class SnapshotAvailable(
-    live: List[String],
-    dead: List[String],
+    live: Map[String, Option[String]],
+    dead: Map[String, Option[String]],
     receivedFrom: Set[(String, String)]
   ) extends ApiServerMessage
 

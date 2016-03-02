@@ -2,15 +2,19 @@ package akkaviz.events
 
 import akka.actor.ActorRef
 import akkaviz.events.Helpers._
+import akkaviz.events.LightSnapshot.{ClassName, ActorRefEquiv}
 import akkaviz.events.types._
 
 import scala.Predef.{any2stringadd => _, _}
 import scala.language.implicitConversions
 
 case class LightSnapshot(
-    liveActors: Set[String] = Set(),
-    receivedFrom: Set[(String, String)] = Set()
+    liveActors: Set[ActorRefEquiv] = Set(),
+    receivedFrom: Set[(ActorRefEquiv, ActorRefEquiv)] = Set(),
+    classes: Map[ActorRefEquiv, ClassName] = Map()
 ) {
+
+  def classNameFor(ref: ActorRefEquiv): Option[ClassName] = classes.get(ref)
 
   implicit def refPair2StringPair(pair: (ActorRef, ActorRef)): (String, String) = {
     val (actor1, actor2) = pair
@@ -36,9 +40,17 @@ case class LightSnapshot(
       copy(liveActors = liveActors - ref)
     case CurrentActorState(ref, _) if ref.isUserActor =>
       copy(liveActors = liveActors + ref)
-    case Instantiated(ref, _) if ref.isUserActor =>
-      copy(liveActors = liveActors + ref)
+    case Instantiated(ref, actor) if ref.isUserActor =>
+      copy(liveActors = liveActors + ref, classes = classes.updated(ref, actor.getClass.getName))
+    case CurrentActorState(ref, actor) if ref.isUserActor =>
+      copy(classes = classes.updated(ref, actor.getClass.getName))
     case other =>
       this
   }
+}
+
+object LightSnapshot {
+  type ActorRefEquiv = String
+  type ClassName = String
+
 }

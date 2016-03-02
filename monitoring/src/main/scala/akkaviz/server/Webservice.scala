@@ -138,7 +138,15 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directi
     case ReportingEnabled =>
       protocol.ReportingEnabled
     case SnapshotAvailable(s) =>
-      protocol.SnapshotAvailable(s.liveActors.toList, s.dead.toList, s.receivedFrom)
+      protocol.SnapshotAvailable(
+        s.liveActors.map(ref => ref -> s.classNameFor(ref)).toMap,
+        s.dead.map(ref => ref -> s.classNameFor(ref)).toMap,
+        s.receivedFrom
+      )
+  }
+
+  def tsToIsoTs(ts: EventTs): String = {
+    java.time.Instant.ofEpochMilli(ts).toString
   }
 
   def eventSerialization: Flow[protocol.ApiServerMessage, ByteString, Any] = Flow[protocol.ApiServerMessage].map {
