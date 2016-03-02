@@ -1,6 +1,6 @@
 package akkaviz.frontend.components
 
-import org.scalajs.dom.html.Element
+import org.scalajs.dom.Element
 
 import scala.concurrent.duration._
 import scala.scalajs.js.timers
@@ -14,7 +14,9 @@ class Alert extends Component {
     position.fixed, right := 0.px
   ).render
 
-  override def render: Element = connectionAlert
+  override def attach(parent: Element): Unit = {
+    parent.appendChild(connectionAlert)
+  }
 
   def success(msg: String) = {
     connectionAlert.innerHTML = msg

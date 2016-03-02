@@ -7,7 +7,7 @@ import akkaviz.frontend.{DOMGlobalScope, FrontendUtil, PrettyJson}
 import akkaviz.protocol.{ActorFailure, Received}
 import org.scalajs.dom.html._
 import org.scalajs.dom.raw.MouseEvent
-import org.scalajs.dom.{Element => domElement, Node, console}
+import org.scalajs.dom.{Node, console, Element => domElement}
 import rx.{Rx, Var}
 
 import scala.collection.immutable.Queue
@@ -17,7 +17,7 @@ import scala.util.Try
 import scalatags.JsDom.all._
 
 trait Component {
-  def render: Element
+  def attach(parent: domElement): Unit
 }
 
 trait OnOffWithLabel {
@@ -160,8 +160,8 @@ class ActorSelector(
     }
   }
 
-  def render = {
-    div(cls := "panel-body", id := "actortree",
+  def attach(parent: domElement): Unit = {
+    val elem = div(cls := "panel-body", id := "actortree",
       table(
         cls := "table table-striped table-hover",
         thead(
@@ -175,6 +175,7 @@ class ActorSelector(
         ),
         actorTreeTbody
       )).render
+    parent.appendChild(elem)
   }
 }
 
@@ -210,8 +211,8 @@ class MessageFilter(
 
   lazy val messagesTbody = tbody().render
 
-  def render = {
-    div(cls := "panel-body", id := "messagefilter",
+  def attach(parent: domElement): Unit = {
+    val elem = div(cls := "panel-body", id := "messagefilter",
       table(
         cls := "table table-striped table-hover",
         thead(
@@ -225,6 +226,8 @@ class MessageFilter(
         ),
         messagesTbody
       )).render
+
+    parent.appendChild(elem)
   }
 
   def clearMessageFilters: ThisFunction0[domElement, Unit] = { _: domElement =>
@@ -349,8 +352,8 @@ class MessagesPanel(selectedActors: Var[Set[String]]) extends Component with Pre
     msgQueue() = Queue.empty
   }
 
-  override def render: Element = {
-    div(
+  override def attach(parent: domElement): Unit = {
+    val elem = div(
       cls := "panel panel-default",
       messagePanelHeader,
       div(cls := "panel-body", id := "messagespanelbody",
@@ -361,6 +364,8 @@ class MessagesPanel(selectedActors: Var[Set[String]]) extends Component with Pre
           ), messagesTbody, tfoot(showMoreRow)
         ))
     ).render
+
+    parent.appendChild(elem)
   }
 }
 

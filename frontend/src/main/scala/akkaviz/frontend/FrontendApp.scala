@@ -205,22 +205,19 @@ object FrontendApp extends JSApp with Persistence
 
     setupApiConnection
 
-    document.body.appendChild(connectionAlert.render)
-    insertComponent("#actorselection", actorSelector.render)
-    insertComponent("#messagefiltering", messageFilter.render)
-    insertComponent("#messagelist", messagesPanel.render)
-    insertComponent("#asklist", asksPanel.render)
-    insertComponent("#receivedelay", receiveDelayPanel.render)
-    insertComponent("#onoffsettings", monitoringOnOff.render)
-    insertComponent("#graphsettings", unconnectedOnOff.render)
-    insertComponent("#repl", replTerminal.render)
-    //FIXME: insert GraphView here when it gets ported to scala
+    connectionAlert.attach(document.body)
+    actorSelector.attach(document.getElementById("actorselection"))
+    messageFilter.attach(document.getElementById("messagefiltering"))
+    messagesPanel.attach(document.getElementById("messagelist"))
+    asksPanel.attach(document.getElementById("asklist"))
+    document.getElementById("receivedelay").appendChild(receiveDelayPanel.render) //FIXME: port to component
+    monitoringOnOff.attach(document.getElementById("onoffsettings"))
+    unconnectedOnOff.attach(document.getElementById("graphsettings"))
+    replTerminal.attach(document.getElementById("repl"))
+    graphView.attach(document.getElementById("graphview"))
 
     DOMGlobalScope.$.material.init()
 
   }
 
-  def insertComponent(parentSelector: String, component: Node): Node = {
-    document.querySelector(parentSelector).appendChild(component)
-  }
 }

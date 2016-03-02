@@ -4,6 +4,7 @@ import akkaviz.frontend.DOMGlobalScope._
 import akkaviz.frontend.FrontendUtil.shortActorName
 import akkaviz.frontend.PrettyJson
 import akkaviz.protocol.{Answer, AnswerFailed, AskResult, Question}
+import org.scalajs.dom.Element
 import rx.Var
 
 import scala.collection.mutable
@@ -13,7 +14,9 @@ class AsksPanel(selectedActors: Var[Set[String]]) extends Component with PrettyJ
 
   private val asks: mutable.Set[Question] = mutable.Set()
 
-  override def render = panelBody.render
+  override def attach(parent: Element): Unit = {
+    parent.appendChild(panelBody.render)
+  }
 
   lazy val panelBody = div(
     cls := "panel-body",
