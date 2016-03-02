@@ -102,6 +102,10 @@ package object vis {
       opts.physics.minVelocity = 0.75
       opts.physics.solver = "forceAtlas2Based"
 
+      opts.configure = js.Dynamic.literal()
+      opts.configure.enabled = true
+      opts.configure.container = document.getElementById("graphsettings")
+
       console.log(opts)
       opts.asInstanceOf[NetworkOptions]
     }
