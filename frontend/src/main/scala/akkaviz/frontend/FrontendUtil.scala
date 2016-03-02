@@ -33,6 +33,9 @@ object FrontendUtil {
   }
 
   @inline
+  def isTemporaryActor(actorRef: String) = actorRef.contains("/temp/")
+
+  @inline
   def shortActorName(actorRef: String) = actorRef.split('/').drop(3).mkString("/")
 
 }

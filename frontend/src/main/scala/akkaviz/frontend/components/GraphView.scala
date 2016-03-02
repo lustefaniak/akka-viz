@@ -1,8 +1,7 @@
 package akkaviz.frontend.components
 
 import akkaviz.frontend.DOMGlobalScope
-import akkaviz.frontend.components.GraphView.AddLink
-import org.scalajs.dom.console
+import akkaviz.frontend.FrontendUtil.isTemporaryActor
 import org.scalajs.dom.html.Element
 import rx.Var
 
@@ -80,21 +79,26 @@ class GraphView(showUnconnected: Var[Boolean]) extends Component {
 
   def ensureGraphLink(sender: String, receiver: String, nodesLabeler: (String) => String): Unit = {
     val linkId = s"${sender}->${receiver}"
-    if (!createdLinks.contains(linkId)) {
+    ensureNodeExists(sender, nodesLabeler(sender))
+    ensureNodeExists(receiver, nodesLabeler(receiver))
+    if (notTemporary(sender, receiver) && !createdLinks.contains(linkId)) {
       createdLinks.update(linkId, ())
-      ensureNodeExists(sender, nodesLabeler(sender))
-      ensureNodeExists(receiver, nodesLabeler(receiver))
       connectedNodes.update(sender, ())
       connectedNodes.update(receiver, ())
       enqueueOperation(GraphView.AddLink(sender, receiver, linkId))
     }
   }
 
+  private def notTemporary(refA: String, refB: String) =
+    !isTemporaryActor(refA) && !isTemporaryActor(refB)
+
   def ensureNodeExists(node: String, label: String, data: js.Dictionary[js.Any] = js.Dictionary()): Unit = {
-    data.update("label", label)
-    nodes.update(node, data)
-    if (showUnconnected.now || isNodeConnected(node))
-      enqueueOperation(GraphView.AddNode(node, data))
+    if (!isTemporaryActor(node)) {
+      data.update("label", label)
+      nodes.update(node, data)
+      if (showUnconnected.now || isNodeConnected(node))
+        enqueueOperation(GraphView.AddNode(node, data))
+    }
   }
 
 }
