@@ -115,6 +115,10 @@ package object vis {
   @JSName("vis.Network")
   class Network(element: Element, data: NetworkData, options: NetworkOptions) extends js.Any {
 
+    def destroy(): Unit = js.native
+
+    def fit() = js.native
+
   }
 
 }

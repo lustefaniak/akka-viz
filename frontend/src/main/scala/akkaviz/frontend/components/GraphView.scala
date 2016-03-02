@@ -12,6 +12,7 @@ class GraphView(showUnconnected: Var[Boolean]) extends Component {
   private[this] lazy val visibleNodes = js.Dictionary[Unit]()
   private[this] lazy val networkNodes = new vis.DataSet[vis.Node]()
   private[this] lazy val networkEdges = new vis.DataSet[vis.Edge]()
+  private[this] var network: js.UndefOr[vis.Network] = js.undefined
 
   override def attach(parent: Element): Unit = {
     console.log(networkNodes)
@@ -19,7 +20,8 @@ class GraphView(showUnconnected: Var[Boolean]) extends Component {
     console.log(parent)
     val data = js.Dynamic.literal(nodes = networkNodes, edges = networkEdges).asInstanceOf[vis.NetworkData]
     console.log(data)
-    val network = new vis.Network(parent, data, vis.NetworkOptions())
+    network.foreach(_.destroy())
+    network = new vis.Network(parent, data, vis.NetworkOptions())
     console.log(network)
   }
 
@@ -27,6 +29,7 @@ class GraphView(showUnconnected: Var[Boolean]) extends Component {
   private[this] val nodeData = js.Dictionary[String]()
   private[this] val connectedNodes = js.Dictionary[Unit]()
   private[this] val createdLinks = js.Dictionary[Unit]()
+  private[this] lazy val fitOnce = network.foreach(_.fit) // do it once
 
   private[this] def isNodeConnected(node: String): Boolean = {
     connectedNodes.contains(node)
@@ -73,6 +76,8 @@ class GraphView(showUnconnected: Var[Boolean]) extends Component {
     nodesToAdd.keys.foreach(visibleNodes.update(_, ()))
 
     networkEdges.add(linksToCreate)
+
+    fitOnce
 
   }
 
