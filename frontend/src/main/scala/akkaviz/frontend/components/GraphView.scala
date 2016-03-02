@@ -1,81 +1,79 @@
 package akkaviz.frontend.components
 
-import akkaviz.frontend.DOMGlobalScope
-import akkaviz.frontend.components.GraphView.AddLink
-import org.scalajs.dom.console
-import org.scalajs.dom.html.Element
+import akkaviz.frontend.{ScheduledQueue, vis}
+import org.scalajs.dom.{Element, console}
 import rx.Var
 
-import scala.concurrent.duration.{FiniteDuration, _}
 import scala.scalajs.js
-import scala.scalajs.js.timers.SetTimeoutHandle
+import scala.scalajs.js.JSConverters._
 
 class GraphView(showUnconnected: Var[Boolean]) extends Component {
 
-  override def render: Element = {
+  private[this] lazy val visibleNodes = js.Dictionary[Unit]()
+  private[this] lazy val networkNodes = new vis.DataSet[vis.Node]()
+  private[this] lazy val networkEdges = new vis.DataSet[vis.Edge]()
 
-    //FIXME: port initialization of graph from JS to scala and do it here
-    js.undefined.asInstanceOf
+  override def attach(parent: Element): Unit = {
+    console.log(networkNodes)
+    console.log(networkEdges)
+    console.log(parent)
+    val data = js.Dynamic.literal(nodes = networkNodes, edges = networkEdges).asInstanceOf[vis.NetworkData]
+    console.log(data)
+    val network = new vis.Network(parent, data, vis.NetworkOptions())
+    console.log(network)
   }
 
-  private val graph = DOMGlobalScope.graph
-  private val nodes = js.Dictionary[js.Dictionary[js.Any]]()
-  private val connectedNodes = js.Dictionary[Unit]()
-  private val createdLinks = js.Dictionary[Unit]()
+  private[this] val scheduler = new ScheduledQueue[GraphView.GraphOperation](applyGraphOperations)
+  private[this] val nodeData = js.Dictionary[String]()
+  private[this] val connectedNodes = js.Dictionary[Unit]()
+  private[this] val createdLinks = js.Dictionary[Unit]()
 
-  private val updateFrequency: FiniteDuration = 500.millis
-
-  private var scheduler: js.UndefOr[SetTimeoutHandle] = js.undefined
-
-  private def isNodeConnected(node: String): Boolean = {
+  private[this] def isNodeConnected(node: String): Boolean = {
     connectedNodes.contains(node)
   }
 
   showUnconnected.triggerLater {
     val show = showUnconnected.now
     if (show) {
-      nodes.foreach {
-        case (node, data) =>
-          enqueueOperation(GraphView.AddNode(node, data))
+      nodeData.foreach {
+        case (node, label) =>
+          scheduler.enqueueOperation(GraphView.AddNode(node, label))
       }
     } else {
-      nodes.foreach {
-        case (node, data) if !isNodeConnected(node) =>
-          enqueueOperation(GraphView.RemoveNode(node))
+      nodeData.foreach {
+        case (node, label) if !isNodeConnected(node) =>
+          scheduler.enqueueOperation(GraphView.RemoveNode(node))
         case _ => //do nothing
       }
     }
   }
 
-  private def scheduleGraphOperations(): Unit = {
-    if (scheduler.isEmpty) {
-      val timer: SetTimeoutHandle = scala.scalajs.js.timers.setTimeout(updateFrequency) {
-        scheduler = js.undefined
-        applyGraphOperations()
-      }
-      scheduler = timer
-    }
-  }
+  private def applyGraphOperations(operationsToApply: js.Array[GraphView.GraphOperation]): Unit = {
 
-  private def applyGraphOperations(): Unit = {
-    graph.beginUpdate()
+    val nodesToAdd = js.Dictionary[vis.Node]()
+    val nodesToRemove = js.Dictionary[Unit]()
+    val linksToCreate = js.Array[vis.Edge]()
+
     operationsToApply.foreach {
-      case GraphView.AddLink(from, to, id) =>
-        graph.addLink(from, to, id)
-      case GraphView.AddNode(node, dataMaybe) =>
-        graph.addNode(node, dataMaybe)
+      case GraphView.AddNode(node, label) =>
+        nodesToRemove.delete(node)
+        if (!visibleNodes.contains(node))
+          nodesToAdd.update(node, vis.Node(node, label))
       case GraphView.RemoveNode(node) =>
-        graph.removeNode(node)
+        nodesToAdd.delete(node)
+        nodesToRemove.update(node, ())
+      case GraphView.AddLink(from, to, linkId) =>
+        linksToCreate.push(vis.Edge(from, to))
     }
-    operationsToApply = js.Array()
-    graph.endUpdate()
-  }
 
-  private var operationsToApply = js.Array[GraphView.GraphOperation]()
+    val removeIds = nodesToRemove.keys.toJSArray
+    networkNodes.remove(removeIds)
+    removeIds.foreach(visibleNodes.delete(_))
+    networkNodes.add(nodesToAdd.values.toJSArray)
+    nodesToAdd.keys.foreach(visibleNodes.update(_, ()))
 
-  private def enqueueOperation(op: GraphView.GraphOperation): Unit = {
-    operationsToApply.append(op)
-    scheduleGraphOperations()
+    networkEdges.add(linksToCreate)
+
   }
 
   def ensureGraphLink(sender: String, receiver: String, nodesLabeler: (String) => String): Unit = {
@@ -86,15 +84,14 @@ class GraphView(showUnconnected: Var[Boolean]) extends Component {
       ensureNodeExists(receiver, nodesLabeler(receiver))
       connectedNodes.update(sender, ())
       connectedNodes.update(receiver, ())
-      enqueueOperation(GraphView.AddLink(sender, receiver, linkId))
+      scheduler.enqueueOperation(GraphView.AddLink(sender, receiver, linkId))
     }
   }
 
-  def ensureNodeExists(node: String, label: String, data: js.Dictionary[js.Any] = js.Dictionary()): Unit = {
-    data.update("label", label)
-    nodes.update(node, data)
+  def ensureNodeExists(node: String, label: String): Unit = {
+    nodeData.update(node, label)
     if (showUnconnected.now || isNodeConnected(node))
-      enqueueOperation(GraphView.AddNode(node, data))
+      scheduler.enqueueOperation(GraphView.AddNode(node, label))
   }
 
 }
@@ -105,7 +102,7 @@ case object GraphView {
 
   case class AddLink(from: String, to: String, linkId: String) extends GraphOperation
 
-  case class AddNode(node: String, data: js.UndefOr[js.Any] = js.undefined) extends GraphOperation
+  case class AddNode(node: String, label: String) extends GraphOperation
 
   case class RemoveNode(node: String) extends GraphOperation
 
