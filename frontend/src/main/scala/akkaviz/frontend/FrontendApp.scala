@@ -6,13 +6,12 @@ import akkaviz.frontend.components._
 import akkaviz.protocol
 import akkaviz.protocol._
 import org.scalajs.dom.raw.{CloseEvent, ErrorEvent, MessageEvent}
-import org.scalajs.dom.{Node, console, document}
+import org.scalajs.dom.{console, document}
 import rx._
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-import scala.scalajs.js
 import scala.scalajs.js.annotation.JSExport
 import scala.scalajs.js.typedarray.{ArrayBuffer, TypedArrayBuffer}
 import scala.scalajs.js.{JSApp, timers}
@@ -137,7 +136,7 @@ object FrontendApp extends JSApp with Persistence
       repo.seenActors.now.foreach {
         actor =>
           val actorState = repo.state(actor).now
-          graphView.ensureNodeExists(actor, actorState.label, js.Dictionary(("dead", actorState.isDead)))
+          graphView.ensureNodeExists(actor, actorState.label)
       }
     }
 

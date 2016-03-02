@@ -7,6 +7,6 @@ import scala.scalajs.js
 
 trait MailboxDisplay {
   def handleMailboxStatus(mb: protocol.MailboxStatus, graphView: GraphView): Unit = {
-    graphView.ensureNodeExists(mb.owner, FrontendUtil.shortActorName(mb.owner), js.Dictionary("mailboxSize" -> mb.size))
+    //graphView.ensureNodeExists(mb.owner, FrontendUtil.shortActorName(mb.owner))
   }
 }
