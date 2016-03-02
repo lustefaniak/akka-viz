@@ -1,11 +1,13 @@
 package akkaviz.frontend.components
 
-import akkaviz.frontend.{ScheduledQueue, vis}
+import akkaviz.frontend.{DOMGlobalScope, ScheduledQueue, vis}
 import org.scalajs.dom.{Element, console}
 import rx.Var
 
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
+import scala.scalajs.js.|
+import scala.scalajs.js.|._
 
 class GraphView(showUnconnected: Var[Boolean]) extends Component {
 
@@ -18,7 +20,7 @@ class GraphView(showUnconnected: Var[Boolean]) extends Component {
     console.log(networkNodes)
     console.log(networkEdges)
     console.log(parent)
-    val data = js.Dynamic.literal(nodes = networkNodes, edges = networkEdges).asInstanceOf[vis.NetworkData]
+    val data = vis.NetworkData(networkNodes, networkEdges)
     console.log(data)
     network.foreach(_.destroy())
     network = new vis.Network(parent, data, vis.NetworkOptions())
@@ -61,7 +63,7 @@ class GraphView(showUnconnected: Var[Boolean]) extends Component {
       case GraphView.AddNode(node, label) =>
         nodesToRemove.delete(node)
         if (!visibleNodes.contains(node))
-          nodesToAdd.update(node, vis.Node(node, label))
+          nodesToAdd.update(node, vis.Node(node, label)) //, color = DOMGlobalScope.colorByHashCode(node)))
       case GraphView.RemoveNode(node) =>
         nodesToAdd.delete(node)
         nodesToRemove.update(node, ())

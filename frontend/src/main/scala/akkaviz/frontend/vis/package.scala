@@ -4,6 +4,10 @@ import org.scalajs.dom.{Element, console}
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSName
+import org.scalajs.dom.document
+
+import scala.scalajs.js.|
+import scala.scalajs.js.|._
 
 package object vis {
 
@@ -57,8 +61,14 @@ package object vis {
 
   @js.native
   trait NetworkData extends js.Any {
-    var nodes: DataSet[Node] = js.native
-    var edges: DataSet[Edge] = js.native
+    var nodes: js.Array[Node] | DataSet[Node] = js.native
+    var edges: js.Array[Edge] | DataSet[Edge] = js.native
+  }
+
+  object NetworkData {
+    def apply(nodes: js.Array[Node] | DataSet[Node], edges: js.Array[Edge] | DataSet[Edge]): NetworkData = {
+      js.Dynamic.literal(nodes = nodes.asInstanceOf[js.Any], edges = edges.asInstanceOf[js.Any]).asInstanceOf[vis.NetworkData]
+    }
   }
 
   @js.native
