@@ -26,7 +26,7 @@ object FrontendApp extends JSApp with Persistence
   @JSExport("toggleActor")
   def toggleActor(name: String) = actorSelector.toggleActor(name)
 
-  private val repo = new ActorRepository()
+  private[this] val repo = new ActorRepository()
 
   private def handleDownstream(messageReceived: (Received) => Unit)(messageEvent: MessageEvent): Unit = {
     val bb = TypedArrayBuffer.wrap(messageEvent.data.asInstanceOf[ArrayBuffer])
@@ -114,22 +114,22 @@ object FrontendApp extends JSApp with Persistence
     }
   }
 
-  private val monitoringStatus = Var[MonitoringStatus](UnknownYet)
-  private val selectedActors = persistedVar[Set[String]](Set(), "selectedActors")
-  private val seenMessages = Var[Set[String]](Set())
-  private val selectedMessages = persistedVar[Set[String]](Set(), "selectedMessages")
-  private val thrownExceptions = Var[Seq[ActorFailure]](Seq())
-  private val showUnconnected = Var[Boolean](false)
-  private val actorSelector = new ActorSelector(repo.seenActors, selectedActors, repo.state, thrownExceptions)
-  private val messageFilter = new MessageFilter(seenMessages, selectedMessages, selectedActors)
-  private val messagesPanel = new MessagesPanel(selectedActors)
-  private val asksPanel = new AsksPanel(selectedActors)
-  private val monitoringOnOff = new MonitoringOnOff(monitoringStatus)
-  private val connectionAlert = new Alert()
-  private val unconnectedOnOff = new UnconnectedOnOff(showUnconnected)
-  private val replTerminal = new ReplTerminal()
-  private val graphView = new GraphView(showUnconnected)
-  private val maxRetries = 10
+  private[this] val monitoringStatus = Var[MonitoringStatus](UnknownYet)
+  private[this] val selectedActors = persistedVar[Set[String]](Set(), "selectedActors")
+  private[this] val seenMessages = Var[Set[String]](Set())
+  private[this] val selectedMessages = persistedVar[Set[String]](Set(), "selectedMessages")
+  private[this] val thrownExceptions = Var[Seq[ActorFailure]](Seq())
+  private[this] val showUnconnected = Var[Boolean](false)
+  private[this] val actorSelector = new ActorSelector(repo.seenActors, selectedActors, repo.state, thrownExceptions)
+  private[this] val messageFilter = new MessageFilter(seenMessages, selectedMessages, selectedActors)
+  private[this] val messagesPanel = new MessagesPanel(selectedActors)
+  private[this] val asksPanel = new AsksPanel(selectedActors)
+  private[this] val monitoringOnOff = new MonitoringOnOff(monitoringStatus)
+  private[this] val connectionAlert = new Alert()
+  private[this] val unconnectedOnOff = new UnconnectedOnOff(showUnconnected)
+  private[this] val replTerminal = new ReplTerminal()
+  private[this] val graphView = new GraphView(showUnconnected)
+  private[this] val maxRetries = 10
 
   def main(): Unit = {
 
