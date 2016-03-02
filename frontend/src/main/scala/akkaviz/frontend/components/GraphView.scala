@@ -63,7 +63,7 @@ class GraphView(showUnconnected: Var[Boolean]) extends Component {
         nodesToAdd.delete(node)
         nodesToRemove.update(node, ())
       case GraphView.AddLink(from, to, linkId) =>
-        linksToCreate.push(vis.Edge(from, to))
+        linksToCreate.push(vis.Edge(linkId, from, to))
     }
 
     val removeIds = nodesToRemove.keys.toJSArray
