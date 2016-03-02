@@ -1,5 +1,6 @@
 package akkaviz.frontend
 
+import akkaviz.protocol.IsoTs
 import rx.Var
 
 import scala.scalajs.js
@@ -41,7 +42,8 @@ case object ActorRepository {
     internalState: js.UndefOr[String] = js.undefined,
     className: js.UndefOr[String] = js.undefined,
     fsmState: js.UndefOr[FSMState] = js.undefined,
-    lastUpdatedAt: js.Date = new Date()
+    lastUpdatedAt: js.Date = new Date(),
+    throughputLog: js.Array[js.Dictionary[Any]] = new js.Array() // mutable but it's going to be updated frequently (once a second or so)
   )
 
 }

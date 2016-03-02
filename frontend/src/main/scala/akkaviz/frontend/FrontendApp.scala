@@ -15,7 +15,7 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSExport
 import scala.scalajs.js.typedarray.{ArrayBuffer, TypedArrayBuffer}
-import scala.scalajs.js.{JSApp, timers}
+import scala.scalajs.js.{Date, JSApp, timers}
 import scalatags.JsDom.all._
 
 case class FsmTransition(fromStateClass: String, toStateClass: String)
@@ -27,6 +27,8 @@ object FrontendApp extends JSApp with Persistence
   def toggleActor(name: String) = actorSelector.toggleActor(name)
 
   private val repo = new ActorRepository()
+
+  val MaxThroughputLogLen = 30
 
   private def handleDownstream(messageReceived: (Received) => Unit)(messageEvent: MessageEvent): Unit = {
     val bb = TypedArrayBuffer.wrap(messageEvent.data.asInstanceOf[ArrayBuffer])
@@ -111,6 +113,12 @@ object FrontendApp extends JSApp with Persistence
 
       case Ping => {}
 
+      case t @ ThroughputMeasurement(ref, msgPerSecond, ts) =>
+        repo.mutateActor(ref) { s =>
+          s.throughputLog.push(js.Dictionary("x" -> new Date(ts).valueOf()/1000, "y" -> msgPerSecond))
+          if (s.throughputLog.length > MaxThroughputLogLen) s.throughputLog.shift()
+          s
+        }
     }
   }
 
@@ -156,21 +164,22 @@ object FrontendApp extends JSApp with Persistence
       connection.foreach { upstream =>
         connectionAlert.success("Connected!")
         connectionAlert.fadeOut()
+        val triggers = Seq(
 
         selectedMessages.triggerLater {
           console.log(s"Will send allowedClasses: ${selectedMessages.now.mkString("[", ",", "]")}")
           upstream.send(SetAllowedMessages(selectedMessages.now))
-        }
+        },
 
         selectedActors.trigger {
           console.log(s"Will send ObserveActors: ${selectedActors.now.mkString("[", ",", "]")}")
           upstream.send(ObserveActors(selectedActors.now))
-        }
+        },
 
         delayMillis.triggerLater {
           import scala.concurrent.duration._
           upstream.send(SetReceiveDelay(delayMillis.now.millis))
-        }
+        },
 
         monitoringStatus.triggerLater {
           monitoringStatus.now match {
@@ -181,17 +190,22 @@ object FrontendApp extends JSApp with Persistence
               console.log("monitoring status: ", monitoringStatus.now.toString)
           }
         }
+        )
+
 
         upstream.onclose = { ce: CloseEvent =>
           connectionAlert.warning("Reconnecting...")
           console.log("ws closed, retrying in 2 seconds")
-          timers.setTimeout(2.seconds) {
-            setupApiConnection
-          }
+          cleanUpAndRetry(triggers)
         }
         upstream.onerror = { ce: ErrorEvent =>
           connectionAlert.warning("Reconnecting...")
           console.log("ws error, retrying in 2 seconds")
+          cleanUpAndRetry(triggers)
+        }
+
+        def cleanUpAndRetry(triggers: Seq[Obs]): Unit = {
+          triggers.foreach(_.kill())
           timers.setTimeout(2.seconds) {
             setupApiConnection
           }

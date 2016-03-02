@@ -15,4 +15,6 @@ object DOMGlobalScope extends js.GlobalScope {
 
   def str2ab(str: String): ArrayBuffer = js.native
 
+  def Rickshaw: js.Dynamic = js.native
+
 }
