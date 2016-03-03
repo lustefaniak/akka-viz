@@ -8,5 +8,6 @@ class UnconnectedOnOff(status: Var[Boolean]) extends OnOffWithLabel with Compone
   inp.onchange = { e: Event =>
     status() = inp.checked
   }
+
   override def attach(parent: Element): Unit = parent.appendChild(stateBtn.render)
 }

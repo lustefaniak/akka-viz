@@ -38,13 +38,23 @@ class MonitoringOnOff(status: Var[MonitoringStatus])(implicit ctx: Ctx.Owner) ex
 }
 
 sealed trait MonitoringStatus
-sealed trait Synced extends MonitoringStatus { def asBoolean: Boolean }
+
+sealed trait Synced extends MonitoringStatus {
+  def asBoolean: Boolean
+}
 
 object Synced {
   def apply(b: Boolean) = if (b) On else Off
 }
 
-case object On extends Synced { val asBoolean = true }
+case object On extends Synced {
+  val asBoolean = true
+}
+
 case class Awaiting(target: Synced) extends MonitoringStatus
-case object Off extends Synced { val asBoolean = false }
+
+case object Off extends Synced {
+  val asBoolean = false
+}
+
 case object UnknownYet extends MonitoringStatus

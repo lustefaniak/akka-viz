@@ -2,7 +2,7 @@ package akkaviz.frontend.components
 
 import akkaviz.frontend.ActorRepository.ActorState
 import akkaviz.frontend.vis
-import org.scalajs.dom.console
+
 import scala.scalajs.js
 
 object ActorStateAsNodeRenderer {
