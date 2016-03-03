@@ -45,6 +45,10 @@ package object vis {
 
     def add(d: js.Array[T]): js.Array[String] = js.native
 
+    def update(d: T): js.Array[String] = js.native
+
+    def update(d: js.Array[T]): js.Array[String] = js.native
+
     def remove(d: String): js.Array[String] = js.native
 
     def remove(d: js.Array[String]): js.Array[String] = js.native
