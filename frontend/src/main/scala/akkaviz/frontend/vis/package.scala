@@ -1,6 +1,7 @@
 package akkaviz.frontend
 
-import org.scalajs.dom.Element
+import org.scalajs.dom.{Element, Event}
+import org.scalajs.dom.html.Canvas
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSName
@@ -79,12 +80,169 @@ package object vis {
   }
 
   @js.native
+  trait Coords extends js.Any {
+    val x: Double
+    val y: Double
+  }
+
+  object Coords {
+    def apply(x: Double, y: Double): Coords = {
+      js.Dynamic.literal(x = x, y = y).asInstanceOf[Coords]
+    }
+  }
+
+  @js.native
+  trait NetworkMoveToOptions extends js.Any {
+    var position: Coords = js.native
+    var scale: Double = js.native
+    var offset: Coords = js.native
+    //var animation
+  }
+
+  @js.native
+  trait NetworkFitOptions extends NetworkMoveToOptions {
+  }
+
+  @js.native
+  trait NetworkFocusOptions extends NetworkMoveToOptions {
+    var locked: Boolean = js.native
+  }
+
+  @js.native
   @JSName("vis.Network")
   class Network(element: Element, data: NetworkData, options: NetworkOptions) extends js.Any {
 
+    //Global methods for the network
     def destroy(): Unit = js.native
 
-    def fit(): Unit = js.native
+    def setData(data: NetworkData): Unit = js.native
+
+    def setOptions(options: NetworkOptions): Unit = js.native
+
+    def on(event: String, fn: js.Function): Unit = js.native
+
+    def off(event: String, fn: js.Function): Unit = js.native
+
+    def once(event: String, fn: js.Function): Unit = js.native
+
+    //Methods related to the canvas
+    def canvasToDOM(coords: Coords): Coords = js.native
+
+    def DOMtoCanvas(coords: Coords): Coords = js.native
+
+    def redraw(): Unit = js.native
+
+    def setSize(width: String, height: String): Unit = js.native
+
+    //Methods to get information on nodes and edges.
+
+    //Physics methods to control when the simulation should run.
+
+    //Selection methods for nodes and edges.
+
+    //Methods to control the viewport for zoom and animation.
+    def getScale(): Double = js.native
+
+    def getViewPosition(): Coords = js.native
+
+    def fit(options: js.UndefOr[NetworkFitOptions] = js.undefined): Unit = js.native
+
+    def focus(nodeId: String, options: js.UndefOr[NetworkFocusOptions] = js.undefined): Unit = js.native
+
+    def moveTo(options: js.UndefOr[NetworkMoveToOptions] = js.undefined): Unit = js.native
+
+    def releaseNode(): Unit = js.native
+
+  }
+
+  @js.native
+  trait PointerCoords extends js.Any {
+    var DOM: Coords = js.native
+    var canvas: Coords = js.native
+  }
+
+  @js.native
+  trait ClickEvent extends js.Any {
+    var nodes: js.Array[String] = js.native
+    var edges: js.Array[String] = js.native
+    var event: Event = js.native
+    var pointer: PointerCoords = js.native
+  }
+
+  @js.native
+  trait PreviousSelection extends js.Any {
+    var nodes: js.Array[String] = js.native
+    var edges: js.Array[String] = js.native
+  }
+
+  @js.native
+  trait DeselectEvent extends ClickEvent {
+    var previousSelection: PreviousSelection = js.native
+  }
+
+  @js.native
+  trait EdgeEvent extends js.Any {
+    var edge: String = js.native
+  }
+
+  @js.native
+  trait NodeEvent extends js.Any {
+    var node: String = js.native
+  }
+
+  @js.native
+  trait ZoomEvent extends js.Any {
+    var direction: String = js.native
+    var scale: Double = js.native
+  }
+
+  implicit class NetworkStaticEvents(val underlying: Network) extends AnyVal {
+    def onClick(fn: ClickEvent => Unit) = underlying.on("click", fn)
+
+    def onDoubleClick(fn: ClickEvent => Unit) = underlying.on("doubleClick", fn)
+
+    def onContext(fn: ClickEvent => Unit) = underlying.on("onContext", fn)
+
+    def onHold(fn: ClickEvent => Unit) = underlying.on("hold", fn)
+
+    def onRelease(fn: ClickEvent => Unit) = underlying.on("release", fn)
+
+    def onSelect(fn: ClickEvent => Unit) = underlying.on("select", fn)
+
+    def onSelectNode(fn: ClickEvent => Unit) = underlying.on("selectNode", fn)
+
+    def onSelectEdge(fn: ClickEvent => Unit) = underlying.on("selectEdge", fn)
+
+    def onDeselectNode(fn: DeselectEvent => Unit) = underlying.on("deselectNode", fn)
+
+    def onDeselectEdge(fn: DeselectEvent => Unit) = underlying.on("deselectEdge", fn)
+
+    def onDragStart(fn: ClickEvent => Unit) = underlying.on("dragStart", fn)
+
+    def onDragging(fn: ClickEvent => Unit) = underlying.on("dragging", fn)
+
+    def onDragEnd(fn: ClickEvent => Unit) = underlying.on("dragEnd", fn)
+
+    def onHoverNode(fn: NodeEvent => Unit) = underlying.on("hoverNode", fn)
+
+    def onBlurNode(fn: NodeEvent => Unit) = underlying.on("blurNode", fn)
+
+    def onHoverEdge(fn: EdgeEvent => Unit) = underlying.on("hoverEdge", fn)
+
+    def onBlurEdge(fn: EdgeEvent => Unit) = underlying.on("blurEdge", fn)
+
+    def onZoom(fn: ZoomEvent => Unit) = underlying.on("zoom", fn)
+
+    def onShowPopup(fn: String => Unit) = underlying.on("showPopup", fn)
+
+    def onHidePopup(fn: () => Unit) = underlying.on("hidePopup", fn)
+
+    //Events triggered by the rendering module. Can be used to draw custom elements on the canvas.
+    def onInitRedraw(fn: () => Unit) = underlying.on("initRedraw", fn)
+
+    def onBeforeDrawing(fn: (Canvas) => Unit) = underlying.on("beforeDrawing", fn)
+
+    def onAfterDrawing(fn: (Canvas) => Unit) = underlying.on("afterDrawing", fn)
 
   }
 
