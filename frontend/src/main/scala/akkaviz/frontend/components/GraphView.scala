@@ -18,14 +18,9 @@ class GraphView(showUnconnected: Var[Boolean]) extends Component {
   private[this] var network: js.UndefOr[vis.Network] = js.undefined
 
   override def attach(parent: Element): Unit = {
-    console.log(networkNodes)
-    console.log(networkEdges)
-    console.log(parent)
     val data = vis.NetworkData(networkNodes, networkEdges)
-    console.log(data)
     network.foreach(_.destroy())
-    network = new vis.Network(parent, data, vis.NetworkOptions())
-    console.log(network)
+    network = new vis.Network(parent, data, graphSettings)
   }
 
   private def graphSettings: NetworkOptions = {
@@ -73,7 +68,7 @@ class GraphView(showUnconnected: Var[Boolean]) extends Component {
   private[this] val nodeData = js.Dictionary[String]()
   private[this] val connectedNodes = js.Dictionary[Unit]()
   private[this] val createdLinks = js.Dictionary[Unit]()
-  private[this] lazy val fitOnce = network.foreach(_.fit) // do it once
+  private[this] lazy val fitOnce = network.foreach(_.fit()) // do it once
 
   private[this] def isNodeConnected(node: String): Boolean = {
     connectedNodes.contains(node)
@@ -95,6 +90,37 @@ class GraphView(showUnconnected: Var[Boolean]) extends Component {
     }
   }
 
+  //http://tools.medialab.sciences-po.fr/iwanthue/index.php
+  private[this] val possibleColors = js.Array[String](
+    "#D7C798",
+    "#8AD9E5",
+    "#ECACC1",
+    "#97E3B0",
+    "#D5EB85",
+    "#F2AE99",
+    "#DFC56D",
+    "#DAECD0",
+    "#D2DCE6",
+    "#D4F0AD",
+    "#D9C0B3",
+    "#E8AD70",
+    "#DAC1E1",
+    "#82DDC9",
+    "#B8BE74",
+    "#A8C5AA",
+    "#A7C5E2",
+    "#A0D38F",
+    "#EEDF98",
+    "#ADD7D4"
+  )
+
+  @inline
+  private def colorForNode(node: String): String = {
+    val system = node.split('/')(2)
+
+    possibleColors(Math.abs(system.hashCode) % (possibleColors.size - 1))
+  }
+
   private def applyGraphOperations(operationsToApply: js.Array[GraphView.GraphOperation]): Unit = {
 
     val nodesToAdd = js.Dictionary[vis.Node]()
@@ -105,7 +131,7 @@ class GraphView(showUnconnected: Var[Boolean]) extends Component {
       case GraphView.AddNode(node, label) =>
         nodesToRemove.delete(node)
         if (!visibleNodes.contains(node))
-          nodesToAdd.update(node, vis.Node(node, label)) //, color = DOMGlobalScope.colorByHashCode(node)))
+          nodesToAdd.update(node, vis.Node(node, label, color = colorForNode(node)))
       case GraphView.RemoveNode(node) =>
         nodesToAdd.delete(node)
         nodesToRemove.update(node, ())
