@@ -127,7 +127,7 @@ object FrontendApp extends JSApp with Persistence
   private[this] val connectionAlert = new Alert()
   private[this] val unconnectedOnOff = new UnconnectedOnOff(showUnconnected)
   private[this] val replTerminal = new ReplTerminal()
-  private[this] val graphView = new GraphView(showUnconnected)
+  private[this] val graphView = new GraphView(showUnconnected, actorSelector.toggleActor)
   private[this] val maxRetries = 10
 
   def main(): Unit = {

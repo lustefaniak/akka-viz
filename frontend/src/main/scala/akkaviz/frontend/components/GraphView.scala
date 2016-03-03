@@ -1,16 +1,15 @@
 package akkaviz.frontend.components
 
 import akkaviz.frontend.vis.NetworkOptions
-import akkaviz.frontend.{DOMGlobalScope, ScheduledQueue, vis}
+import akkaviz.frontend.{ScheduledQueue, vis}
 import org.scalajs.dom._
 import rx.Var
 
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
-import scala.scalajs.js.|
 import scala.scalajs.js.|._
 
-class GraphView(showUnconnected: Var[Boolean]) extends Component {
+class GraphView(showUnconnected: Var[Boolean], actorSelectionToggler: (String) => Unit) extends Component {
 
   private[this] lazy val visibleNodes = js.Dictionary[Unit]()
   private[this] lazy val networkNodes = new vis.DataSet[vis.Node]()
@@ -18,9 +17,16 @@ class GraphView(showUnconnected: Var[Boolean]) extends Component {
   private[this] var network: js.UndefOr[vis.Network] = js.undefined
 
   override def attach(parent: Element): Unit = {
-    val data = vis.NetworkData(networkNodes, networkEdges)
     network.foreach(_.destroy())
-    network = new vis.Network(parent, data, graphSettings)
+
+    val data = vis.NetworkData(networkNodes, networkEdges)
+    val n = new vis.Network(parent, data, graphSettings)
+    n.onDoubleClick {
+      (event: vis.ClickEvent) =>
+        event.nodes.foreach(actorSelectionToggler)
+    }
+
+    network = n
   }
 
   private def graphSettings: NetworkOptions = {
@@ -43,9 +49,8 @@ class GraphView(showUnconnected: Var[Boolean]) extends Component {
 
     opts.interaction = js.Dynamic.literal()
     opts.interaction.hover = true
-    opts.interaction.navigationButtons = true
-    opts.interaction.tooltipDelay = 200
     opts.interaction.hideEdgesOnDrag = true
+    opts.interaction.multiselect = true
 
     opts.physics = js.Dynamic.literal()
     //opts.physics.solver = "hierarchicalRepulsion"
@@ -74,20 +79,20 @@ class GraphView(showUnconnected: Var[Boolean]) extends Component {
     connectedNodes.contains(node)
   }
 
-  showUnconnected.triggerLater {
-    val show = showUnconnected.now
-    if (show) {
-      nodeData.foreach {
-        case (node, label) =>
-          scheduler.enqueueOperation(GraphView.AddNode(node, label))
+  showUnconnected.foreach {
+    show =>
+      if (show) {
+        nodeData.foreach {
+          case (node, label) =>
+            scheduler.enqueueOperation(GraphView.AddNode(node, label))
+        }
+      } else {
+        nodeData.foreach {
+          case (node, label) if !isNodeConnected(node) =>
+            scheduler.enqueueOperation(GraphView.RemoveNode(node))
+          case _ => //do nothing
+        }
       }
-    } else {
-      nodeData.foreach {
-        case (node, label) if !isNodeConnected(node) =>
-          scheduler.enqueueOperation(GraphView.RemoveNode(node))
-        case _ => //do nothing
-      }
-    }
   }
 
   //http://tools.medialab.sciences-po.fr/iwanthue/index.php
