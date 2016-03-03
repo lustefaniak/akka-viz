@@ -6,13 +6,12 @@ import akkaviz.frontend.components._
 import akkaviz.protocol
 import akkaviz.protocol._
 import org.scalajs.dom.raw.{CloseEvent, ErrorEvent, MessageEvent}
-import org.scalajs.dom.{Node, console, document}
+import org.scalajs.dom.{console, document}
 import rx._
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-import scala.scalajs.js
 import scala.scalajs.js.annotation.JSExport
 import scala.scalajs.js.typedarray.{ArrayBuffer, TypedArrayBuffer}
 import scala.scalajs.js.{JSApp, timers}
@@ -20,13 +19,9 @@ import scalatags.JsDom.all._
 
 case class FsmTransition(fromStateClass: String, toStateClass: String)
 
-object FrontendApp extends JSApp with Persistence
-    with MailboxDisplay with PrettyJson with ManipulationsUI {
+object FrontendApp extends JSApp with Persistence with PrettyJson with ManipulationsUI {
 
-  @JSExport("toggleActor")
-  def toggleActor(name: String) = actorSelector.toggleActor(name)
-
-  private val repo = new ActorRepository()
+  private[this] val repo = new ActorRepository()
 
   private def handleDownstream(messageReceived: (Received) => Unit)(messageEvent: MessageEvent): Unit = {
     val bb = TypedArrayBuffer.wrap(messageEvent.data.asInstanceOf[ArrayBuffer])
@@ -38,9 +33,9 @@ object FrontendApp extends JSApp with Persistence
       case rcv: Received =>
         val sender = rcv.sender
         val receiver = rcv.receiver
+        graphView.addLink(sender, receiver)
         repo.addActorsToSeen(sender, receiver)
         messageReceived(rcv)
-        graphView.ensureGraphLink(sender, receiver, FrontendUtil.shortActorName)
 
       case ac: AvailableClasses =>
         seenMessages() = ac.availableClasses.toSet
@@ -69,7 +64,6 @@ object FrontendApp extends JSApp with Persistence
         repo.mutateActor(mb.owner) {
           _.copy(mailboxSize = mb.size)
         }
-        handleMailboxStatus(mb, graphView)
 
       case Killed(ref) =>
         repo.mutateActor(ref) {
@@ -89,15 +83,16 @@ object FrontendApp extends JSApp with Persistence
         asksPanel.receivedAnswerFailed(af)
 
       case SnapshotAvailable(live, deadActors, rcv) =>
+        //TODO: register here instantiated
+        rcv.foreach {
+          case (from, to) => graphView.addLink(from, to)
+        }
         repo.addActorsToSeen(live: _*)
         deadActors.foreach {
           dead =>
             repo.mutateActor(dead) {
               _.copy(isDead = true)
             }
-        }
-        rcv.foreach {
-          case (from, to) => graphView.ensureGraphLink(from, to, FrontendUtil.shortActorName)
         }
 
       case ReceiveDelaySet(duration) =>
@@ -114,30 +109,29 @@ object FrontendApp extends JSApp with Persistence
     }
   }
 
-  private val monitoringStatus = Var[MonitoringStatus](UnknownYet)
-  private val selectedActors = persistedVar[Set[String]](Set(), "selectedActors")
-  private val seenMessages = Var[Set[String]](Set())
-  private val selectedMessages = persistedVar[Set[String]](Set(), "selectedMessages")
-  private val thrownExceptions = Var[Seq[ActorFailure]](Seq())
-  private val showUnconnected = Var[Boolean](false)
-  private val actorSelector = new ActorSelector(repo.seenActors, selectedActors, repo.state, thrownExceptions)
-  private val messageFilter = new MessageFilter(seenMessages, selectedMessages, selectedActors)
-  private val messagesPanel = new MessagesPanel(selectedActors)
-  private val asksPanel = new AsksPanel(selectedActors)
-  private val monitoringOnOff = new MonitoringOnOff(monitoringStatus)
-  private val connectionAlert = new Alert()
-  private val unconnectedOnOff = new UnconnectedOnOff(showUnconnected)
-  private val replTerminal = new ReplTerminal()
-  private val graphView = new GraphView(showUnconnected)
-  private val maxRetries = 10
+  private[this] val monitoringStatus = Var[MonitoringStatus](UnknownYet)
+  private[this] val selectedActors = persistedVar[Set[String]](Set(), "selectedActors")
+  private[this] val seenMessages = Var[Set[String]](Set())
+  private[this] val selectedMessages = persistedVar[Set[String]](Set(), "selectedMessages")
+  private[this] val thrownExceptions = Var[Seq[ActorFailure]](Seq())
+  private[this] val showUnconnected = Var[Boolean](false)
+  private[this] val actorSelector = new ActorSelector(repo.seenActors, selectedActors, repo.state, thrownExceptions)
+  private[this] val messageFilter = new MessageFilter(seenMessages, selectedMessages, selectedActors)
+  private[this] val messagesPanel = new MessagesPanel(selectedActors)
+  private[this] val asksPanel = new AsksPanel(selectedActors)
+  private[this] val monitoringOnOff = new MonitoringOnOff(monitoringStatus)
+  private[this] val connectionAlert = new Alert()
+  private[this] val unconnectedOnOff = new UnconnectedOnOff(showUnconnected)
+  private[this] val replTerminal = new ReplTerminal()
+  private[this] val graphView = new GraphView(showUnconnected, actorSelector.toggleActor, ActorStateAsNodeRenderer.render)
+  private[this] val maxRetries = 10
 
   def main(): Unit = {
 
     repo.seenActors.triggerLater {
       repo.seenActors.now.foreach {
         actor =>
-          val actorState = repo.state(actor).now
-          graphView.ensureNodeExists(actor, actorState.label, js.Dictionary(("dead", actorState.isDead)))
+          graphView.addActor(actor, repo.state(actor))
       }
     }
 
@@ -205,22 +199,19 @@ object FrontendApp extends JSApp with Persistence
 
     setupApiConnection
 
-    document.body.appendChild(connectionAlert.render)
-    insertComponent("#actorselection", actorSelector.render)
-    insertComponent("#messagefiltering", messageFilter.render)
-    insertComponent("#messagelist", messagesPanel.render)
-    insertComponent("#asklist", asksPanel.render)
-    insertComponent("#receivedelay", receiveDelayPanel.render)
-    insertComponent("#onoffsettings", monitoringOnOff.render)
-    insertComponent("#graphsettings", unconnectedOnOff.render)
-    insertComponent("#repl", replTerminal.render)
-    //FIXME: insert GraphView here when it gets ported to scala
+    connectionAlert.attach(document.body)
+    actorSelector.attach(document.getElementById("actorselection"))
+    messageFilter.attach(document.getElementById("messagefiltering"))
+    messagesPanel.attach(document.getElementById("messagelist"))
+    asksPanel.attach(document.getElementById("asklist"))
+    document.getElementById("receivedelay").appendChild(receiveDelayPanel.render) //FIXME: port to component
+    monitoringOnOff.attach(document.getElementById("onoffsettings"))
+    unconnectedOnOff.attach(document.getElementById("graphsettings"))
+    replTerminal.attach(document.getElementById("repl"))
+    graphView.attach(document.getElementById("graphview"))
 
     DOMGlobalScope.$.material.init()
 
   }
 
-  def insertComponent(parentSelector: String, component: Node): Node = {
-    document.querySelector(parentSelector).appendChild(component)
-  }
 }

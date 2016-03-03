@@ -1,7 +1,6 @@
 package akkaviz.frontend.components
 
-import org.scalajs.dom.html._
-import org.scalajs.dom.Event
+import org.scalajs.dom.{Event, _}
 import rx.{Ctx, Var}
 
 import scalatags.JsDom.all._
@@ -29,10 +28,12 @@ class MonitoringOnOff(status: Var[MonitoringStatus])(implicit ctx: Ctx.Owner) ex
 
   }
 
-  override def render: Element = {
-    Seq(
+  override def attach(parent: Element): Unit = {
+    val elem = Seq[Frag](
       div(`class` := "panel-body", stateBtn)
-    ).render.asInstanceOf[Element]
+    ).render
+
+    parent.appendChild(elem)
   }
 }
 

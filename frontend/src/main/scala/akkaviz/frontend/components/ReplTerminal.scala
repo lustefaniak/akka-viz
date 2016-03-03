@@ -1,9 +1,9 @@
 package akkaviz.frontend.components
 
-import akkaviz.frontend.terminal._
+import akkaviz.frontend.terminal.{Terminal, TerminalOptions}
 import akkaviz.frontend.{DOMGlobalScope, FrontendUtil}
 import org.scalajs.dom.raw.{CloseEvent, Element, ErrorEvent, WebSocket}
-import org.scalajs.dom.{html, Event, MessageEvent}
+import org.scalajs.dom.{Event, MessageEvent}
 
 import scala.scalajs.js
 import scala.scalajs.js.typedarray.ArrayBuffer
@@ -73,9 +73,9 @@ class ReplTerminal extends Component {
     terminal.open(element)
   }
 
-  override def render: html.Element = {
+  override def attach(parent: Element): Unit = {
     val d = div().render
     setupReplTerminal(d)
-    d
+    parent.appendChild(d)
   }
 }

@@ -35,4 +35,7 @@ object FrontendUtil {
   @inline
   def shortActorName(actorRef: String) = actorRef.split('/').drop(3).mkString("/")
 
+  @inline
+  def systemName(actorRef: String): String = actorRef.split('/')(2)
+
 }

@@ -1,7 +1,6 @@
 package akkaviz.frontend.components
 
-import org.scalajs.dom.Event
-import org.scalajs.dom.html.Element
+import org.scalajs.dom.{Element, Event}
 import rx.Var
 
 class UnconnectedOnOff(status: Var[Boolean]) extends OnOffWithLabel with Component {
@@ -9,5 +8,5 @@ class UnconnectedOnOff(status: Var[Boolean]) extends OnOffWithLabel with Compone
   inp.onchange = { e: Event =>
     status() = inp.checked
   }
-  override def render: Element = stateBtn.render
+  override def attach(parent: Element): Unit = parent.appendChild(stateBtn.render)
 }

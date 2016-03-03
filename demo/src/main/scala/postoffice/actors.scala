@@ -35,7 +35,7 @@ class PostOfficeActor(val postOffice: PostOffice) extends Actor with ActorLoggin
   def nextOffice(route: List[City]): ActorSelection = {
     val nextCity = route.dropWhile(_ != postOffice.city).drop(1).head
 
-    val selection: ActorSelection = context.system.actorSelection(s"akka://post-office/user/$nextCity")
+    val selection: ActorSelection = context.system.actorSelection(s"/user/$nextCity")
     selection
   }
 
