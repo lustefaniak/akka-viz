@@ -11,19 +11,19 @@ package object vis {
 
   @js.native
   trait Node extends js.Any {
-    def id: js.Any
+    var id: js.Any = js.native
 
   }
 
   object Node {
-    def apply(id: String, label: String, value: js.UndefOr[Int] = js.undefined, color: js.UndefOr[String] = js.undefined): vis.Node = {
-      js.Dynamic.literal(id = id, label = label, value = value, color = color).asInstanceOf[vis.Node]
+    def apply(id: String, label: String, title: js.UndefOr[String] = js.undefined, value: js.UndefOr[Int] = js.undefined, color: js.UndefOr[String] = js.undefined): vis.Node = {
+      js.Dynamic.literal(id = id, label = label, value = value, color = color, title = title).asInstanceOf[vis.Node]
     }
   }
 
   @js.native
   trait Edge extends js.Any {
-    def id: js.Any
+    var id: js.Any = js.native
   }
 
   object Edge {

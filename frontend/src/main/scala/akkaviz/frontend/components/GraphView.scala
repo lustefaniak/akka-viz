@@ -131,7 +131,7 @@ class GraphView(showUnconnected: Var[Boolean]) extends Component {
       case GraphView.AddNode(node, label) =>
         nodesToRemove.delete(node)
         if (!visibleNodes.contains(node))
-          nodesToAdd.update(node, vis.Node(node, label, color = colorForNode(node)))
+          nodesToAdd.update(node, vis.Node(node, label, title = node, color = colorForNode(node)))
       case GraphView.RemoveNode(node) =>
         nodesToAdd.delete(node)
         nodesToRemove.update(node, ())
