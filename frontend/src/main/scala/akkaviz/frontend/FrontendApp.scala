@@ -52,7 +52,9 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
 
       case fsm: FSMTransition =>
         repo.mutateActor(fsm.ref) {
-          _.copy(fsmState = FSMState(fsm.nextState, fsm.nextData))
+          state =>
+            val transition: (String, String) = (fsm.currentStateClass, fsm.nextStateClass)
+            state.copy(fsmState = FSMState(fsm.nextState, fsm.nextData), fsmTransitions = state.fsmTransitions + transition)
         }
 
       case i: Instantiated =>

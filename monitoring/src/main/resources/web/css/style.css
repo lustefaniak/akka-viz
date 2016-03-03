@@ -59,3 +59,7 @@ div.terminal {
 .modal-dialog.modal-large {
     width: 900px;
 }
+
+#actor-fsm {
+    height: 400px;
+}

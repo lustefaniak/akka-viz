@@ -21,6 +21,8 @@ class ActorSelector(
     actorFailures: Var[Seq[ActorFailure]]
 ) extends PrettyJson with Component {
 
+  var fsmGraph: js.UndefOr[FsmGraph] = js.undefined
+
   def attach(parent: domElement): Unit = {
     val elem = div(cls := "panel-body", id := "actortree",
       table(
@@ -36,6 +38,9 @@ class ActorSelector(
         ),
         actorTreeTbody
       )).render
+
+    fsmGraph = new FsmGraph(document.getElementById("actor-fsm").asInstanceOf[Element])
+
     parent.appendChild(elem)
   }
 
@@ -113,14 +118,13 @@ class ActorSelector(
       "data-toggle".attr := "modal",
       "data-target".attr := "#details-modal",
       onclick := { () =>
-        val details = div().render
-        val optionalFsm = div().render
-        val parent = document.getElementById("details-modal-body")
+        val details = document.getElementById("actor-details")
         val stateVar = currentActorState(actorName)
         renderActorState(details, stateVar)
-        parent.innerHTML = ""
-        parent.appendChild(details)
-        parent.appendChild(optionalFsm)
+        fsmGraph.foreach {
+          fsmGraph =>
+            fsmGraph.displayFsm(stateVar.now.fsmTransitions)
+        }
       }
     )
 

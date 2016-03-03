@@ -47,6 +47,7 @@ case object ActorRepository {
     internalState: js.UndefOr[String] = js.undefined,
     className: js.UndefOr[String] = js.undefined,
     fsmState: js.UndefOr[FSMState] = js.undefined,
+    fsmTransitions: Set[(String, String)] = Set(),
     lastUpdatedAt: js.Date = new Date()
   )
 
