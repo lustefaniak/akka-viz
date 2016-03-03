@@ -2,6 +2,7 @@ package akkaviz.frontend
 
 import akkaviz.frontend.ActorRepository.FSMState
 import akkaviz.frontend.ApiConnection.ApiUpstream
+import akkaviz.frontend.components.GraphView.LinkType
 import akkaviz.frontend.components._
 import akkaviz.protocol
 import akkaviz.protocol._
@@ -26,12 +27,12 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
     val bb = TypedArrayBuffer.wrap(messageEvent.data.asInstanceOf[ArrayBuffer])
     val message: ApiServerMessage = protocol.IO.readServer(bb)
 
-    def addActorLink(sender: String, receiver: String): Unit = {
+    def addActorLink(sender: String, receiver: String, linkType: LinkType): Unit = {
       val actors = Seq(sender, receiver).filter(FrontendUtil.isUserActor)
       repo.addActorsToSeen(actors)
       if (actors.length > 1) {
         // means both are user actor
-        graphView.addLink(sender, receiver)
+        graphView.addLink(sender, receiver, linkType)
       }
     }
 
@@ -40,7 +41,7 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
 
       case rcv: Received =>
         messageReceived(rcv)
-        addActorLink(rcv.sender, rcv.receiver)
+        addActorLink(rcv.sender, rcv.receiver, GraphView.TellLink)
 
       case ac: AvailableClasses =>
         seenMessages() = ac.availableClasses.toSet
@@ -80,6 +81,10 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
 
       case q: Question =>
         asksPanel.receivedQuestion(q)
+        q.sender.foreach {
+          sender =>
+            addActorLink(sender, q.actorRef, GraphView.AskLink)
+        }
 
       case a: Answer =>
         asksPanel.receivedAnswer(a)
@@ -90,7 +95,7 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
       case SnapshotAvailable(live, deadActors, rcv) =>
         rcv.foreach {
           case (from, to) => {
-            addActorLink(from, to)
+            addActorLink(from, to, GraphView.TellLink)
           }
         }
 

@@ -1,7 +1,7 @@
 package akkaviz.frontend.components
 
 import akkaviz.frontend.ActorRepository.ActorState
-import akkaviz.frontend.components.GraphView.{AddNode, RemoveNode}
+import akkaviz.frontend.components.GraphView.{LinkType, AddNode, RemoveNode}
 import akkaviz.frontend.{ScheduledQueue, vis}
 import org.scalajs.dom._
 import rx.Var
@@ -37,11 +37,11 @@ class GraphView(showUnconnected: Var[Boolean], actorSelectionToggler: (String) =
     network = n
   }
 
-  def addLink(sender: String, receiver: String): Unit = {
-    val linkId = s"${sender}->${receiver}"
+  def addLink(sender: String, receiver: String, linkType: LinkType): Unit = {
+    val linkId = linkType.linkId(sender, receiver)
     if (!createdLinks.contains(linkId)) {
       createdLinks.update(linkId, ())
-      scheduler.enqueueOperation(GraphView.AddLink(sender, receiver, linkId))
+      scheduler.enqueueOperation(GraphView.AddLink(sender, receiver, linkId, linkType))
       markConnected(sender)
       markConnected(receiver)
     }
@@ -94,7 +94,7 @@ class GraphView(showUnconnected: Var[Boolean], actorSelectionToggler: (String) =
         nodesToAdd.delete(node)
         nodesToUpdate.delete(node)
         nodesToRemove.update(node, ())
-      case GraphView.AddLink(from, to, linkId) =>
+      case GraphView.AddLink(from, to, linkId, linkType) =>
         linksToCreate.push(vis.Edge(linkId, from, to))
     }
 
@@ -131,10 +131,22 @@ case object GraphView {
 
   sealed trait GraphOperation
 
-  case class AddLink(from: String, to: String, linkId: String) extends GraphOperation
+  case class AddLink(from: String, to: String, linkId: String, linkType: LinkType) extends GraphOperation
 
   case class AddNode(node: String, data: vis.Node) extends GraphOperation
 
   case class RemoveNode(node: String) extends GraphOperation
+
+  sealed trait LinkType {
+    def linkId(from: String, to: String): String
+  }
+
+  case object TellLink extends LinkType {
+    override def linkId(from: String, to: String): String = s"$from->$to"
+  }
+
+  case object AskLink extends LinkType {
+    override def linkId(from: String, to: String): String = js.Array(from, to).sorted.mkString("<?>")
+  }
 
 }
