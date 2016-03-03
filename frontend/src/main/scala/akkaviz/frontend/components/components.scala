@@ -121,8 +121,10 @@ class ActorSelector(
             onclick := {
               () => toggleActor(actorName)
             })),
-          td(actorComponent(actorName)),
-          td(actorExceptionsIndicator(actorName, actorFailures.now.filter(_.actorRef == actorName)))
+          td(
+            actorComponent(actorName),
+            span(float.right, actorExceptionsIndicator(actorName, actorFailures.now.filter(_.actorRef == actorName)))
+          )
         )(data("actor") := actorName).render
 
         DOMGlobalScope.$(element).popover(popoverOptions)
