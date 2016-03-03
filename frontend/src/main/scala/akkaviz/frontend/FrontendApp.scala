@@ -12,7 +12,6 @@ import rx._
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-import scala.scalajs.js.annotation.JSExport
 import scala.scalajs.js.typedarray.{ArrayBuffer, TypedArrayBuffer}
 import scala.scalajs.js.{JSApp, timers}
 import scalatags.JsDom.all._
@@ -83,16 +82,19 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
         asksPanel.receivedAnswerFailed(af)
 
       case SnapshotAvailable(live, deadActors, rcv) =>
-        //TODO: register here instantiated
         rcv.foreach {
           case (from, to) => graphView.addLink(from, to)
         }
-        repo.addActorsToSeen(live: _*)
-        deadActors.foreach {
-          dead =>
-            repo.mutateActor(dead) {
-              _.copy(isDead = true)
-            }
+
+        for {
+          (ref, clzMaybe) <- live ++ deadActors
+          clz <- clzMaybe
+        } repo.mutateActor(ref)(_.copy(className = clz))
+
+        deadActors.keys.foreach {
+          repo.mutateActor(_) {
+            _.copy(isDead = true)
+          }
         }
 
       case ReceiveDelaySet(duration) =>

@@ -3,7 +3,7 @@ package akkaviz.frontend
 import rx.Var
 
 import scala.scalajs.js
-import scala.scalajs.js.Date
+import scala.scalajs.js.{UndefOr, Date}
 
 class ActorRepository {
 
@@ -20,7 +20,12 @@ class ActorRepository {
     addActorsToSeen(actor)
   }
 
-  def addActorsToSeen(actors: String*): Unit = {
+  @inline
+  final def addActorsToSeen(actors: String*): Unit = {
+    addActorsToSeen(actors)
+  }
+
+  def addActorsToSeen(actors: Iterable[String]): Unit = {
     val previouslySeen = seenActors.now
     val newSeen = previouslySeen ++ actors
     if (previouslySeen.size != newSeen.size)
