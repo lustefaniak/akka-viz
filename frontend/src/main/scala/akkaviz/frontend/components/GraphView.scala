@@ -57,19 +57,23 @@ class GraphView(showUnconnected: Var[Boolean], actorSelectionToggler: (String) =
     }
   }
 
-  showUnconnected.foreach {
-    show =>
-      if (show) {
-        registeredActors.filterKeys(currentlyVisibleNodes.contains).foreach {
+  showUnconnected.triggerLater {
+    val show = showUnconnected.now
+    if (show) {
+      registeredActors
+        .filterKeys(node => !currentlyVisibleNodes.contains(node))
+        .foreach {
           case (node, state) =>
+            console.log(s"redraw ${node}")
             redrawActor(node, state.now)
         }
-      } else {
-        currentlyVisibleNodes.keys.filterNot(connectedActors.contains).foreach {
-          case node =>
-            scheduler.enqueueOperation(RemoveNode(node))
-        }
+    } else {
+      currentlyVisibleNodes.keys.filterNot(connectedActors.contains).foreach {
+        case node =>
+          console.log(s"remove ${node}")
+          scheduler.enqueueOperation(RemoveNode(node))
       }
+    }
   }
 
   private[this] def applyGraphOperations(operationsToApply: js.Array[GraphView.GraphOperation]): Unit = {
