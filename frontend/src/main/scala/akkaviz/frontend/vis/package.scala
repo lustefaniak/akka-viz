@@ -1,7 +1,7 @@
 package akkaviz.frontend
 
-import org.scalajs.dom.{Element, Event}
 import org.scalajs.dom.html.Canvas
+import org.scalajs.dom.{Element, Event}
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSName
@@ -109,6 +109,18 @@ package object vis {
   }
 
   @js.native
+  trait SelectionOptions extends js.Any {
+    var unselectAll: Boolean = js.native
+    var highlightEdges: Boolean = js.native
+  }
+
+  object SelectionOptions {
+    def apply(unselectAll: js.UndefOr[Boolean] = js.undefined, highlightEdges: js.UndefOr[Boolean] = js.undefined) = {
+      js.Dynamic.literal(unselectAll = unselectAll, highlightEdges = highlightEdges).asInstanceOf[SelectionOptions]
+    }
+  }
+
+  @js.native
   @JSName("vis.Network")
   class Network(element: Element, data: NetworkData, options: NetworkOptions) extends js.Any {
 
@@ -139,6 +151,23 @@ package object vis {
     //Physics methods to control when the simulation should run.
 
     //Selection methods for nodes and edges.
+    def getSelection(): Selection = js.native
+
+    def getSelectedNodes(): js.Array[String] = js.native
+
+    def getSelectedEdges(): js.Array[String] = js.native
+
+    def getNodeAt(domPosition: Coords): String = js.native
+
+    def getEdgeAt(domPosition: Coords): String = js.native
+
+    def selectNodes(nodeIds: js.Array[String], highlightEdges: Boolean = ???): Unit = js.native
+
+    def selectEdges(edgeIds: js.Array[String]): Unit = js.native
+
+    def setSellection(selection: Selection, options: js.UndefOr[SelectionOptions] = js.undefined): Unit = js.native
+
+    def unselectAll(): Unit = js.native
 
     //Methods to control the viewport for zoom and animation.
     def getScale(): Double = js.native
@@ -162,22 +191,26 @@ package object vis {
   }
 
   @js.native
-  trait ClickEvent extends js.Any {
-    var nodes: js.Array[String] = js.native
-    var edges: js.Array[String] = js.native
+  trait ClickEvent extends js.Any with Selection {
     var event: Event = js.native
     var pointer: PointerCoords = js.native
   }
 
   @js.native
-  trait PreviousSelection extends js.Any {
+  trait Selection extends js.Any {
     var nodes: js.Array[String] = js.native
     var edges: js.Array[String] = js.native
   }
 
+  object Selection {
+    def apply(nodes: js.UndefOr[js.Array[String]] = js.undefined, edges: js.UndefOr[js.Array[String]] = js.undefined): Selection = {
+      js.Dynamic.literal(nodes = nodes, edges = edges).asInstanceOf[Selection]
+    }
+  }
+
   @js.native
   trait DeselectEvent extends ClickEvent {
-    var previousSelection: PreviousSelection = js.native
+    var previousSelection: Selection = js.native
   }
 
   @js.native
