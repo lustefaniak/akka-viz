@@ -1,13 +1,10 @@
 package akkaviz.frontend
 
-import org.scalajs.dom.{Element, console}
+import org.scalajs.dom.Element
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSName
-import org.scalajs.dom.document
-
 import scala.scalajs.js.|
-import scala.scalajs.js.|._
 
 package object vis {
 
@@ -72,52 +69,12 @@ package object vis {
   }
 
   @js.native
-  trait NetworkOptions extends js.Any {
+  trait NetworkOptions extends js.Any
 
-  }
-
-  //TOD: Generate good parameters using http://visjs.org/examples/network/other/configuration.html
   object NetworkOptions {
+    //TODO: define typesafe builder
     def apply(): NetworkOptions = {
-
-      val opts = js.Dynamic.literal()
-
-      //opts.edges = js.Dynamic.literal(smooth = js.Dynamic.literal(`type` = "continuous"))
-
-      opts.nodes = js.Dynamic.literal()
-      opts.nodes.shape = "dot"
-      opts.nodes.scaling = js.Dynamic.literal()
-      opts.nodes.scaling.min = 10
-      opts.nodes.scaling.max = 30
-      opts.nodes.scaling.label = js.Dynamic.literal()
-      opts.nodes.scaling.label.min = 8
-      opts.nodes.scaling.label.max = 30
-      opts.nodes.scaling.label.drawThreshold = 10
-      opts.nodes.scaling.label.maxVisible = 30
-
-      opts.interaction = js.Dynamic.literal()
-      opts.interaction.hover = true
-      opts.interaction.navigationButtons = true
-      opts.interaction.tooltipDelay = 200
-      opts.interaction.hideEdgesOnDrag = true
-
-      opts.physics = js.Dynamic.literal()
-      //opts.physics.solver = "hierarchicalRepulsion"
-      //opts.physics.hierarchicalRepulsion = js.Dynamic.literal()
-      //opts.physics.hierarchicalRepulsion.centralGravity = 2.0
-      //opts.physics.hierarchicalRepulsion.nodeDistance = 200
-
-      opts.physics.forceAtlas2Based = js.Dynamic.literal()
-      opts.physics.forceAtlas2Based.springLength = 100
-      opts.physics.minVelocity = 0.75
-      opts.physics.solver = "forceAtlas2Based"
-
-      opts.configure = js.Dynamic.literal()
-      opts.configure.enabled = true
-      opts.configure.container = document.getElementById("graphsettings")
-
-      console.log(opts)
-      opts.asInstanceOf[NetworkOptions]
+      js.Dynamic.literal().asInstanceOf[NetworkOptions]
     }
   }
 
@@ -127,7 +84,7 @@ package object vis {
 
     def destroy(): Unit = js.native
 
-    def fit() = js.native
+    def fit(): Unit = js.native
 
   }
 
