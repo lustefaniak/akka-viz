@@ -19,11 +19,7 @@ import scalatags.JsDom.all._
 
 case class FsmTransition(fromStateClass: String, toStateClass: String)
 
-object FrontendApp extends JSApp with Persistence
-    with MailboxDisplay with PrettyJson with ManipulationsUI {
-
-  @JSExport("toggleActor")
-  def toggleActor(name: String) = actorSelector.toggleActor(name)
+object FrontendApp extends JSApp with Persistence with PrettyJson with ManipulationsUI {
 
   private[this] val repo = new ActorRepository()
 
@@ -37,9 +33,9 @@ object FrontendApp extends JSApp with Persistence
       case rcv: Received =>
         val sender = rcv.sender
         val receiver = rcv.receiver
+        graphView.addLink(sender, receiver)
         repo.addActorsToSeen(sender, receiver)
         messageReceived(rcv)
-        graphView.ensureGraphLink(sender, receiver, FrontendUtil.shortActorName)
 
       case ac: AvailableClasses =>
         seenMessages() = ac.availableClasses.toSet
@@ -68,7 +64,6 @@ object FrontendApp extends JSApp with Persistence
         repo.mutateActor(mb.owner) {
           _.copy(mailboxSize = mb.size)
         }
-        handleMailboxStatus(mb, graphView)
 
       case Killed(ref) =>
         repo.mutateActor(ref) {
@@ -88,15 +83,16 @@ object FrontendApp extends JSApp with Persistence
         asksPanel.receivedAnswerFailed(af)
 
       case SnapshotAvailable(live, deadActors, rcv) =>
+        //TODO: register here instantiated
+        rcv.foreach {
+          case (from, to) => graphView.addLink(from, to)
+        }
         repo.addActorsToSeen(live: _*)
         deadActors.foreach {
           dead =>
             repo.mutateActor(dead) {
               _.copy(isDead = true)
             }
-        }
-        rcv.foreach {
-          case (from, to) => graphView.ensureGraphLink(from, to, FrontendUtil.shortActorName)
         }
 
       case ReceiveDelaySet(duration) =>
@@ -127,7 +123,7 @@ object FrontendApp extends JSApp with Persistence
   private[this] val connectionAlert = new Alert()
   private[this] val unconnectedOnOff = new UnconnectedOnOff(showUnconnected)
   private[this] val replTerminal = new ReplTerminal()
-  private[this] val graphView = new GraphView(showUnconnected, actorSelector.toggleActor)
+  private[this] val graphView = new GraphView(showUnconnected, actorSelector.toggleActor, ActorStateAsNodeRenderer.render)
   private[this] val maxRetries = 10
 
   def main(): Unit = {
@@ -135,8 +131,7 @@ object FrontendApp extends JSApp with Persistence
     repo.seenActors.triggerLater {
       repo.seenActors.now.foreach {
         actor =>
-          val actorState = repo.state(actor).now
-          graphView.ensureNodeExists(actor, actorState.label)
+          graphView.addActor(actor, repo.state(actor))
       }
     }
 

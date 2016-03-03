@@ -1,6 +1,7 @@
 package akkaviz.frontend.components
 
-import akkaviz.frontend.vis.NetworkOptions
+import akkaviz.frontend.ActorRepository.ActorState
+import akkaviz.frontend.components.GraphView.{AddNode, RemoveNode}
 import akkaviz.frontend.{ScheduledQueue, vis}
 import org.scalajs.dom._
 import rx.Var
@@ -9,12 +10,19 @@ import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
 import scala.scalajs.js.|._
 
-class GraphView(showUnconnected: Var[Boolean], actorSelectionToggler: (String) => Unit) extends Component {
+class GraphView(showUnconnected: Var[Boolean], actorSelectionToggler: (String) => Unit, renderer: (String, ActorState) => vis.Node) extends Component with GraphViewSettings {
 
-  private[this] lazy val visibleNodes = js.Dictionary[Unit]()
-  private[this] lazy val networkNodes = new vis.DataSet[vis.Node]()
-  private[this] lazy val networkEdges = new vis.DataSet[vis.Edge]()
+  private[this] val registeredActors = js.Dictionary[Var[ActorState]]()
+  private[this] val connectedActors = js.Dictionary[Unit]()
+  private[this] val createdLinks = js.Dictionary[Unit]()
+
+  private[this] val currentlyVisibleNodes = js.Dictionary[Unit]()
+
+  private[this] val networkNodes = new vis.DataSet[vis.Node]()
+  private[this] val networkEdges = new vis.DataSet[vis.Edge]()
   private[this] var network: js.UndefOr[vis.Network] = js.undefined
+  private[this] val scheduler = new ScheduledQueue[GraphView.GraphOperation](applyGraphOperations)
+  private[this] lazy val fitOnce = network.foreach(_.fit()) // do it once
 
   override def attach(parent: Element): Unit = {
     network.foreach(_.destroy())
@@ -29,116 +37,58 @@ class GraphView(showUnconnected: Var[Boolean], actorSelectionToggler: (String) =
     network = n
   }
 
-  private def graphSettings: NetworkOptions = {
-    //TODO: Generate good parameters using http://visjs.org/examples/network/other/configuration.html
-    val opts = js.Dynamic.literal()
-
-    //for faster rendering
-    //opts.edges = js.Dynamic.literal(smooth = js.Dynamic.literal(`type` = "continuous"))
-
-    opts.nodes = js.Dynamic.literal()
-    opts.nodes.shape = "dot"
-    opts.nodes.scaling = js.Dynamic.literal()
-    opts.nodes.scaling.min = 10
-    opts.nodes.scaling.max = 30
-    opts.nodes.scaling.label = js.Dynamic.literal()
-    opts.nodes.scaling.label.min = 8
-    opts.nodes.scaling.label.max = 30
-    opts.nodes.scaling.label.drawThreshold = 10
-    opts.nodes.scaling.label.maxVisible = 30
-
-    opts.interaction = js.Dynamic.literal()
-    opts.interaction.hover = true
-    opts.interaction.hideEdgesOnDrag = true
-    opts.interaction.multiselect = true
-
-    opts.physics = js.Dynamic.literal()
-    //opts.physics.solver = "hierarchicalRepulsion"
-    //opts.physics.hierarchicalRepulsion = js.Dynamic.literal()
-    //opts.physics.hierarchicalRepulsion.centralGravity = 2.0
-    //opts.physics.hierarchicalRepulsion.nodeDistance = 200
-    opts.physics.solver = "forceAtlas2Based"
-    opts.physics.forceAtlas2Based = js.Dynamic.literal()
-    opts.physics.forceAtlas2Based.springLength = 100
-
-    opts.configure = js.Dynamic.literal()
-    opts.configure.enabled = true
-    opts.configure.container = document.getElementById("graphsettings")
-
-    console.log(opts)
-    opts.asInstanceOf[NetworkOptions]
+  def addLink(sender: String, receiver: String): Unit = {
+    val linkId = s"${sender}->${receiver}"
+    if (!createdLinks.contains(linkId)) {
+      createdLinks.update(linkId, ())
+      scheduler.enqueueOperation(GraphView.AddLink(sender, receiver, linkId))
+      markConnected(sender)
+      markConnected(receiver)
+    }
   }
 
-  private[this] val scheduler = new ScheduledQueue[GraphView.GraphOperation](applyGraphOperations)
-  private[this] val nodeData = js.Dictionary[String]()
-  private[this] val connectedNodes = js.Dictionary[Unit]()
-  private[this] val createdLinks = js.Dictionary[Unit]()
-  private[this] lazy val fitOnce = network.foreach(_.fit()) // do it once
-
-  private[this] def isNodeConnected(node: String): Boolean = {
-    connectedNodes.contains(node)
+  def addActor(node: String, state: Var[ActorState]): Unit = {
+    if (!registeredActors.contains(node)) {
+      registeredActors.update(node, state)
+      state.foreach {
+        updatedState =>
+          redrawActor(node, updatedState)
+      }
+    }
   }
 
   showUnconnected.foreach {
     show =>
       if (show) {
-        nodeData.foreach {
-          case (node, label) =>
-            scheduler.enqueueOperation(GraphView.AddNode(node, label))
+        registeredActors.filterKeys(currentlyVisibleNodes.contains).foreach {
+          case (node, state) =>
+            redrawActor(node, state.now)
         }
       } else {
-        nodeData.foreach {
-          case (node, label) if !isNodeConnected(node) =>
-            scheduler.enqueueOperation(GraphView.RemoveNode(node))
-          case _ => //do nothing
+        currentlyVisibleNodes.keys.filterNot(connectedActors.contains).foreach {
+          case node =>
+            scheduler.enqueueOperation(RemoveNode(node))
         }
       }
   }
 
-  //http://tools.medialab.sciences-po.fr/iwanthue/index.php
-  private[this] val possibleColors = js.Array[String](
-    "#D7C798",
-    "#8AD9E5",
-    "#ECACC1",
-    "#97E3B0",
-    "#D5EB85",
-    "#F2AE99",
-    "#DFC56D",
-    "#DAECD0",
-    "#D2DCE6",
-    "#D4F0AD",
-    "#D9C0B3",
-    "#E8AD70",
-    "#DAC1E1",
-    "#82DDC9",
-    "#B8BE74",
-    "#A8C5AA",
-    "#A7C5E2",
-    "#A0D38F",
-    "#EEDF98",
-    "#ADD7D4"
-  )
-
-  @inline
-  private def colorForNode(node: String): String = {
-    val system = node.split('/')(2)
-
-    possibleColors(Math.abs(system.hashCode) % (possibleColors.size - 1))
-  }
-
-  private def applyGraphOperations(operationsToApply: js.Array[GraphView.GraphOperation]): Unit = {
+  private[this] def applyGraphOperations(operationsToApply: js.Array[GraphView.GraphOperation]): Unit = {
 
     val nodesToAdd = js.Dictionary[vis.Node]()
+    val nodesToUpdate = js.Dictionary[vis.Node]()
     val nodesToRemove = js.Dictionary[Unit]()
     val linksToCreate = js.Array[vis.Edge]()
 
     operationsToApply.foreach {
-      case GraphView.AddNode(node, label) =>
+      case GraphView.AddNode(node, data) =>
         nodesToRemove.delete(node)
-        if (!visibleNodes.contains(node))
-          nodesToAdd.update(node, vis.Node(node, label, title = node, color = colorForNode(node)))
+        if (currentlyVisibleNodes.contains(node))
+          nodesToUpdate.update(node, data)
+        else
+          nodesToAdd.update(node, data)
       case GraphView.RemoveNode(node) =>
         nodesToAdd.delete(node)
+        nodesToUpdate.delete(node)
         nodesToRemove.update(node, ())
       case GraphView.AddLink(from, to, linkId) =>
         linksToCreate.push(vis.Edge(linkId, from, to))
@@ -146,9 +96,10 @@ class GraphView(showUnconnected: Var[Boolean], actorSelectionToggler: (String) =
 
     val removeIds = nodesToRemove.keys.toJSArray
     networkNodes.remove(removeIds)
-    removeIds.foreach(visibleNodes.delete(_))
+    removeIds.foreach(currentlyVisibleNodes.delete(_))
+    networkNodes.update(nodesToUpdate.values.toJSArray)
     networkNodes.add(nodesToAdd.values.toJSArray)
-    nodesToAdd.keys.foreach(visibleNodes.update(_, ()))
+    nodesToAdd.keys.foreach(currentlyVisibleNodes.update(_, ()))
 
     networkEdges.add(linksToCreate)
 
@@ -156,22 +107,18 @@ class GraphView(showUnconnected: Var[Boolean], actorSelectionToggler: (String) =
 
   }
 
-  def ensureGraphLink(sender: String, receiver: String, nodesLabeler: (String) => String): Unit = {
-    val linkId = s"${sender}->${receiver}"
-    if (!createdLinks.contains(linkId)) {
-      createdLinks.update(linkId, ())
-      ensureNodeExists(sender, nodesLabeler(sender))
-      ensureNodeExists(receiver, nodesLabeler(receiver))
-      connectedNodes.update(sender, ())
-      connectedNodes.update(receiver, ())
-      scheduler.enqueueOperation(GraphView.AddLink(sender, receiver, linkId))
+  private[this] def markConnected(node: String): Unit = {
+    connectedActors.update(node, ())
+    registeredActors.get(node).foreach {
+      state =>
+        redrawActor(node, state.now)
     }
   }
 
-  def ensureNodeExists(node: String, label: String): Unit = {
-    nodeData.update(node, label)
-    if (showUnconnected.now || isNodeConnected(node))
-      scheduler.enqueueOperation(GraphView.AddNode(node, label))
+  private[this] def redrawActor(node: String, state: ActorState): Unit = {
+    if (showUnconnected.now || connectedActors.contains(node)) {
+      scheduler.enqueueOperation(AddNode(node, renderer(node, state)))
+    }
   }
 
 }
@@ -182,7 +129,7 @@ case object GraphView {
 
   case class AddLink(from: String, to: String, linkId: String) extends GraphOperation
 
-  case class AddNode(node: String, label: String) extends GraphOperation
+  case class AddNode(node: String, data: vis.Node) extends GraphOperation
 
   case class RemoveNode(node: String) extends GraphOperation
 
