@@ -59,6 +59,8 @@ package object vis {
 
     def setOptions(o: DataSetOptions): Unit = js.native
 
+    def clear(): js.Array[String] = js.native
+
   }
 
   @js.native
