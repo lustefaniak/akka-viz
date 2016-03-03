@@ -13,7 +13,7 @@ class ActorRepository {
 
   val seenActors = Var[Set[String]](Set())
 
-  def state(actor: String): Var[ActorState] = currentActorState.getOrElseUpdate(actor, Var(ActorState(actor, FrontendUtil.shortActorName(actor))))
+  def state(actor: String): Var[ActorState] = currentActorState.getOrElseUpdate(actor, Var(ActorState(actor, FrontendUtil.shortActorName(actor), FrontendUtil.systemName(actor))))
 
   def mutateActor(actor: String)(fn: ActorState => ActorState) = {
     state(actor)() = fn(state(actor).now.copy(lastUpdatedAt = new js.Date()))
@@ -36,6 +36,7 @@ case object ActorRepository {
   case class ActorState(
     path: String,
     label: String,
+    system: String,
     isDead: Boolean = false,
     mailboxSize: js.UndefOr[Int] = js.undefined,
     internalState: js.UndefOr[String] = js.undefined,
