@@ -329,7 +329,7 @@ class MessagesPanel(selectedActors: Var[Set[String]]) extends Component with Pre
   }
 
   val unhandledIndicator = span(
-    style := "color: orange; vertical-align: middle",
+    style := "color: orange; vertical-align: middle; float: right",
     `class` := "glyphicon glyphicon-exclamation-sign",
     title := "Unhandled message"
   )
