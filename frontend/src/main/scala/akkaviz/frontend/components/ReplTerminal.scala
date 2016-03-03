@@ -2,8 +2,8 @@ package akkaviz.frontend.components
 
 import akkaviz.frontend.terminal.{Terminal, TerminalOptions}
 import akkaviz.frontend.{DOMGlobalScope, FrontendUtil}
-import org.scalajs.dom.raw.{CloseEvent, Element, ErrorEvent, WebSocket}
-import org.scalajs.dom.{Event, MessageEvent}
+import org.scalajs.dom.raw.HTMLButtonElement
+import org.scalajs.dom.{Event, MessageEvent, _}
 
 import scala.scalajs.js
 import scala.scalajs.js.typedarray.ArrayBuffer
@@ -11,16 +11,35 @@ import scalatags.JsDom.all._
 
 class ReplTerminal extends Component {
 
-  private def options = js.Dynamic.literal(
+  private[this] def options = js.Dynamic.literal(
     cols = 120,
     rows = 25
   ).asInstanceOf[TerminalOptions]
 
-  private var ws: js.UndefOr[WebSocket] = js.undefined
+  private[this] var ws: js.UndefOr[WebSocket] = js.undefined
 
-  private lazy val terminal = new Terminal(options)
+  private[this] lazy val terminal = new Terminal(options)
+  private[this] var connectButton: js.UndefOr[HTMLButtonElement] = js.undefined
+  private[this] var isConnected = false
 
-  private def setupWebsocket(): Unit = {
+  private[this] def connected(): Unit = {
+    isConnected = true;
+    connectButton.foreach {
+      _.innerHTML = "Disconnect"
+    }
+  }
+
+  private[this] def disconnected(): Unit = {
+    isConnected = false
+    terminal.off("data")
+    terminal.write("\n\r\n\rDisconnected\n\r\n\r")
+    ws = js.undefined
+    connectButton.foreach {
+      _.innerHTML = "Connect"
+    }
+  }
+
+  private[this] def setupWebsocket(): Unit = {
 
     def writeToTerminal(s: String): Unit = {
       terminal.write(s)
@@ -34,14 +53,13 @@ class ReplTerminal extends Component {
       DOMGlobalScope.str2ab(str)
     }
 
-    def disconnected(): Unit = {
-      terminal.off("data")
-      ws = js.undefined
-    }
-
     val _ws = new WebSocket(FrontendUtil.webSocketUrl("repl"))
     _ws.binaryType = "arraybuffer"
     _ws.onopen = (event: Event) => {
+
+      connected()
+
+      terminal.write("\n\r\n\rPlease wait, initializing server side REPL\n\r\n\r\r\r\n\r")
 
       terminal.onData((caller: Any, d: String) => {
         _ws.send(encodeArrayBuffer(d))
@@ -68,14 +86,28 @@ class ReplTerminal extends Component {
     ws = _ws
   }
 
-  private def setupReplTerminal(element: Element): Unit = {
-    setupWebsocket()
+  private[this] def setupReplTerminal(element: Element): Unit = {
     terminal.open(element)
   }
 
   override def attach(parent: Element): Unit = {
+    val b = button(tpe := "button", `class` := "btn btn-default", "Connect").render
+    b.onclick = (e: MouseEvent) => {
+      if (isConnected) {
+        ws.foreach {
+          ws =>
+            ws.send(DOMGlobalScope.str2ab("\u0004"))
+            ws.close()
+        }
+        disconnected()
+      } else {
+        setupWebsocket()
+      }
+    }
+    connectButton = b
     val d = div().render
     setupReplTerminal(d)
+    parent.appendChild(b)
     parent.appendChild(d)
   }
 }
