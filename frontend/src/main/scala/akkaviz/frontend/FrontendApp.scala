@@ -26,15 +26,21 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
     val bb = TypedArrayBuffer.wrap(messageEvent.data.asInstanceOf[ArrayBuffer])
     val message: ApiServerMessage = protocol.IO.readServer(bb)
 
+    def addActorLink(sender: String, receiver: String): Unit = {
+      val actors = Seq(sender, receiver).filter(FrontendUtil.isUserActor)
+      repo.addActorsToSeen(actors)
+      if (actors.length > 1) {
+        // means both are user actor
+        graphView.addLink(sender, receiver)
+      }
+    }
+
     message match {
       case ActorSystemCreated(system) =>
 
       case rcv: Received =>
-        val sender = rcv.sender
-        val receiver = rcv.receiver
-        graphView.addLink(sender, receiver)
-        repo.addActorsToSeen(sender, receiver)
         messageReceived(rcv)
+        addActorLink(rcv.sender, rcv.receiver)
 
       case ac: AvailableClasses =>
         seenMessages() = ac.availableClasses.toSet
@@ -83,7 +89,9 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
 
       case SnapshotAvailable(live, deadActors, rcv) =>
         rcv.foreach {
-          case (from, to) => graphView.addLink(from, to)
+          case (from, to) => {
+            addActorLink(from, to)
+          }
         }
 
         for {

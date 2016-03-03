@@ -7,8 +7,14 @@ import scala.scalajs.js
 import scalatags.JsDom.all._
 
 object FrontendUtil {
+  @inline
+  final def isUserActor(ref: String): Boolean = {
+    val split = ref.split('/')
+    split.length > 3 && split(3) == "user"
+  }
 
-  def webSocketUrl(path: String) = {
+  @inline
+  final def webSocketUrl(path: String) = {
     val l = window.location
     (if (l.protocol == "https:") "wss://" else "ws://") +
       l.hostname +
