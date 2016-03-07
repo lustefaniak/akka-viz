@@ -59,7 +59,7 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
 
       case i: Instantiated =>
         repo.mutateActor(i.ref) {
-          _.copy(className = i.clazz)
+          _.copy(className = i.clazz, isDead = false)
         }
 
       case CurrentActorState(ref, state) =>
