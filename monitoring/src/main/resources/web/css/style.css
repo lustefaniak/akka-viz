@@ -21,8 +21,8 @@ html {
 }
 
 #thebox {
-    left: 5px;
-    top: 5px;
+    left: 0;
+    top: 0;
     display: block;
     position: absolute;
     width: 480px;
