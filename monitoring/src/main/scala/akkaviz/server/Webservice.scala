@@ -55,6 +55,9 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directi
             system.log.info(s"Setting EventSystem.setEnabled(${isEnabled})")
             EventSystem.setEnabled(isEnabled)
             Nil
+          case protocol.RefreshInternalState(actor) =>
+            ActorSystems.refreshActorState(actor)
+            Nil
           case other =>
             system.log.error(s"Received unsupported unpickled object via WS: ${other}")
             Nil

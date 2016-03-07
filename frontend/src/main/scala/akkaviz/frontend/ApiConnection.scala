@@ -11,30 +11,41 @@ import scala.scalajs.js.typedarray.TypedArrayBufferOps
 import scala.scalajs.js.{JavaScriptException, timers}
 
 trait Upstream {
-  def send(msg: String): Unit
+  def send(msg: ApiClientMessage): Unit
+
+  def onclose: js.UndefOr[js.Function1[CloseEvent, _]]
+
+  def onclose_=(fn: js.Function1[CloseEvent, _]): Unit
+
+  def onerror: js.UndefOr[js.Function1[ErrorEvent, _]]
+
+  def onerror_=(fn: js.Function1[ErrorEvent, _]): Unit
+
 }
 
 object ApiConnection {
 
-  case class ApiUpstream(private val ws: WebSocket) extends AnyVal {
+  class ApiUpstream(private val ws: WebSocket) extends Upstream {
     def send(msg: ApiClientMessage): Unit = {
       val encoded = IO.write(msg)
       ws.send(new TypedArrayBufferOps(encoded).arrayBuffer())
     }
 
     def onclose = ws.onclose
+
     def onclose_=(fn: js.Function1[CloseEvent, _]): Unit = {
       ws.onclose = fn
     }
 
     def onerror = ws.onerror
+
     def onerror_=(fn: js.Function1[ErrorEvent, _]): Unit = {
       ws.onerror = fn
     }
 
   }
 
-  def apply(url: String, onWsOpen: ApiUpstream => Unit, fn: MessageEvent => Unit, maxRetries: Int = 1)(implicit ec: ExecutionContext): Future[ApiUpstream] = {
+  def apply(url: String, onWsOpen: Upstream => Unit, fn: MessageEvent => Unit, maxRetries: Int = 1)(implicit ec: ExecutionContext): Future[Upstream] = {
 
     def createWebsocket: WebSocket = {
       val ws = new WebSocket(url)
@@ -42,7 +53,7 @@ object ApiConnection {
       ws
     }
 
-    val wsPromise = Promise[ApiUpstream]()
+    val wsPromise = Promise[Upstream]()
     val newWs = createWebsocket
     newWs.onclose = { ce: CloseEvent =>
       timers.setTimeout(2.seconds) {
@@ -52,12 +63,12 @@ object ApiConnection {
     newWs.onopen = { e: Event =>
       dom.console.log("API websocket connection established")
       newWs.onmessage = fn
-      val wrapped = ApiUpstream(newWs)
+      val wrapped = new ApiUpstream(newWs)
       onWsOpen(wrapped)
       wsPromise.success(wrapped)
     }
 
-    val wsFuture: Future[ApiUpstream] = wsPromise.future
+    val wsFuture: Future[Upstream] = wsPromise.future
 
     wsFuture
       .recoverWith {
