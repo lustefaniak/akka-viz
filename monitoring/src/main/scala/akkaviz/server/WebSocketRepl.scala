@@ -2,6 +2,7 @@ package akkaviz.server
 
 import java.io.{InputStream, OutputStream, PrintStream}
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicInteger
 
 import akka.Done
 import akka.http.scaladsl.model.ws._
@@ -21,6 +22,12 @@ trait WebSocketRepl {
   def replPredef: String
 
   def replArgs: Seq[Bind[_]]
+
+  def replThreadName: String = {
+    s"Ammonite-REPL-${replCounter.incrementAndGet()}"
+  }
+
+  private[this] var replCounter = new AtomicInteger()
 
   def defaultReplPredef =
     """
@@ -72,7 +79,7 @@ trait WebSocketRepl {
         }
       }
 
-      new Thread(runnable)
+      new Thread(runnable, replThreadName)
     }
 
     val wsFlow: Flow[Message, Message, _] = {
