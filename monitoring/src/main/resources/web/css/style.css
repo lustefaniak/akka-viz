@@ -2,7 +2,7 @@ html {
     height: 100%;
 }
 
-#graphview {
+#right-pane {
     display: block;
     position: fixed;
     left: 481px;
@@ -12,9 +12,12 @@ html {
     width: 100%;
 }
 
-#graphview svg {
-    width: 100%;
+#right-pane .tab-content {
     height: 100%;
+}
+
+#graphview {
+    height:100%;
 }
 
 #thebox {
