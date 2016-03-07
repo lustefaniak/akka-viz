@@ -82,6 +82,8 @@ package object protocol {
 
   case class ObserveActors(actors: Set[String]) extends ApiClientMessage
 
+  case class RefreshInternalState(ref: String) extends ApiClientMessage
+
   object IO {
 
     import boopickle.Default._
