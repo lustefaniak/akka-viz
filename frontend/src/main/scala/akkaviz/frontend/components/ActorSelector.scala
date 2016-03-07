@@ -1,12 +1,12 @@
 package akkaviz.frontend.components
 
 import akkaviz.frontend.ActorRepository.ActorState
-import akkaviz.frontend.DOMGlobalScope.$
 import akkaviz.frontend.FrontendUtil.actorComponent
 import akkaviz.frontend.{DOMGlobalScope, PrettyJson}
+import akkaviz.protocol
 import akkaviz.protocol.ActorFailure
 import org.scalajs.dom.html._
-import org.scalajs.dom.{Element => domElement, document, Node, console}
+import org.scalajs.dom.{Element => domElement, Node, console, document}
 import rx.{Rx, Var}
 
 import scala.scalajs.js
@@ -18,7 +18,8 @@ class ActorSelector(
     seenActors: Var[Set[String]],
     selectedActors: Var[Set[String]],
     currentActorState: (String) => Var[ActorState],
-    actorFailures: Var[Seq[ActorFailure]]
+    actorFailures: Var[Seq[ActorFailure]],
+    upstreamSend: protocol.ApiClientMessage => Unit
 ) extends PrettyJson with Component {
 
   var fsmGraph: js.UndefOr[FsmGraph] = js.undefined
@@ -99,27 +100,27 @@ class ActorSelector(
       )
     ).render
 
-  private[this] def exceptionsButton(actorName: String, failures: Seq[ActorFailure]) =
+  private[this] def exceptionsButton(actorRef: String, failures: Seq[ActorFailure]) =
     span(
       style := "color: red",
-      `class` := "glyphicon glyphicon-exclamation-sign",
+      `class` := "imgbtn glyphicon glyphicon-exclamation-sign",
       "data-toggle".attr := "modal",
       "data-target".attr := "#failures-modal",
       onclick := { () =>
-        document.getElementById("actor-name").innerHTML = actorName
+        document.getElementById("actor-name").innerHTML = actorRef
         document.getElementById("actor-failures").innerHTML = ""
         document.getElementById("actor-failures").appendChild(failureTable(failures))
       }
     )
 
-  private[this] def detailsButton(actorName: String) =
+  private[this] def detailsButton(actorRef: String) =
     span(
-      `class` := "glyphicon glyphicon-info-sign",
+      `class` := "imgbtn glyphicon glyphicon-info-sign",
       "data-toggle".attr := "modal",
       "data-target".attr := "#details-modal",
       onclick := { () =>
         val details = document.getElementById("actor-details")
-        val stateVar = currentActorState(actorName)
+        val stateVar = currentActorState(actorRef)
         renderActorState(details, stateVar)
         fsmGraph.foreach {
           fsmGraph =>
@@ -128,9 +129,17 @@ class ActorSelector(
       }
     )
 
-  private[this] def actorExceptionsIndicator(actorName: String, failures: Seq[ActorFailure]): _root_.scalatags.JsDom.Modifier =
+  private[this] def refreshButton(actorRef: String) =
+    span(
+      `class` := "imgbtn glyphicon glyphicon-refresh",
+      onclick := { () =>
+        upstreamSend(protocol.RefreshInternalState(actorRef))
+      }
+    )
+
+  private[this] def actorExceptionsIndicator(actorRef: String, failures: Seq[ActorFailure]): _root_.scalatags.JsDom.Modifier =
     if (failures.isEmpty) ""
-    else span(b(s"${failures.length} "), exceptionsButton(actorName, failures))
+    else span(b(s"${failures.length} "), exceptionsButton(actorRef, failures))
 
   val actorsObs = Rx.unsafe {
     (seenActors(), selectedActors(), actorFailures())
@@ -139,18 +148,18 @@ class ActorSelector(
     val selected = selectedActors.now
 
     val content = seen.map {
-      actorName =>
-        val isSelected = selected.contains(actorName)
+      actorRef =>
+        val isSelected = selected.contains(actorRef)
         val element = tr(
           td(input(`type` := "checkbox", if (isSelected) checked else (),
             onclick := {
-              () => toggleActor(actorName)
+              () => toggleActor(actorRef)
             })),
           td(
-            actorComponent(actorName),
-            span(float.right, actorExceptionsIndicator(actorName, actorFailures.now.filter(_.actorRef == actorName)), detailsButton(actorName))
+            actorComponent(actorRef),
+            span(float.right, actorExceptionsIndicator(actorRef, actorFailures.now.filter(_.actorRef == actorRef)), refreshButton(actorRef), detailsButton(actorRef))
           )
-        )(data("actor") := actorName).render
+        )(data("actor") := actorRef).render
 
         DOMGlobalScope.$(element).popover(popoverOptions)
         element
@@ -160,13 +169,13 @@ class ActorSelector(
     actorTreeTbody.appendChild(content.render)
   }
 
-  def toggleActor(actorPath: String): Unit = {
-    if (selectedActors.now contains actorPath) {
-      console.log(s"Unselected '$actorPath' actor")
-      selectedActors() = selectedActors.now - actorPath
+  def toggleActor(actorRef: String): Unit = {
+    if (selectedActors.now contains actorRef) {
+      console.log(s"Unselected '$actorRef' actor")
+      selectedActors() = selectedActors.now - actorRef
     } else {
-      console.log(s"Selected '$actorPath' actor")
-      selectedActors() = selectedActors.now + actorPath
+      console.log(s"Selected '$actorRef' actor")
+      selectedActors() = selectedActors.now + actorRef
     }
   }
 

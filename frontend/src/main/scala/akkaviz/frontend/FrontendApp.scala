@@ -1,7 +1,6 @@
 package akkaviz.frontend
 
 import akkaviz.frontend.ActorRepository.FSMState
-import akkaviz.frontend.ApiConnection.ApiUpstream
 import akkaviz.frontend.components._
 import akkaviz.protocol
 import akkaviz.protocol._
@@ -12,6 +11,7 @@ import rx._
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import scala.scalajs.js
 import scala.scalajs.js.typedarray.{ArrayBuffer, TypedArrayBuffer}
 import scala.scalajs.js.{JSApp, timers}
 import scalatags.JsDom.all._
@@ -127,7 +127,7 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
   private[this] val selectedMessages = persistedVar[Set[String]](Set(), "selectedMessages")
   private[this] val thrownExceptions = Var[Seq[ActorFailure]](Seq())
   private[this] val showUnconnected = Var[Boolean](false)
-  private[this] val actorSelector = new ActorSelector(repo.seenActors, selectedActors, repo.state, thrownExceptions)
+  private[this] val actorSelector = new ActorSelector(repo.seenActors, selectedActors, repo.state, thrownExceptions, upstreamSend)
   private[this] val messageFilter = new MessageFilter(seenMessages, selectedMessages, selectedActors)
   private[this] val messagesPanel = new MessagesPanel(selectedActors)
   private[this] val asksPanel = new AsksPanel(selectedActors)
@@ -137,6 +137,17 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
   private[this] val replTerminal = new ReplTerminal()
   private[this] val graphView = new GraphView(showUnconnected, actorSelector.toggleActor, ActorStateAsNodeRenderer.render)
   private[this] val maxRetries = 10
+
+  private[this] var upstreamConnection: js.UndefOr[Upstream] = js.undefined
+
+  private def upstreamSend(msg: protocol.ApiClientMessage): Unit = {
+    upstreamConnection.fold {
+      console.log("Upstream is not available now")
+    } {
+      up =>
+        up.send(msg)
+    }
+  }
 
   def main(): Unit = {
 
@@ -149,7 +160,7 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
 
     def setupApiConnection: Unit = {
 
-      val connection: Future[ApiUpstream] = ApiConnection(
+      val connection: Future[Upstream] = ApiConnection(
         FrontendUtil.webSocketUrl("stream"),
         upstream => {
           upstream.send(SetAllowedMessages(selectedMessages.now))
@@ -160,6 +171,8 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
       )
 
       connection.foreach { upstream =>
+        upstreamConnection = upstream
+
         connectionAlert.success("Connected!")
         connectionAlert.fadeOut()
 
