@@ -6,8 +6,8 @@ import akka.dispatch.MessageDispatcher
 import akkaviz.config.Config
 import akkaviz.events.EventSystem
 import akkaviz.events.types._
-import org.aspectj.lang.JoinPoint
 import org.aspectj.lang.annotation._
+import org.aspectj.lang.{JoinPoint, ProceedingJoinPoint}
 
 @Aspect
 class ActorCellInstrumentation {
@@ -16,6 +16,15 @@ class ActorCellInstrumentation {
 
   @Pointcut(value = "execution (* akka.actor.ActorCell.receiveMessage(..)) && args(msg)", argNames = "msg")
   def receiveMessagePointcut(msg: Any): Unit = {}
+
+  @Around(value = "receiveMessagePointcut(msg) && this(me)", argNames = "jp")
+  def arroundMessage(jp: ProceedingJoinPoint, msg: Any, me: ActorCell): Any = {
+    if (msg == ActorCellInstrumentation.RefreshInternalStateMsg) {
+      EventSystem.report(CurrentActorState(me.self, me.actor))
+    } else {
+      jp.proceed()
+    }
+  }
 
   @Before(value = "receiveMessagePointcut(msg) && this(me)", argNames = "jp,msg,me")
   def message(jp: JoinPoint, msg: Any, me: ActorCell) {
@@ -93,4 +102,10 @@ class ActorCellInstrumentation {
       EventSystem.report(Received(actor.sender(), actor.self, msg, canHandle))
     }
   }
+}
+
+object ActorCellInstrumentation {
+
+  case object RefreshInternalStateMsg
+
 }

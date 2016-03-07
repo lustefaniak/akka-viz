@@ -30,4 +30,8 @@ object ActorSystems {
     }
   }
 
+  def refreshActorState(path: String): Unit = {
+    tell(path, ActorCellInstrumentation.RefreshInternalStateMsg)
+  }
+
 }
