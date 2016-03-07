@@ -99,7 +99,6 @@ class ReplTerminal extends Component {
             ws.send(DOMGlobalScope.str2ab("\u0004"))
             ws.close()
         }
-        disconnected()
       } else {
         setupWebsocket()
       }

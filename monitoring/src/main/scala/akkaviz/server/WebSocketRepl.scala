@@ -3,6 +3,7 @@ package akkaviz.server
 import java.io.{InputStream, OutputStream, PrintStream}
 import java.util.concurrent.Executors
 
+import akka.Done
 import akka.http.scaladsl.model.ws._
 import akka.http.scaladsl.server.{Directives, Route}
 import akka.stream.scaladsl._
@@ -10,9 +11,10 @@ import akka.util.ByteString
 import ammonite.ops.Path
 import ammonite.repl._
 
-import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
-import scala.concurrent.blocking
+import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Try
+import scala.util.control.NonFatal
 
 trait WebSocketRepl {
 
@@ -34,29 +36,6 @@ trait WebSocketRepl {
       val homePath = Path(Path.makeTmp)
       val sshOut = new SshOutputStream(out)
 
-      Future {
-        blocking {
-          val replSessionEnv = Environment(replServerClassLoader, in, sshOut)
-          Environment.withEnvironment(replSessionEnv) {
-            try {
-              withConsoleRedirection {
-                val predef = defaultReplPredef + "\n" + replPredef
-                val repl = new Repl(in, sshOut, sshOut, Ref(Storage(homePath, None)), predef, replArgs)
-                repl.run()
-                repl
-              }
-            } catch {
-              case any: Throwable =>
-                val sshClientOutput = new PrintStream(sshOut)
-                sshClientOutput.println("What a terrible failure, the REPL just blow up!")
-                any.printStackTrace(sshClientOutput)
-                sshOut.flush()
-                sshOut.close()
-            }
-          }
-        }
-      }
-
       def withConsoleRedirection(fun: => Any): Unit = {
         Console.withIn(in) {
           Console.withOut(sshOut) {
@@ -66,6 +45,34 @@ trait WebSocketRepl {
           }
         }
       }
+
+      val replSessionEnv = Environment(replServerClassLoader, in, sshOut)
+      val runnable = new Runnable {
+        override def run(): Unit = {
+          try {
+            Environment.withEnvironment(replSessionEnv) {
+              withConsoleRedirection {
+                val predef = defaultReplPredef + "\n" + replPredef
+                val repl = new Repl(in, sshOut, sshOut, Ref(Storage(homePath, None)), predef, replArgs)
+                repl.run()
+                repl
+              }
+            }
+          } catch {
+            case NonFatal(t) =>
+              val sshClientOutput = new PrintStream(sshOut)
+              sshClientOutput.println("What a terrible failure, the REPL just blow up!")
+              t.printStackTrace(sshClientOutput)
+              sshOut.flush()
+              sshOut.close()
+          } finally {
+            Try(in.close())
+            Try(sshOut.close())
+          }
+        }
+      }
+
+      new Thread(runnable)
     }
 
     val wsFlow: Flow[Message, Message, _] = {
@@ -81,9 +88,15 @@ trait WebSocketRepl {
         .map[Message](bs => BinaryMessage.Strict(bs))
 
       Flow.fromSinkAndSourceMat(in, out)(Keep.both).mapMaterializedValue {
-        case (in, out) => runRepl(this.getClass.getClassLoader, in, out)
+        case (in, out) => {
+          val thread = runRepl(this.getClass.getClassLoader, in, out)
+          thread.start()
+          thread
+        }
       }.keepAlive(30.seconds, () => BinaryMessage.Strict(ByteString()))
-
+    }.watchTermination() {
+      (t: Thread, f: Future[Done]) =>
+        f.onComplete { _ => t.interrupt() }
     }
 
     Directives.handleWebSocketMessages(wsFlow)
