@@ -1,8 +1,10 @@
 package akkaviz.events
 
-import akka.actor.ActorSystem
+import akka.actor.{ActorPath, ActorRef, ActorSystem}
+import akka.viz.ActorCellInstrumentation
 
 import scala.ref.WeakReference
+import scala.util.Try
 
 object ActorSystems {
 
@@ -16,6 +18,16 @@ object ActorSystems {
 
   def registerSystem(system: ActorSystem): Unit = {
     systemReferences.update(system.name, WeakReference(system))
+  }
+
+  def tell(path: String, message: Any): Unit = {
+    Try {
+      val actorPath = ActorPath.fromString(path)
+      systems.get(actorPath.address.system).foreach {
+        system =>
+          system.actorSelection(actorPath).tell(message, ActorRef.noSender)
+      }
+    }
   }
 
 }
