@@ -1,7 +1,8 @@
 package akkaviz.frontend.components
 
 import akkaviz.frontend.ActorRepository.ActorState
-import akkaviz.frontend.{FrontendUtil, DOMGlobalScope, PrettyJson}
+import akkaviz.frontend.{FrontendApp, FrontendUtil, DOMGlobalScope, PrettyJson}
+import akkaviz.protocol
 import akkaviz.protocol.ActorFailure
 import org.scalajs.dom.html._
 import org.scalajs.dom.{Element => domElement, Node, console, document}
@@ -20,8 +21,6 @@ class ActorSelector(
     upstreamSend: protocol.ApiClientMessage => Unit
 ) extends PrettyJson with Component {
 
-  var fsmGraph: js.UndefOr[FsmGraph] = js.undefined
-
   def attach(parent: domElement): Unit = {
     val elem = div(cls := "panel-body", id := "actortree",
       table(
@@ -37,8 +36,6 @@ class ActorSelector(
         ),
         actorTreeTbody
       )).render
-
-    fsmGraph = new FsmGraph(document.getElementById("actor-fsm").asInstanceOf[Element])
 
     parent.appendChild(elem)
   }
@@ -73,22 +70,10 @@ class ActorSelector(
     span(
       `class` := "glyphicon glyphicon-info-sign",
       onclick := { () =>
-        val stateVar = currentActorState(actorName)
+        val stateVar = currentActorState(actorRef)
 
-        new ActorStateTab(stateVar).attach(document.querySelector("#right-pane"))
-
-        fsmGraph.foreach {
-          fsmGraph =>
-            fsmGraph.displayFsm(stateVar.now.fsmTransitions)
-        }
-      }
-    )
-
-  private[this] def refreshButton(actorRef: String) =
-    span(
-      `class` := "imgbtn glyphicon glyphicon-refresh",
-      onclick := { () =>
-        upstreamSend(protocol.RefreshInternalState(actorRef))
+        val tab: ActorStateTab = new ActorStateTab(stateVar, upstreamSend)
+        tab.attach(document.querySelector("#right-pane"))
       }
     )
 
@@ -111,8 +96,8 @@ class ActorSelector(
               () => toggleActor(actorRef)
             })),
           td(
-            span(FrontendUtil.shortActorName(actorName)),
-            span(float.right, actorExceptionsIndicator(actorName, actorFailures.now.filter(_.actorRef == actorName)), detailsButton(actorName))
+            span(FrontendUtil.shortActorName(actorRef)),
+            span(float.right, actorExceptionsIndicator(actorRef, actorFailures.now.filter(_.actorRef == actorRef)), detailsButton(actorRef))
           )
         )(data("actor") := actorRef).render
 

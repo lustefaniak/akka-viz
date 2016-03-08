@@ -2,7 +2,8 @@ package akkaviz.frontend.components
 
 import akkaviz.frontend.ActorRepository.ActorState
 import akkaviz.frontend.DOMGlobalScope.$
-import org.scalajs.dom.{Element => domElement}
+import akkaviz.protocol
+import org.scalajs.dom.{Element => domElement, _}
 import rx.Var
 
 import scalatags.JsDom.all._
@@ -37,7 +38,7 @@ trait Tab extends Component {
 
 }
 
-class ActorStateTab(actorState: Var[ActorState]) extends ClosableTab {
+class ActorStateTab(actorState: Var[ActorState], upstreamSend: protocol.ApiClientMessage => Unit) extends ClosableTab {
   import akkaviz.frontend.PrettyJson._
   import ActorStateTab._
 
@@ -47,8 +48,13 @@ class ActorStateTab(actorState: Var[ActorState]) extends ClosableTab {
   val stateObs = actorState.foreach(renderState(_))
 
   def renderState(state: ActorState) = {
+    lazy val fsmDiv = div(cls := s"fsm-graph").render
+    lazy val fsmGraph = new FsmGraph(fsmDiv)
+
     val rendered = div(
       cls := "panel-body",
+      refreshButton(actorState.now.path),
+      fsmDiv,
       div(strong("Class: "), state.className.getOrElse[String]("Unknown class")),
       div(strong("Is dead: "), state.isDead.toString),
       div(strong("Internal state: "), pre(state.internalState.map(prettyPrintJson).getOrElse[String]("Internal state unknown"))),
@@ -66,12 +72,24 @@ class ActorStateTab(actorState: Var[ActorState]) extends ClosableTab {
 
     tabBody.innerHTML = ""
     tabBody.appendChild(rendered)
+    fsmGraph.displayFsm(state.fsmTransitions)
   }
 
   override def onClose() = {
     super.onClose()
     stateObs.kill()
   }
+
+  private[this] def refreshButton(actorRef: String) =
+    a(cls := "btn btn-default", href := "#", role := "button", float.right,
+      span(
+        `class` := "imgbtn glyphicon glyphicon-refresh", " "
+      ),
+      onclick := { () =>
+        upstreamSend(protocol.RefreshInternalState(actorRef))
+      },
+      "Refresh state")
+
 }
 
 object ActorStateTab {
