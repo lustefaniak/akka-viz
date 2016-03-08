@@ -1,9 +1,7 @@
 package akkaviz.frontend.components
 
 import akkaviz.frontend.ActorRepository.ActorState
-import akkaviz.frontend.FrontendUtil.actorComponent
-import akkaviz.frontend.{DOMGlobalScope, PrettyJson}
-import akkaviz.protocol
+import akkaviz.frontend.{FrontendUtil, DOMGlobalScope, PrettyJson}
 import akkaviz.protocol.ActorFailure
 import org.scalajs.dom.html._
 import org.scalajs.dom.{Element => domElement, Node, console, document}
@@ -44,24 +42,6 @@ class ActorSelector(
 
     parent.appendChild(elem)
   }
-
-  private[this] val popoverContent: ThisFunction0[domElement, Node] = (that: domElement) => {
-    val actor: String = that.getAttribute("data-actor")
-    val content = div().render
-    val stateVar = currentActorState(actor)
-    //renderActorState(content, stateVar) //fixme!
-    Seq[Frag](
-      h5(actor),
-      content
-    ).render
-  }
-
-  private[this] val popoverOptions = js.Dictionary(
-    "content" -> popoverContent,
-    "trigger" -> "hover",
-    "placement" -> "right",
-    "html" -> true
-  )
 
   private[this] def failureTable(failures: Seq[ActorFailure]) =
     table(
@@ -131,12 +111,11 @@ class ActorSelector(
               () => toggleActor(actorRef)
             })),
           td(
-            actorComponent(actorRef),
-            span(float.right, actorExceptionsIndicator(actorRef, actorFailures.now.filter(_.actorRef == actorRef)), refreshButton(actorRef), detailsButton(actorRef))
+            span(FrontendUtil.shortActorName(actorName)),
+            span(float.right, actorExceptionsIndicator(actorName, actorFailures.now.filter(_.actorRef == actorName)), detailsButton(actorName))
           )
         )(data("actor") := actorRef).render
 
-        DOMGlobalScope.$(element).popover(popoverOptions)
         element
     }
 

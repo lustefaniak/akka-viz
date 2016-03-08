@@ -15,7 +15,7 @@ trait ClosableTab extends Tab {
 
   override def attach(tabbedPane: domElement): Unit = {
     super.attach(tabbedPane)
-    tab.appendChild(a(cls:="glyphicon glyphicon-remove", href:="#", float.left, onclick := onClose _).render)
+    tab.appendChild(a(cls := "glyphicon glyphicon-remove", href := "#", float.left, onclick := onClose _).render)
   }
 }
 
@@ -27,7 +27,7 @@ trait Tab extends Component {
   lazy val activateA = a(href := s"#$tabId", "data-toggle".attr := "tab", s"$name", float.left).render
   lazy val tab = li(activateA).render
 
-  lazy val tabBody = div(`class`:="tab-pane panel panel-default ", id:=s"$tabId").render
+  lazy val tabBody = div(`class` := "tab-pane panel panel-default ", id := s"$tabId").render
 
   override def attach(tabbedPane: domElement): Unit = {
     tabbedPane.querySelector("ul.nav-tabs").appendChild(tab)
@@ -47,7 +47,8 @@ class ActorStateTab(actorState: Var[ActorState]) extends ClosableTab {
   val stateObs = actorState.foreach(renderState(_))
 
   def renderState(state: ActorState) = {
-    val rendered = div(cls := "panel-body",
+    val rendered = div(
+      cls := "panel-body",
       div(strong("Class: "), state.className.getOrElse[String]("Unknown class")),
       div(strong("Is dead: "), state.isDead.toString),
       div(strong("Internal state: "), pre(state.internalState.map(prettyPrintJson).getOrElse[String]("Internal state unknown"))),
@@ -66,7 +67,6 @@ class ActorStateTab(actorState: Var[ActorState]) extends ClosableTab {
     tabBody.innerHTML = ""
     tabBody.appendChild(rendered)
   }
-
 
   override def onClose() = {
     super.onClose()
