@@ -49,35 +49,11 @@ class ActorSelector(
     val actor: String = that.getAttribute("data-actor")
     val content = div().render
     val stateVar = currentActorState(actor)
-    renderActorState(content, stateVar)
+    //renderActorState(content, stateVar) //fixme!
     Seq[Frag](
       h5(actor),
       content
     ).render
-  }
-
-  private[this] def renderActorState(element: domElement, stateVar: Var[ActorState]): Unit = {
-    stateVar.foreach {
-      state =>
-        val renderedState = Seq[Frag](
-          div(strong("Class: "), state.className.getOrElse[String]("Unknown class")),
-          div(strong("Is dead: "), state.isDead.toString),
-          div(strong("Internal state: "), pre(state.internalState.map(prettyPrintJson).getOrElse[String]("Internal state unknown"))),
-          div(strong("Is FSM: "), state.fsmState.isDefined.toString),
-          state.fsmState.map[Frag] {
-            fsm =>
-              Seq(
-                div(strong("FSM State: "), pre(prettyPrintJson(fsm.currentState))),
-                div(strong("FSM Data: "), pre(prettyPrintJson(fsm.currentData)))
-              )
-          }.getOrElse(()),
-          div(strong("Mailbox size: "), state.mailboxSize.map(_.toString).getOrElse[String]("Unknown")),
-          div(strong("Last updated: "), state.lastUpdatedAt.toISOString())
-        ).render
-
-        element.innerHTML = ""
-        element.appendChild(renderedState)
-    }
   }
 
   private[this] val popoverOptions = js.Dictionary(
@@ -115,17 +91,16 @@ class ActorSelector(
 
   private[this] def detailsButton(actorRef: String) =
     span(
-      `class` := "imgbtn glyphicon glyphicon-info-sign",
-      "data-toggle".attr := "modal",
-      "data-target".attr := "#details-modal",
+      `class` := "glyphicon glyphicon-info-sign",
       onclick := { () =>
-        val details = document.getElementById("actor-details")
-        val stateVar = currentActorState(actorRef)
-        renderActorState(details, stateVar)
-        fsmGraph.foreach {
-          fsmGraph =>
-            fsmGraph.displayFsm(stateVar.now.fsmTransitions)
-        }
+        val stateVar = currentActorState(actorName)
+
+        new ActorStateTab(stateVar).attach(document.querySelector("#right-pane"))
+//
+//        fsmGraph.foreach {
+//          fsmGraph =>
+//            fsmGraph.displayFsm(stateVar.now.fsmTransitions)
+//        }
       }
     )
 
