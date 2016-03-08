@@ -96,11 +96,11 @@ class ActorSelector(
         val stateVar = currentActorState(actorName)
 
         new ActorStateTab(stateVar).attach(document.querySelector("#right-pane"))
-//
-//        fsmGraph.foreach {
-//          fsmGraph =>
-//            fsmGraph.displayFsm(stateVar.now.fsmTransitions)
-//        }
+
+        fsmGraph.foreach {
+          fsmGraph =>
+            fsmGraph.displayFsm(stateVar.now.fsmTransitions)
+        }
       }
     )
 

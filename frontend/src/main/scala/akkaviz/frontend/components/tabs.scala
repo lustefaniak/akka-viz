@@ -1,6 +1,7 @@
 package akkaviz.frontend.components
 
 import akkaviz.frontend.ActorRepository.ActorState
+import akkaviz.frontend.DOMGlobalScope.$
 import org.scalajs.dom.{Element => domElement}
 import rx.Var
 
@@ -23,22 +24,26 @@ trait Tab extends Component {
 
   def tabId: String
 
-  lazy val tab = li(a(href:=s"#$tabId", "data-toggle".attr:="tab", s"$name", float.left)).render
+  lazy val activateA = a(href := s"#$tabId", "data-toggle".attr := "tab", s"$name", float.left).render
+  lazy val tab = li(activateA).render
 
   lazy val tabBody = div(`class`:="tab-pane panel panel-default ", id:=s"$tabId").render
 
   override def attach(tabbedPane: domElement): Unit = {
     tabbedPane.querySelector("ul.nav-tabs").appendChild(tab)
     tabbedPane.querySelector("div.tab-content").appendChild(tabBody)
+    $(activateA).click()
   }
 
 }
 
 class ActorStateTab(actorState: Var[ActorState]) extends ClosableTab {
   import akkaviz.frontend.PrettyJson._
+  import ActorStateTab._
 
   val name = actorState.now.path
-  val tabId = s"actor-state-${actorState.now.path.replace("/", "-").filterNot(_ == ':')}"
+  val tabId = stateTabId(actorState.now.path)
+
   val stateObs = actorState.foreach(renderState(_))
 
   def renderState(state: ActorState) = {
@@ -67,6 +72,11 @@ class ActorStateTab(actorState: Var[ActorState]) extends ClosableTab {
     super.onClose()
     stateObs.kill()
   }
+}
 
+object ActorStateTab {
+  def stateTabId(path: String): String = {
+    s"actor-state-${path.replaceAll("[\\/|\\.|\\\\|\\$]", "-").filterNot(_ == ':')}"
+  }
 }
 
