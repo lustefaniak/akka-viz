@@ -9,7 +9,7 @@ import scalatags.JsDom.all._
 
 class HierarchyPanel extends Component {
 
-  val seenActors: Dictionary[Unit] = Dictionary("root" -> ())
+  val seenActors: Dictionary[Unit] = Dictionary()
 
   private val ActorAttr = "actor-path".attr
 
@@ -19,9 +19,9 @@ class HierarchyPanel extends Component {
 
   private def node(ref: String) = li(
     ActorAttr := ref,
-    title := ref,
     span(
       shortName(ref),
+      title := ref,
       "data-target".attr := s"""[actor-path="$ref"]>ul""",
       "data-toggle".attr := "collapse"
     ),
@@ -37,9 +37,8 @@ class HierarchyPanel extends Component {
   def insert(ref: String): Unit = {
     if (!exists(ref)) {
       val parentRef = FrontendUtil.parent(ref)
-      val parentElement = parentRef.getOrElse("root")
-      insert(parentElement)
-      insertSorted(parentElement, ref)
+      parentRef.foreach(insert)
+      insertSorted(parentRef.getOrElse("root"), ref)
       seenActors.update(ref, ())
     }
   }
