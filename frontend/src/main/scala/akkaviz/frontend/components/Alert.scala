@@ -1,6 +1,7 @@
 package akkaviz.frontend.components
 
 import org.scalajs.dom.Element
+import org.scalajs.dom.raw.MouseEvent
 
 import scala.concurrent.duration._
 import scala.scalajs.js.timers
@@ -18,24 +19,26 @@ class Alert extends Component {
     parent.appendChild(connectionAlert)
   }
 
-  def success(msg: String) = {
+  def success(msg: String, fn: MouseEvent => Unit = _ => {}) = {
+    connectionAlert.onclick = fn
     connectionAlert.innerHTML = msg
     connectionAlert.classList.remove("alert-warning")
-    connectionAlert.classList.remove("alert-error")
+    connectionAlert.classList.remove("alert-danger")
     connectionAlert.classList.add("alert-success")
     connectionAlert.classList.add("in")
-
   }
 
-  def warning(msg: String) = {
+  def warning(msg: String, fn: MouseEvent => Unit = _ => {}) = {
+    connectionAlert.onclick = fn
     connectionAlert.innerHTML = msg
     connectionAlert.classList.remove("alert-success")
-    connectionAlert.classList.remove("alert-error")
+    connectionAlert.classList.remove("alert-danger")
     connectionAlert.classList.add("alert-warning")
     connectionAlert.classList.add("in")
   }
 
-  def error(msg: String) = {
+  def error(msg: String, fn: MouseEvent => Unit = _ => {}) = {
+    connectionAlert.onclick = fn
     connectionAlert.innerHTML = msg
     connectionAlert.classList.remove("alert-success")
     connectionAlert.classList.remove("alert-warning")
