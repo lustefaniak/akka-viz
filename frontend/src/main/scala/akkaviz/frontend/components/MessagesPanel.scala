@@ -13,11 +13,11 @@ import scala.scalajs.js.ThisFunction1
 import scalatags.JsDom.all._
 
 class MessagesPanel(selectedActors: Var[Set[String]]) extends Component with PrettyJson {
-  val ShowMoreLength = 200
+  private[this] val ShowMoreLength = 200
 
-  private val msgQueue = Var[Queue[Received]](Queue.empty)
+  private[this] val msgQueue = Var[Queue[Received]](Queue.empty)
 
-  private var lastDisplayed = 0L
+  private[this] var lastDisplayed = 0L
 
   def messageReceived(rcv: Received): Unit = {
     val selected = selectedActors.now
@@ -31,16 +31,10 @@ class MessagesPanel(selectedActors: Var[Set[String]]) extends Component with Pre
     }
   }
 
-  val showMoreRow = tr(cell, onclick := displayMoreMessages).render
-  lazy val cell = td(colspan := 3, fontStyle.italic).render
+  private[this] val showMoreRow = tr(cell, onclick := displayMoreMessages).render
+  private[this] lazy val cell = td(colspan := 3, fontStyle.italic).render
 
-  msgQueue.foreach { q =>
-    if (q.headOption.exists(_.eventId > lastDisplayed))
-      cell.innerHTML = s"${q.length} messages not shown, click to display more"
-    else cell.innerHTML = ""
-  }
-
-  def displayMoreMessages: ThisFunction1[TableRow, MouseEvent, Unit] = { (row: TableRow, ev: MouseEvent) =>
+  private[this] def displayMoreMessages: ThisFunction1[TableRow, MouseEvent, Unit] = { (row: TableRow, ev: MouseEvent) =>
     ev.preventDefault()
     val (portion, q) = (msgQueue.now.take(ShowMoreLength), msgQueue.now.drop(ShowMoreLength))
     msgQueue() = q
@@ -48,18 +42,16 @@ class MessagesPanel(selectedActors: Var[Set[String]]) extends Component with Pre
       messagesTbody.appendChild(messageRow(rcv).render)
       lastDisplayed = rcv.eventId
     }
-
-    ()
   }
 
-  def toggleVisibility(e: domElement): Unit = {
+  private[this] def toggleVisibility(e: domElement): Unit = {
     val elem = e.asInstanceOf[Element]
     if (elem.style.display == "none")
       elem.style.display = ""
     else elem.style.display = "none"
   }
 
-  val toggleMessageDetails = (mouseEvent: MouseEvent) => {
+  private[this] val toggleMessageDetails = (mouseEvent: MouseEvent) => {
     mouseEvent.preventDefault()
     console.log(mouseEvent.srcElement)
     FrontendUtil.findParentWithAttribute(mouseEvent.srcElement, "data-message").foreach {
@@ -80,7 +72,7 @@ class MessagesPanel(selectedActors: Var[Set[String]]) extends Component with Pre
     }
   }
 
-  def messageRow(rcv: Received) = {
+  private[this] def messageRow(rcv: Received) = {
     tr(
       "data-message".attr := rcv.payload.getOrElse(""),
       `class` := "tgl",
@@ -91,28 +83,21 @@ class MessagesPanel(selectedActors: Var[Set[String]]) extends Component with Pre
     )
   }
 
-  val unhandledIndicator = span(
+  private[this] val unhandledIndicator = span(
     style := "color: orange; vertical-align: middle; float: right",
     `class` := "glyphicon glyphicon-exclamation-sign",
     title := "Unhandled message"
   )
 
-  selectedActors.trigger {
-    if (selectedActors.now.isEmpty) {
-      messagePanelTitle.innerHTML = s"Select actor to show its messages"
-    } else {
-      messagePanelTitle.innerHTML = s"Messages"
-    }
-  }
-  lazy val messagePanelTitle = span("Messages").render
-  lazy val messagePanelHeader = div(
+  private[this] lazy val messagePanelTitle = span("Messages").render
+  private[this] lazy val messagePanelHeader = div(
     cls := "panel-heading", id := "messagespaneltitle",
     messagePanelTitle,
     a(href := "#", float.right, onclick := clearMessages, i(`class` := "material-icons", "delete"))
   ).render
-  lazy val messagesTbody = tbody().render
+  private[this] lazy val messagesTbody = tbody().render
 
-  val clearMessages = () => {
+  private[this] val clearMessages = () => {
     messagesTbody.innerHTML = ""
     msgQueue() = Queue.empty
   }
@@ -129,6 +114,20 @@ class MessagesPanel(selectedActors: Var[Set[String]]) extends Component with Pre
           ), messagesTbody, tfoot(showMoreRow)
         ))
     ).render
+
+    msgQueue.foreach { q =>
+      if (q.headOption.exists(_.eventId > lastDisplayed))
+        cell.innerHTML = s"${q.length} messages not shown, click to display more"
+      else cell.innerHTML = ""
+    }
+
+    selectedActors.trigger {
+      if (selectedActors.now.isEmpty) {
+        messagePanelTitle.innerHTML = s"Select actor to show its messages"
+      } else {
+        messagePanelTitle.innerHTML = s"Messages"
+      }
+    }
 
     parent.appendChild(elem)
   }
