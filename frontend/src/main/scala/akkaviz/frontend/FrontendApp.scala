@@ -129,7 +129,8 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
   private[this] val selectedMessages = persistedVar[Set[String]](Set(), "selectedMessages")
   private[this] val thrownExceptions = Var[Seq[ActorFailure]](Seq())
   private[this] val showUnconnected = Var[Boolean](false)
-  private[this] val actorSelector = new ActorSelector(repo.seenActors, selectedActors, repo.state, thrownExceptions, upstreamConnection.send)
+  private[this] val tabManager = new TabManager(repo, upstreamConnection)
+  private[this] val actorSelector = new ActorSelector(repo.seenActors, selectedActors, thrownExceptions, tabManager.openActorDetails)
   private[this] val messageFilter = new MessageFilter(seenMessages, selectedMessages, selectedActors)
   private[this] val messagesPanel = new MessagesPanel(selectedActors)
   private[this] val asksPanel = new AsksPanel(selectedActors)
@@ -138,6 +139,7 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
   private[this] val unconnectedOnOff = new UnconnectedOnOff(showUnconnected)
   private[this] val replTerminal = new ReplTerminal()
   private[this] val graphView = new GraphView(showUnconnected, actorSelector.toggleActor, ActorStateAsNodeRenderer.render)
+  private[this] val hierarchyView = new HierarchyPanel(tabManager.openActorDetails)
   private[this] val maxRetries = 10
 
   def main(): Unit = {
@@ -189,6 +191,11 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
       }
     }
 
+    repo.newActors.foreach {
+      newActors =>
+        hierarchyView.insert(newActors)
+    }
+
     connectionAlert.attach(document.body)
     actorSelector.attach(document.getElementById("actorselection"))
     messageFilter.attach(document.getElementById("messagefiltering"))
@@ -199,6 +206,7 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
     unconnectedOnOff.attach(document.getElementById("graphsettings"))
     replTerminal.attach(document.getElementById("repl"))
     graphView.attach(document.getElementById("graphview"))
+    hierarchyView.attach(document.getElementById("hierarchy-view"))
 
     DOMGlobalScope.$.material.init()
 

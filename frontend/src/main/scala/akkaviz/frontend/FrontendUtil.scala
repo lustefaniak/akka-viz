@@ -36,4 +36,9 @@ object FrontendUtil {
   @inline
   def systemName(actorRef: String): String = actorRef.split('/')(2)
 
+  def parent(actor: String): Option[String] = {
+    val path = actor.stripPrefix("akka://").split("/")
+    if (path.length <= 1) None
+    else Some("akka://" + path.init.mkString("/"))
+  }
 }
