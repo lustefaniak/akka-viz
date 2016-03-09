@@ -55,7 +55,7 @@ object ClassInspector {
     }
     new ClassInspector {
       val underlyingClass: Class[_] = clazz
-      private val f = reflectedFields.toSeq
+      private[this] val f = reflectedFields.toSeq
 
       override def inspect(obj: Any, fieldNames: Set[String] = allFieldNames): Map[String, Any] = {
         val result = mutable.Map[String, Any]()

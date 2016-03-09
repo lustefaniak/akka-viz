@@ -8,6 +8,7 @@ import akkaviz.protocol._
 import org.scalajs.dom.{console, document}
 import rx._
 
+import scala.scalajs.js
 import scala.scalajs.js.JSApp
 import scalatags.JsDom.all._
 
@@ -208,7 +209,7 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
     graphView.attach(document.getElementById("graphview"))
     hierarchyView.attach(document.getElementById("hierarchy-view"))
 
-    DOMGlobalScope.$.material.init()
+    js.Dynamic.global.$.material.init()
 
   }
 

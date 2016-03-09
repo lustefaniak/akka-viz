@@ -11,14 +11,14 @@ import scala.concurrent.duration._
 
 object EventSystem {
 
-  private implicit val timeout = Timeout(100.millis)
-  private implicit val system = ActorSystem(Config.internalSystemName)
+  private[this] implicit val timeout = Timeout(100.millis)
+  private[this] implicit val system = ActorSystem(Config.internalSystemName)
 
-  private val publisher = system.actorOf(Props(classOf[EventPublisherActor]).withDispatcher(
+  private[this] val publisher = system.actorOf(Props(classOf[EventPublisherActor]).withDispatcher(
     "control-aware-dispatcher"
   ))
-  private val globalSettings = system.actorOf(Props(classOf[GlobalSettingsActor]))
-  private val autoStartReporting = Config.autoStartReporting
+  private[this] val globalSettings = system.actorOf(Props(classOf[GlobalSettingsActor]))
+  private[this] val autoStartReporting = Config.autoStartReporting
 
   globalSettings ! publisher
 
@@ -31,17 +31,16 @@ object EventSystem {
     globalSettings ! d
   }
 
-  private def publish(event: InternalEvent): Unit = {
+  private[this] def publish(event: InternalEvent): Unit = {
     publisher ! event
   }
 
   @volatile
-  private var _isEnabled: Boolean = false
+  private[this] var _isEnabled: Boolean = false
 
   def isEnabled() = _isEnabled
 
   def setEnabled(enabled: Boolean) = {
-    println(s"setEnabled: ${enabled}")
     _isEnabled = enabled
     publish(if (enabled) ReportingEnabled else ReportingDisabled)
   }

@@ -81,7 +81,7 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directi
   }
 
   @inline
-  private implicit val actorRefToString = Helpers.actorRefToString _
+  private[this] implicit val actorRefToString = Helpers.actorRefToString _
 
   def internalToApi: Flow[BackendEvent, protocol.ApiServerMessage, Any] = Flow[BackendEvent].map {
     case ReceivedWithId(eventId, sender, receiver, message, handled) =>
@@ -160,6 +160,8 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directi
 
   override def replPredef: String =
     """
+      |import Predef.{println => _}
+      |import pprint.{pprintln => println}
       |import akkaviz.events.ActorSystems.systems
       |import scala.concurrent.duration._
       |import akka.actor._

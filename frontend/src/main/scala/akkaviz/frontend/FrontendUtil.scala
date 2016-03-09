@@ -4,7 +4,6 @@ import org.scalajs.dom.{Element, window}
 
 import scala.annotation.tailrec
 import scala.scalajs.js
-import scalatags.JsDom.all._
 
 object FrontendUtil {
   @inline
