@@ -45,16 +45,17 @@ class ActorStateTab(actorState: Var[ActorState], upstreamSend: protocol.ApiClien
   val name = actorState.now.path
   val tabId = stateTabId(actorState.now.path)
 
-  val stateObs = actorState.foreach(renderState(_))
+  private[this] val stateObs = actorState.foreach(renderState)
 
-  def renderState(state: ActorState) = {
+  private[this] def renderState(state: ActorState) = {
     lazy val fsmDiv = div(cls := s"fsm-graph").render
     lazy val fsmGraph = new FsmGraph(fsmDiv)
 
     val rendered = div(
       cls := "panel-body",
-      refreshButton(actorState.now.path),
+      refreshButton(state.path), killButton(state.path), poisonPillButton(state.path),
       fsmDiv,
+      div(strong("ActorRef: "), state.path),
       div(strong("Class: "), state.className.getOrElse[String]("Unknown class")),
       div(strong("Is dead: "), state.isDead.toString),
       div(strong("Internal state: "), pre(state.internalState.map(prettyPrintJson).getOrElse[String]("Internal state unknown"))),
@@ -75,7 +76,7 @@ class ActorStateTab(actorState: Var[ActorState], upstreamSend: protocol.ApiClien
     fsmGraph.displayFsm(state.fsmTransitions)
   }
 
-  override def onClose() = {
+  override def onClose(): Unit = {
     super.onClose()
     stateObs.kill()
   }
@@ -90,6 +91,21 @@ class ActorStateTab(actorState: Var[ActorState], upstreamSend: protocol.ApiClien
       },
       "Refresh state")
 
+  private[this] def killButton(actorRef: String) =
+    a(cls := "btn btn-default", href := "#", role := "button", float.right,
+      span(`class` := "glyphicons glyphicons-remove-sign"),
+      onclick := { () =>
+        upstreamSend(protocol.KillActor(actorRef))
+      },
+      "Kill")
+
+  private[this] def poisonPillButton(actorRef: String) =
+    a(cls := "btn btn-default", href := "#", role := "button", float.right,
+      span(`class` := "glyphicons glyphicons-lab"),
+      onclick := { () =>
+        upstreamSend(protocol.PoisonPillActor(actorRef))
+      },
+      "PoisonPill")
 }
 
 object ActorStateTab {
