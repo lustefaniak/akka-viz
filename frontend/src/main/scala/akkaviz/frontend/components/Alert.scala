@@ -19,26 +19,26 @@ class Alert extends Component {
     parent.appendChild(connectionAlert)
   }
 
-  private[this] def makeAlert(msg: String, currentFlag: String, fn: MouseEvent => Unit = _ => {}): Unit = {
+  private[this] def updateElement(msg: String, currentClass: String, fn: MouseEvent => Unit = _ => {}): Unit = {
     connectionAlert.onclick = fn
     connectionAlert.innerHTML = msg
     connectionAlert.classList.remove("alert-warning")
     connectionAlert.classList.remove("alert-danger")
     connectionAlert.classList.remove("alert-success")
-    connectionAlert.classList.add(currentFlag)
+    connectionAlert.classList.add(currentClass)
     connectionAlert.classList.add("in")
   }
 
   def success(msg: String, fn: MouseEvent => Unit = _ => {}): Unit = {
-    makeAlert(msg, "alert-success", fn)
+    updateElement(msg, "alert-success", fn)
   }
 
   def warning(msg: String, fn: MouseEvent => Unit = _ => {}): Unit = {
-    makeAlert(msg, "alert-warning", fn)
+    updateElement(msg, "alert-warning", fn)
   }
 
   def error(msg: String, fn: MouseEvent => Unit = _ => {}): Unit = {
-    makeAlert(msg, "alert-danger", fn)
+    updateElement(msg, "alert-danger", fn)
   }
 
   def fadeOut(after: FiniteDuration = 2.seconds) = timers.setTimeout(after) {
