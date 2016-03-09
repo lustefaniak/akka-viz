@@ -50,14 +50,14 @@ object ApiConnection {
     }
 
     new Upstream {
-      private var messagesToSend = js.Array[ArrayBuffer]()
-      private var connectedWebsocket: js.UndefOr[WebSocket] = js.undefined
-      private var connectingWebsocket: js.UndefOr[WebSocket] = js.undefined
-      private var disconnectedManually = false
-      private var retries: Int = 0
-      private var reconnectTimer: js.UndefOr[SetTimeoutHandle] = js.undefined
+      private[this] var messagesToSend = js.Array[ArrayBuffer]()
+      private[this] var connectedWebsocket: js.UndefOr[WebSocket] = js.undefined
+      private[this] var connectingWebsocket: js.UndefOr[WebSocket] = js.undefined
+      private[this] var disconnectedManually = false
+      private[this] var retries: Int = 0
+      private[this] var reconnectTimer: js.UndefOr[SetTimeoutHandle] = js.undefined
 
-      private def scheduleReconnect(): Unit = {
+      private[this] def scheduleReconnect(): Unit = {
         if (reconnectTimer.isEmpty) {
           reconnectTimer = timers.setTimeout(2.seconds) {
             reconnectTimer = js.undefined
@@ -66,7 +66,7 @@ object ApiConnection {
         }
       }
 
-      private def handleAutoReconnect(): Unit = {
+      private[this] def handleAutoReconnect(): Unit = {
         if (!disconnectedManually) {
           if (retries < maxRetries) {
             scheduleReconnect()
@@ -76,7 +76,7 @@ object ApiConnection {
         }
       }
 
-      private def connected(): Unit = {
+      private[this] def connected(): Unit = {
         connectedWebsocket = connectingWebsocket
         connectingWebsocket = js.undefined
         retries = 0
@@ -88,7 +88,7 @@ object ApiConnection {
         }
       }
 
-      private def disconnected(error: Boolean): Unit = {
+      private[this] def disconnected(error: Boolean): Unit = {
         connectedWebsocket = js.undefined
         connectingWebsocket = js.undefined
         if (disconnectedManually)
@@ -96,7 +96,7 @@ object ApiConnection {
         handleAutoReconnect()
       }
 
-      private def openWebSocket(): Unit = {
+      private[this] def openWebSocket(): Unit = {
         if (connectingWebsocket.isEmpty && connectedWebsocket.isEmpty) {
           val ws = createWebsocket
           connectingWebsocket = ws
