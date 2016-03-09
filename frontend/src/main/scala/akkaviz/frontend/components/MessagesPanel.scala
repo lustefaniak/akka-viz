@@ -1,6 +1,6 @@
 package akkaviz.frontend.components
 
-import akkaviz.frontend.FrontendUtil.actorComponent
+import akkaviz.frontend.FrontendUtil.shortActorName
 import akkaviz.frontend.{FrontendUtil, PrettyJson}
 import akkaviz.protocol.Received
 import org.scalajs.dom.html._
@@ -84,8 +84,8 @@ class MessagesPanel(selectedActors: Var[Set[String]]) extends Component with Pre
     tr(
       "data-message".attr := rcv.payload.getOrElse(""),
       `class` := "tgl",
-      td(actorComponent(rcv.sender)),
-      td(actorComponent(rcv.receiver)),
+      td(shortActorName(rcv.sender)),
+      td(shortActorName(rcv.receiver)),
       td(rcv.payloadClass, if (!rcv.handled) unhandledIndicator else ""),
       onclick := toggleMessageDetails
     )

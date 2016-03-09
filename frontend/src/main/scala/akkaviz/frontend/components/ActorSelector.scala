@@ -1,8 +1,7 @@
 package akkaviz.frontend.components
 
 import akkaviz.frontend.ActorRepository.ActorState
-import akkaviz.frontend.FrontendUtil.actorComponent
-import akkaviz.frontend.{DOMGlobalScope, PrettyJson}
+import akkaviz.frontend.{FrontendApp, FrontendUtil, DOMGlobalScope, PrettyJson}
 import akkaviz.protocol
 import akkaviz.protocol.ActorFailure
 import org.scalajs.dom.html._
@@ -22,8 +21,6 @@ class ActorSelector(
     upstreamSend: protocol.ApiClientMessage => Unit
 ) extends PrettyJson with Component {
 
-  var fsmGraph: js.UndefOr[FsmGraph] = js.undefined
-
   def attach(parent: domElement): Unit = {
     val elem = div(cls := "panel-body", id := "actortree",
       table(
@@ -40,52 +37,8 @@ class ActorSelector(
         actorTreeTbody
       )).render
 
-    fsmGraph = new FsmGraph(document.getElementById("actor-fsm").asInstanceOf[Element])
-
     parent.appendChild(elem)
   }
-
-  private[this] val popoverContent: ThisFunction0[domElement, Node] = (that: domElement) => {
-    val actor: String = that.getAttribute("data-actor")
-    val content = div().render
-    val stateVar = currentActorState(actor)
-    renderActorState(content, stateVar)
-    Seq[Frag](
-      h5(actor),
-      content
-    ).render
-  }
-
-  private[this] def renderActorState(element: domElement, stateVar: Var[ActorState]): Unit = {
-    stateVar.foreach {
-      state =>
-        val renderedState = Seq[Frag](
-          div(strong("Class: "), state.className.getOrElse[String]("Unknown class")),
-          div(strong("Is dead: "), state.isDead.toString),
-          div(strong("Internal state: "), pre(state.internalState.map(prettyPrintJson).getOrElse[String]("Internal state unknown"))),
-          div(strong("Is FSM: "), state.fsmState.isDefined.toString),
-          state.fsmState.map[Frag] {
-            fsm =>
-              Seq(
-                div(strong("FSM State: "), pre(prettyPrintJson(fsm.currentState))),
-                div(strong("FSM Data: "), pre(prettyPrintJson(fsm.currentData)))
-              )
-          }.getOrElse(()),
-          div(strong("Mailbox size: "), state.mailboxSize.map(_.toString).getOrElse[String]("Unknown")),
-          div(strong("Last updated: "), state.lastUpdatedAt.toISOString())
-        ).render
-
-        element.innerHTML = ""
-        element.appendChild(renderedState)
-    }
-  }
-
-  private[this] val popoverOptions = js.Dictionary(
-    "content" -> popoverContent,
-    "trigger" -> "hover",
-    "placement" -> "right",
-    "html" -> true
-  )
 
   private[this] def failureTable(failures: Seq[ActorFailure]) =
     table(
@@ -115,25 +68,12 @@ class ActorSelector(
 
   private[this] def detailsButton(actorRef: String) =
     span(
-      `class` := "imgbtn glyphicon glyphicon-info-sign",
-      "data-toggle".attr := "modal",
-      "data-target".attr := "#details-modal",
+      `class` := "glyphicon glyphicon-info-sign",
       onclick := { () =>
-        val details = document.getElementById("actor-details")
         val stateVar = currentActorState(actorRef)
-        renderActorState(details, stateVar)
-        fsmGraph.foreach {
-          fsmGraph =>
-            fsmGraph.displayFsm(stateVar.now.fsmTransitions)
-        }
-      }
-    )
 
-  private[this] def refreshButton(actorRef: String) =
-    span(
-      `class` := "imgbtn glyphicon glyphicon-refresh",
-      onclick := { () =>
-        upstreamSend(protocol.RefreshInternalState(actorRef))
+        val tab: ActorStateTab = new ActorStateTab(stateVar, upstreamSend)
+        tab.attach(document.querySelector("#right-pane"))
       }
     )
 
@@ -156,12 +96,11 @@ class ActorSelector(
               () => toggleActor(actorRef)
             })),
           td(
-            actorComponent(actorRef),
-            span(float.right, actorExceptionsIndicator(actorRef, actorFailures.now.filter(_.actorRef == actorRef)), refreshButton(actorRef), detailsButton(actorRef))
+            span(FrontendUtil.shortActorName(actorRef)),
+            span(float.right, actorExceptionsIndicator(actorRef, actorFailures.now.filter(_.actorRef == actorRef)), detailsButton(actorRef))
           )
         )(data("actor") := actorRef).render
 
-        DOMGlobalScope.$(element).popover(popoverOptions)
         element
     }
 

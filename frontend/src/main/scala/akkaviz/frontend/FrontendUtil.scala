@@ -31,14 +31,6 @@ object FrontendUtil {
   }
 
   @inline
-  def actorComponent(actorRef: String): Element = {
-    def isUser(ref: String): Boolean = ref.contains("user")
-    span(
-      "data-toggle".attr := "tooltip", "data-placement".attr := "top", title := actorRef, shortActorName(actorRef)
-    ).render
-  }
-
-  @inline
   def shortActorName(actorRef: String) = actorRef.split('/').drop(3).mkString("/")
 
   @inline
