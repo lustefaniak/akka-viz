@@ -3,7 +3,7 @@ package akkaviz.frontend.components
 import akkaviz.frontend.vis
 import akkaviz.frontend.vis.{NetworkData, NetworkOptions}
 import org.scalajs.dom.html.Element
-import org.scalajs.dom.{Element => domElement, _}
+import org.scalajs.dom.{Element => domElement}
 
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
@@ -52,7 +52,6 @@ class FsmGraph(parent: Element) {
     opts.physics.forceAtlas2Based = js.Dynamic.literal()
     opts.physics.forceAtlas2Based.springLength = 100
 
-    console.log(opts)
     opts.asInstanceOf[NetworkOptions]
   }
 

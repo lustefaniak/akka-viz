@@ -1,6 +1,6 @@
 package akkaviz.server
 
-import akka.actor.{ActorRef, ActorSystem}
+import akka.actor.{ActorRef, ActorSystem, Kill, PoisonPill}
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.ws.{BinaryMessage, Message}
 import akka.http.scaladsl.server.Directives
@@ -37,35 +37,9 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directi
   def tracingEventsFlow: Flow[Message, Message, ActorRef] = {
     val eventSrc = Source.actorRef[BackendEvent](Config.bufferSize, OverflowStrategy.dropNew)
 
-    val wsIn = Flow[Message].mapConcat[ChangeSubscriptionSettings] {
-      case BinaryMessage.Strict(msg) =>
-        val command = protocol.IO.readClient(msg.asByteBuffer)
-        command match {
-          case protocol.SetAllowedMessages(classNames) =>
-            system.log.debug(s"Set allowed messages to $classNames")
-            List(SetAllowedClasses(classNames))
-          case protocol.ObserveActors(actors) =>
-            system.log.debug(s"Set observed actors to $actors")
-            List(SetActorEventFilter(actors))
-          case protocol.SetReceiveDelay(duration) =>
-            system.log.debug(s"Setting receive delay to $duration")
-            EventSystem.receiveDelay = duration
-            Nil
-          case protocol.SetEnabled(isEnabled) =>
-            system.log.info(s"Setting EventSystem.setEnabled(${isEnabled})")
-            EventSystem.setEnabled(isEnabled)
-            Nil
-          case protocol.RefreshInternalState(actor) =>
-            ActorSystems.refreshActorState(actor)
-            Nil
-          case other =>
-            system.log.error(s"Received unsupported unpickled object via WS: ${other}")
-            Nil
-        }
-      case other =>
-        system.log.error(s"Received unsupported Message in WS: ${other}")
-        Nil
-    }
+    val wsIn = Flow[Message]
+      .via(wsMessageToClientMessage)
+      .via(handleUserCommand)
       .scan(defaultSettings)(updateSettings)
       .expand(r => Iterator.continually(r))
 
@@ -80,10 +54,41 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directi
     out
   }
 
+  private[this] val handleUserCommand: Flow[protocol.ApiClientMessage, ChangeSubscriptionSettings, _] = Flow[protocol.ApiClientMessage].mapConcat {
+    case protocol.SetAllowedMessages(classNames) =>
+      system.log.debug(s"Set allowed messages to $classNames")
+      List(SetAllowedClasses(classNames))
+    case protocol.ObserveActors(actors) =>
+      system.log.debug(s"Set observed actors to $actors")
+      List(SetActorEventFilter(actors))
+    case protocol.SetReceiveDelay(duration) =>
+      system.log.debug(s"Setting receive delay to $duration")
+      EventSystem.receiveDelay = duration
+      Nil
+    case protocol.SetEnabled(isEnabled) =>
+      system.log.info(s"Setting EventSystem.setEnabled(${isEnabled})")
+      EventSystem.setEnabled(isEnabled)
+      Nil
+    case protocol.RefreshInternalState(actor) =>
+      ActorSystems.refreshActorState(actor)
+      Nil
+    case protocol.PoisonPillActor(actor) =>
+      ActorSystems.tell(actor, PoisonPill)
+      Nil
+    case protocol.KillActor(actor) =>
+      ActorSystems.tell(actor, Kill)
+      Nil
+  }
+
+  private[this] val wsMessageToClientMessage = Flow[Message].collect {
+    case BinaryMessage.Strict(msg) =>
+      protocol.IO.readClient(msg.asByteBuffer)
+  }
+
   @inline
   private[this] implicit val actorRefToString = Helpers.actorRefToString _
 
-  def internalToApi: Flow[BackendEvent, protocol.ApiServerMessage, Any] = Flow[BackendEvent].map {
+  private[this] def internalToApi: Flow[BackendEvent, protocol.ApiServerMessage, Any] = Flow[BackendEvent].map {
     case ReceivedWithId(eventId, sender, receiver, message, handled) =>
       protocol.Received(eventId, sender, receiver, message.getClass.getName, Some(MessageSerialization.render(message)), handled)
     case AvailableMessageTypes(types) =>
@@ -148,17 +153,17 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directi
       )
   }
 
-  def tsToIsoTs(ts: EventTs): String = {
+  private[this] def tsToIsoTs(ts: EventTs): String = {
     java.time.Instant.ofEpochMilli(ts).toString
   }
 
-  def eventSerialization: Flow[protocol.ApiServerMessage, ByteString, Any] = Flow[protocol.ApiServerMessage].map {
+  private[this] def eventSerialization: Flow[protocol.ApiServerMessage, ByteString, Any] = Flow[protocol.ApiServerMessage].map {
     msg => ByteString(protocol.IO.write(msg))
   }
 
-  override def replArgs: Seq[Bind[_]] = Nil
+  protected override def replArgs: Seq[Bind[_]] = Nil
 
-  override def replPredef: String =
+  protected override def replPredef: String =
     """
       |import Predef.{println => _}
       |import pprint.{pprintln => println}

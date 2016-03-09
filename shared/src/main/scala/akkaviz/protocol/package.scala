@@ -84,6 +84,10 @@ package object protocol {
 
   case class RefreshInternalState(ref: String) extends ApiClientMessage
 
+  case class PoisonPillActor(ref: String) extends ApiClientMessage
+
+  case class KillActor(ref: String) extends ApiClientMessage
+
   object IO {
 
     import boopickle.Default._
