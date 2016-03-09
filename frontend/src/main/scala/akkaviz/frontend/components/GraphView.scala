@@ -10,7 +10,11 @@ import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
 import scala.scalajs.js.|._
 
-class GraphView(showUnconnected: Var[Boolean], actorSelectionToggler: (String) => Unit, renderer: (String, ActorState) => vis.Node) extends Component with GraphViewSettings {
+class GraphView(
+    showUnconnected: Var[Boolean],
+    actorSelectionToggler: (String) => Unit,
+    renderNode: (String, ActorState) => vis.Node
+) extends Component with GraphViewSettings {
 
   private[this] val registeredActors = js.Dictionary[Var[ActorState]]()
   private[this] val connectedActors = js.Dictionary[Unit]()
@@ -121,7 +125,7 @@ class GraphView(showUnconnected: Var[Boolean], actorSelectionToggler: (String) =
 
   private[this] def redrawActor(node: String, state: ActorState): Unit = {
     if (showUnconnected.now || connectedActors.contains(node)) {
-      scheduler.enqueueOperation(AddNode(node, renderer(node, state)))
+      scheduler.enqueueOperation(AddNode(node, renderNode(node, state)))
     }
   }
 

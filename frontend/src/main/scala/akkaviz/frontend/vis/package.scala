@@ -12,11 +12,16 @@ package object vis {
   @js.native
   trait Node extends js.Any {
     var id: js.Any = js.native
-
   }
 
   object Node {
-    def apply(id: String, label: String, title: js.UndefOr[String] = js.undefined, value: js.UndefOr[Int] = js.undefined, color: js.UndefOr[String] = js.undefined): vis.Node = {
+    def apply(
+      id: String,
+      label: String,
+      title: js.UndefOr[String] = js.undefined,
+      value: js.UndefOr[Int] = js.undefined,
+      color: js.UndefOr[String] = js.undefined
+    ): vis.Node = {
       js.Dynamic.literal(id = id, label = label, value = value, color = color, title = title).asInstanceOf[vis.Node]
     }
   }
@@ -27,15 +32,20 @@ package object vis {
   }
 
   object Edge {
-    def apply(id: String, from: String, to: String, arrows: js.UndefOr[String] = "to", title: js.UndefOr[String] = js.undefined, value: js.UndefOr[Int] = js.undefined): vis.Edge = {
+    def apply(
+      id: String,
+      from: String,
+      to: String,
+      arrows: js.UndefOr[String] = "to",
+      title: js.UndefOr[String] = js.undefined,
+      value: js.UndefOr[Int] = js.undefined
+    ): vis.Edge = {
       js.Dynamic.literal(id = id, from = from, to = to, value = value, arrows = arrows).asInstanceOf[vis.Edge]
     }
   }
 
   @js.native
-  trait DataSetOptions extends js.Any {
-
-  }
+  trait DataSetOptions extends js.Any
 
   @js.native
   @JSName("vis.DataSet")
@@ -106,8 +116,7 @@ package object vis {
   }
 
   @js.native
-  trait NetworkFitOptions extends NetworkMoveToOptions {
-  }
+  trait NetworkFitOptions extends NetworkMoveToOptions
 
   @js.native
   trait NetworkFocusOptions extends NetworkMoveToOptions {
