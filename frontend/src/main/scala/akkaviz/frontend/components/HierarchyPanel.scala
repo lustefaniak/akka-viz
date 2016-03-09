@@ -20,8 +20,14 @@ class HierarchyPanel extends Component {
   private def node(ref: String) = li(
     ActorAttr := ref,
     title := ref,
-    span(shortName(ref)),
-    ul()
+    span(
+      shortName(ref),
+      "data-target".attr := s"""[actor-path="$ref"]>ul""",
+      "data-toggle".attr := "collapse"
+    ),
+    ul(
+      cls := "collapse"
+    )
   )
 
   private def shortName(ref: String) = {
