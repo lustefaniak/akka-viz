@@ -125,7 +125,7 @@ trait WebSocketRepl {
     }
 
     override def write(bytes: Array[Byte]): Unit = for {
-      i ← bytes.indices
+      i <- bytes.indices
     } write(bytes(i))
 
     override def write(bytes: Array[Byte], offset: Int, length: Int): Unit = {
@@ -172,7 +172,7 @@ trait WebSocketRepl {
      * Runs your code with supplied environment installed.
      * After execution of supplied code block will restore original environment
      */
-    def withEnvironment(env: Environment)(code: ⇒ Any): Any = {
+    def withEnvironment(env: Environment)(code: => Any): Any = {
       val oldEnv = collect()
       try {
         install(env)
