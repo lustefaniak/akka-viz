@@ -110,7 +110,7 @@ trait WebSocketRepl {
 
   }
 
-  private class SshOutputStream(out: OutputStream) extends OutputStream {
+  private[this] class SshOutputStream(out: OutputStream) extends OutputStream {
     override def close() = {
       out.close()
     }

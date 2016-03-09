@@ -12,7 +12,7 @@ import org.aspectj.lang.{JoinPoint, ProceedingJoinPoint}
 @Aspect
 class ActorCellInstrumentation {
 
-  private val internalSystemName = Config.internalSystemName
+  private[this] val internalSystemName = Config.internalSystemName
 
   @Pointcut(value = "execution (* akka.actor.ActorCell.receiveMessage(..)) && args(msg)", argNames = "msg")
   def receiveMessagePointcut(msg: Any): Unit = {}

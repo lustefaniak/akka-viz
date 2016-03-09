@@ -18,7 +18,7 @@ object MessageSerialization extends SerializerFinder with ReflectiveSerializatio
     }
   }
 
-  private def newSerializationContext: SerializationContext = SerializationContextImpl()
+  private[this] def newSerializationContext: SerializationContext = SerializationContextImpl()
 
   def serialize(message: Any, serializationContext: SerializationContext): Js.Value = {
     def unableToSerialize(t: Throwable): Js.Value = {
@@ -35,11 +35,11 @@ object MessageSerialization extends SerializerFinder with ReflectiveSerializatio
     }
   }
 
-  private lazy val serializers: List[AkkaVizSerializer] = findSerializers
+  private[this] lazy val serializers: List[AkkaVizSerializer] = findSerializers
 
-  private lazy val mappers = DefaultSerializers.mappers
+  private[this] lazy val mappers = DefaultSerializers.mappers
 
-  private def getSerializerFor(obj: Any): AkkaVizSerializer = {
+  private[this] def getSerializerFor(obj: Any): AkkaVizSerializer = {
     def findSerializerForObject: AkkaVizSerializer = {
       serializers.find(_.canSerialize(obj)).getOrElse {
         println(s"WARNING: There is no serializer for ${obj.getClass.getName}, consider implementing AkkaVizSerializer")
@@ -49,7 +49,7 @@ object MessageSerialization extends SerializerFinder with ReflectiveSerializatio
     mappers.getOrElseUpdate(obj.getClass, findSerializerForObject)
   }
 
-  private val reflectiveSerializer = new AkkaVizSerializer {
+  private[this] val reflectiveSerializer = new AkkaVizSerializer {
     override def canSerialize(obj: Any): Boolean = {
       false
     }

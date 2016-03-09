@@ -81,7 +81,7 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directi
   }
 
   @inline
-  private implicit val actorRefToString = Helpers.actorRefToString _
+  private[this] implicit val actorRefToString = Helpers.actorRefToString _
 
   def internalToApi: Flow[BackendEvent, protocol.ApiServerMessage, Any] = Flow[BackendEvent].map {
     case ReceivedWithId(eventId, sender, receiver, message, handled) =>
