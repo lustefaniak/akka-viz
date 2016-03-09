@@ -1,7 +1,6 @@
 package akkaviz.frontend.components
 
 import akkaviz.frontend.ActorRepository.ActorState
-import akkaviz.frontend.DOMGlobalScope.$
 import akkaviz.protocol
 import org.scalajs.dom.{Element => domElement, _}
 import rx.Var
@@ -33,12 +32,13 @@ trait Tab extends Component {
   override def attach(tabbedPane: domElement): Unit = {
     tabbedPane.querySelector("ul.nav-tabs").appendChild(tab)
     tabbedPane.querySelector("div.tab-content").appendChild(tabBody)
-    $(activateA).click()
+    activateA.click()
   }
 
 }
 
 class ActorStateTab(actorState: Var[ActorState], upstreamSend: protocol.ApiClientMessage => Unit) extends ClosableTab {
+
   import akkaviz.frontend.PrettyJson._
   import ActorStateTab._
 

@@ -1,10 +1,9 @@
 package akkaviz.frontend.components
 
-import akkaviz.frontend.DOMGlobalScope._
 import akkaviz.frontend.FrontendUtil.shortActorName
 import akkaviz.frontend.PrettyJson
 import akkaviz.protocol.{Answer, AnswerFailed, AskResult, Question}
-import org.scalajs.dom.Element
+import org.scalajs.dom.{Element, document}
 import rx.Var
 
 import scala.collection.mutable
@@ -77,7 +76,9 @@ class AsksPanel(selectedActors: Var[Set[String]]) extends Component with PrettyJ
       td(shortActorName(question.actorRef)),
       td(status),
       onclick := { () =>
-        $("#ask-modal-body").html(details.render)
+        val elem = document.getElementById("ask-modal-body")
+        elem.innerHTML = ""
+        elem.appendChild(details.render)
       }
     )
   }

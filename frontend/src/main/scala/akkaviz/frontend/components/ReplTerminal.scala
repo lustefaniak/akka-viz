@@ -1,7 +1,7 @@
 package akkaviz.frontend.components
 
 import akkaviz.frontend.terminal.{Terminal, TerminalOptions}
-import akkaviz.frontend.{DOMGlobalScope, FrontendUtil}
+import akkaviz.frontend.{NativeUtils, FrontendUtil}
 import org.scalajs.dom.raw.HTMLButtonElement
 import org.scalajs.dom.{Event, MessageEvent, _}
 
@@ -46,11 +46,11 @@ class ReplTerminal extends Component {
     }
 
     def decodeArrayBuffer(buffer: ArrayBuffer): String = {
-      DOMGlobalScope.ab2str(buffer)
+      NativeUtils.ab2str(buffer)
     }
 
     def encodeArrayBuffer(str: String): ArrayBuffer = {
-      DOMGlobalScope.str2ab(str)
+      NativeUtils.str2ab(str)
     }
 
     val _ws = new WebSocket(FrontendUtil.webSocketUrl("repl"))
@@ -96,7 +96,7 @@ class ReplTerminal extends Component {
       if (isConnected) {
         ws.foreach {
           ws =>
-            ws.send(DOMGlobalScope.str2ab("\u0004"))
+            ws.send(NativeUtils.str2ab("\u0004"))
             ws.close()
         }
       } else {
