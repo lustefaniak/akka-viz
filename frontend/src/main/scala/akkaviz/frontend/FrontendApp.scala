@@ -123,13 +123,19 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
     handleDownstream(messagesPanel.messageReceived)
   ).connect()
 
+  private def openDetailsInTab(actorRef: String): Unit = {
+    val stateVar = repo.state(actorRef)
+    val tab: ActorStateTab = new ActorStateTab(stateVar, upstreamConnection.send)
+    tab.attach(document.querySelector("#right-pane"))
+  }
+
   private[this] val monitoringStatus = Var[MonitoringStatus](UnknownYet)
   private[this] val selectedActors = persistedVar[Set[String]](Set(), "selectedActors")
   private[this] val seenMessages = Var[Set[String]](Set())
   private[this] val selectedMessages = persistedVar[Set[String]](Set(), "selectedMessages")
   private[this] val thrownExceptions = Var[Seq[ActorFailure]](Seq())
   private[this] val showUnconnected = Var[Boolean](false)
-  private[this] val actorSelector = new ActorSelector(repo.seenActors, selectedActors, repo.state, thrownExceptions, upstreamConnection.send)
+  private[this] val actorSelector = new ActorSelector(repo.seenActors, selectedActors, thrownExceptions, openDetailsInTab)
   private[this] val messageFilter = new MessageFilter(seenMessages, selectedMessages, selectedActors)
   private[this] val messagesPanel = new MessagesPanel(selectedActors)
   private[this] val asksPanel = new AsksPanel(selectedActors)
@@ -138,7 +144,7 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
   private[this] val unconnectedOnOff = new UnconnectedOnOff(showUnconnected)
   private[this] val replTerminal = new ReplTerminal()
   private[this] val graphView = new GraphView(showUnconnected, actorSelector.toggleActor, ActorStateAsNodeRenderer.render)
-  private[this] val hierarchyView = new HierarchyPanel(repo.state, upstreamSend)
+  private[this] val hierarchyView = new HierarchyPanel(openDetailsInTab)
   private[this] val maxRetries = 10
 
   def main(): Unit = {

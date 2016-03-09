@@ -1,14 +1,11 @@
 package akkaviz.frontend.components
 
-import akkaviz.frontend.ActorRepository.ActorState
-import akkaviz.frontend.{FrontendApp, FrontendUtil, DOMGlobalScope, PrettyJson}
-import akkaviz.protocol
+import akkaviz.frontend.{FrontendUtil, PrettyJson}
 import akkaviz.protocol.ActorFailure
 import org.scalajs.dom.html._
-import org.scalajs.dom.{Element => domElement, Node, console, document}
+import org.scalajs.dom.{Element => domElement, console, document}
 import rx.{Rx, Var}
 
-import scala.scalajs.js
 import scala.scalajs.js.ThisFunction0
 import scala.util.Try
 import scalatags.JsDom.all._
@@ -16,9 +13,8 @@ import scalatags.JsDom.all._
 class ActorSelector(
     seenActors: Var[Set[String]],
     selectedActors: Var[Set[String]],
-    currentActorState: (String) => Var[ActorState],
     actorFailures: Var[Seq[ActorFailure]],
-    upstreamSend: protocol.ApiClientMessage => Unit
+    detailsOpener: (String) => Unit
 ) extends PrettyJson with Component {
 
   def attach(parent: domElement): Unit = {
@@ -70,10 +66,7 @@ class ActorSelector(
     span(
       `class` := "glyphicon glyphicon-info-sign",
       onclick := { () =>
-        val stateVar = currentActorState(actorRef)
-
-        val tab: ActorStateTab = new ActorStateTab(stateVar, upstreamSend)
-        tab.attach(document.querySelector("#right-pane"))
+        detailsOpener(actorRef)
       }
     )
 
@@ -81,7 +74,7 @@ class ActorSelector(
     if (failures.isEmpty) ""
     else span(b(s"${failures.length} "), exceptionsButton(actorRef, failures))
 
-  val actorsObs = Rx.unsafe {
+  private[this] val actorsObs = Rx.unsafe {
     (seenActors(), selectedActors(), actorFailures())
   }.trigger {
     val seen = seenActors.now.toList.sorted

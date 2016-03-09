@@ -1,54 +1,47 @@
 package akkaviz.frontend.components
 
-import akkaviz.frontend.ActorRepository.ActorState
 import akkaviz.frontend.FrontendUtil
-import akkaviz.protocol
 import org.querki.jquery.JQueryStatic
 import org.scalajs.dom._
-import rx.Var
 
 import scala.scalajs.js.Dictionary
 import scalatags.JsDom.all._
 
-class HierarchyPanel(
-  currentActorState: (String) => Var[ActorState],
-  upstreamSend: protocol.ApiClientMessage => Unit
-)
-    extends Component {
+class HierarchyPanel(detailsOpener: (String) => Unit) extends Component {
 
-  private val $ = JQueryStatic
+  private[this] val $ = JQueryStatic
 
-  val seenActors: Dictionary[Unit] = Dictionary()
+  private[this] val seenActors: Dictionary[Unit] = Dictionary()
 
-  private val ActorAttr = "actor-path".attr
+  private[this] val ActorAttr = "actor-path".attr
 
-  val hierarchy = div(
+  private[this] val hierarchy = div(
     cls := "actor-tree",
     ActorAttr := "root",
     ul()
   ).render
 
-  private def node(ref: String) = li(
-    ActorAttr := ref,
+  private[this] def node(actorRef: String) = li(
+    ActorAttr := actorRef,
     span(
       i(cls := "glyphicon glyphicon-leaf"),
-      shortName(ref),
-      title := ref,
-      "data-target".attr := s"""[actor-path="$ref"]>ul""",
+      shortName(actorRef),
+      title := actorRef,
+      "data-target".attr := s"""[actor-path="$actorRef"]>ul""",
       "data-toggle".attr := "collapse",
-      onclick := { () => nodeClicked(ref) }
+      onclick := { () => nodeClicked(actorRef) }
     ),
     a(
       "(details)",
       href := "#",
-      onclick := { () => openTab(ref) }
+      onclick := { () => detailsOpener(actorRef) }
     ),
     ul(
       cls := "collapse"
     )
   )
 
-  def nodeClicked(ref: String) = {
+  private[this] def nodeClicked(ref: String) = {
     val node = $(s"""[actor-path="$ref"]""")
     val nodeUl = node.find("ul").first
     val isEmpty = nodeUl.find("ul").first.length == 0
@@ -61,13 +54,7 @@ class HierarchyPanel(
     }
   }
 
-  def openTab(ref: String): Unit = {
-    val stateVar = currentActorState(ref)
-    val tab: ActorStateTab = new ActorStateTab(stateVar, upstreamSend)
-    tab.attach(document.querySelector("#right-pane"))
-  }
-
-  private def shortName(ref: String) = {
+  private[this] def shortName(ref: String) = {
     ref.stripPrefix("akka://").split("/").last
   }
 
@@ -75,7 +62,7 @@ class HierarchyPanel(
 
   def insert(refs: Iterable[String]): Unit = refs.foreach(insert)
 
-  private def innerInsert(ref: String): Unit = {
+  private[this] def innerInsert(ref: String): Unit = {
     if (!exists(ref)) {
       val parentRef = FrontendUtil.parent(ref)
       parentRef.foreach(innerInsert)
@@ -84,7 +71,7 @@ class HierarchyPanel(
     }
   }
 
-  private def insertSorted(parentRef: String, ref: String): Unit = {
+  private[this] def insertSorted(parentRef: String, ref: String): Unit = {
     val parentUl = $(s"""[actor-path="$parentRef"]>ul""").toArray.head
     val siblings = $(s"""[actor-path="$parentRef"]>ul>li""").toArray.toList
     val nextElementOpt = siblings.dropWhile(_.getAttribute("actor-path") < ref).headOption
@@ -96,7 +83,8 @@ class HierarchyPanel(
     $(parentUl).parent.find("span>i").first.removeClass("glyphicon-leaf").addClass("glyphicon-plus")
   }
 
-  private def exists(ref: String) = seenActors.contains(ref)
+  private[this] def exists(ref: String) = seenActors.contains(ref)
 
   override def attach(parent: Element): Unit = parent.appendChild(hierarchy)
+
 }
