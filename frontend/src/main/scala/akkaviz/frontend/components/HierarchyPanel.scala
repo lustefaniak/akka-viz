@@ -55,7 +55,7 @@ class HierarchyPanel(detailsOpener: (String) => Unit) extends Component {
   }
 
   private[this] def shortName(ref: String) = {
-    ref.stripPrefix("akka://").split("/").last
+    ref.stripPrefix("akka://").split("/").lastOption.getOrElse("")
   }
 
   def insert(ref: String): Unit = innerInsert(ref.stripSuffix("/"))
@@ -72,15 +72,17 @@ class HierarchyPanel(detailsOpener: (String) => Unit) extends Component {
   }
 
   private[this] def insertSorted(parentRef: String, ref: String): Unit = {
-    val parentUl = $(s"""[actor-path="$parentRef"]>ul""").toArray.head
-    val siblings = $(s"""[actor-path="$parentRef"]>ul>li""").toArray.toList
-    val nextElementOpt = siblings.dropWhile(_.getAttribute("actor-path") < ref).headOption
-    val newNode = node(ref).render
-    nextElementOpt match {
-      case Some(elem) => parentUl.insertBefore(newNode, elem)
-      case None       => parentUl.appendChild(newNode)
+    $(s"""[actor-path="$parentRef"]>ul""").toArray.headOption.map {
+      parentUl =>
+        val siblings = $(s"""[actor-path="$parentRef"]>ul>li""").toArray.toList
+        val nextElementOpt = siblings.dropWhile(_.getAttribute("actor-path") < ref).headOption
+        val newNode = node(ref).render
+        nextElementOpt match {
+          case Some(elem) => parentUl.insertBefore(newNode, elem)
+          case None       => parentUl.appendChild(newNode)
+        }
+        $(parentUl).parent.find("span>i").first.removeClass("glyphicon-leaf").addClass("glyphicon-plus")
     }
-    $(parentUl).parent.find("span>i").first.removeClass("glyphicon-leaf").addClass("glyphicon-plus")
   }
 
   private[this] def exists(ref: String) = seenActors.contains(ref)
