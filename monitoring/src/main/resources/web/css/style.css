@@ -65,3 +65,7 @@ div.terminal {
 #actor-fsm {
     height: 400px;
 }
+
+.actor-tree ul {
+    list-style-type: none;
+}

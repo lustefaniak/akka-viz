@@ -23,6 +23,7 @@ class HierarchyPanel(
   private val ActorAttr = "actor-path".attr
 
   val hierarchy = div(
+    cls := "actor-tree",
     ActorAttr := "root",
     ul()
   ).render
@@ -30,10 +31,12 @@ class HierarchyPanel(
   private def node(ref: String) = li(
     ActorAttr := ref,
     span(
+      i(cls := "glyphicon glyphicon-leaf"),
       shortName(ref),
       title := ref,
       "data-target".attr := s"""[actor-path="$ref"]>ul""",
-      "data-toggle".attr := "collapse"
+      "data-toggle".attr := "collapse",
+      onclick := { () => nodeClicked(ref) }
     ),
     a(
       "(details)",
@@ -44,6 +47,19 @@ class HierarchyPanel(
       cls := "collapse"
     )
   )
+
+  def nodeClicked(ref: String) = {
+    val node = $(s"""[actor-path="$ref"]""")
+    val nodeUl = node.find("ul").first
+    val isEmpty = nodeUl.find("ul").first.length == 0
+    if (!isEmpty) {
+      val isExpanded = node.find("ul").first.hasClass("in")
+      if (isExpanded)
+        node.find("span>i").first.removeClass("glyphicon-minus").addClass("glyphicon-plus")
+      else
+        node.find("span>i").first.removeClass("glyphicon-plus").addClass("glyphicon-minus")
+    }
+  }
 
   def openTab(ref: String): Unit = {
     val stateVar = currentActorState(ref)
@@ -70,10 +86,12 @@ class HierarchyPanel(
     val parentUl = $(s"""[actor-path="$parentRef"]>ul""").toArray.head
     val siblings = $(s"""[actor-path="$parentRef"]>ul>li""").toArray.toList
     val nextElementOpt = siblings.dropWhile(_.getAttribute("actor-path") < ref).headOption
+    val newNode = node(ref).render
     nextElementOpt match {
-      case Some(elem) => parentUl.insertBefore(node(ref).render, elem)
-      case None       => parentUl.appendChild(node(ref).render)
+      case Some(elem) => parentUl.insertBefore(newNode, elem)
+      case None       => parentUl.appendChild(newNode)
     }
+    $(parentUl).parent.find("span>i").first.removeClass("glyphicon-leaf").addClass("glyphicon-plus")
   }
 
   private def exists(ref: String) = seenActors.contains(ref)
