@@ -36,10 +36,12 @@ class HierarchyPanel extends Component {
     ref.stripPrefix("akka://").split("/").last
   }
 
-  def insert(ref: String): Unit = {
+  def insert(ref: String) = innerInsert(ref.stripSuffix("/"))
+
+  private def innerInsert(ref: String): Unit = {
     if (!exists(ref)) {
       val parentRef = FrontendUtil.parent(ref)
-      parentRef.foreach(insert)
+      parentRef.foreach(innerInsert)
       insertSorted(parentRef.getOrElse("root"), ref)
       seenActors.update(ref, ())
     }
