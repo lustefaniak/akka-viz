@@ -1,19 +1,14 @@
 package akkaviz.frontend
 
 import akkaviz.frontend.ActorRepository.FSMState
+import akkaviz.frontend.ApiConnection.Upstream
 import akkaviz.frontend.components._
 import akkaviz.protocol
 import akkaviz.protocol._
-import org.scalajs.dom.raw.{CloseEvent, ErrorEvent, MessageEvent}
 import org.scalajs.dom.{console, document}
 import rx._
 
-import scala.concurrent.Future
-import scala.concurrent.duration._
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-import scala.scalajs.js
-import scala.scalajs.js.typedarray.{ArrayBuffer, TypedArrayBuffer}
-import scala.scalajs.js.{JSApp, timers}
+import scala.scalajs.js.JSApp
 import scalatags.JsDom.all._
 
 case class FsmTransition(fromStateClass: String, toStateClass: String)
@@ -22,9 +17,7 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
 
   private[this] val repo = new ActorRepository()
 
-  private def handleDownstream(messageReceived: (Received) => Unit)(messageEvent: MessageEvent): Unit = {
-    val bb = TypedArrayBuffer.wrap(messageEvent.data.asInstanceOf[ArrayBuffer])
-    val message: ApiServerMessage = protocol.IO.readServer(bb)
+  private def handleDownstream(messageReceived: (Received) => Unit)(message: protocol.ApiServerMessage): Unit = {
 
     def addActorLink(sender: String, receiver: String): Unit = {
       val actors = Seq(sender, receiver).filter(FrontendUtil.isUserActor)
@@ -121,13 +114,22 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
     }
   }
 
+  private[this] val upstreamConnection: Upstream = ApiConnection(
+    FrontendUtil.webSocketUrl("stream"),
+    upstream => {
+      upstream.send(SetAllowedMessages(selectedMessages.now))
+      upstream.send(ObserveActors(selectedActors.now))
+    },
+    handleDownstream(messagesPanel.messageReceived)
+  ).connect()
+
   private[this] val monitoringStatus = Var[MonitoringStatus](UnknownYet)
   private[this] val selectedActors = persistedVar[Set[String]](Set(), "selectedActors")
   private[this] val seenMessages = Var[Set[String]](Set())
   private[this] val selectedMessages = persistedVar[Set[String]](Set(), "selectedMessages")
   private[this] val thrownExceptions = Var[Seq[ActorFailure]](Seq())
   private[this] val showUnconnected = Var[Boolean](false)
-  private[this] val actorSelector = new ActorSelector(repo.seenActors, selectedActors, repo.state, thrownExceptions, upstreamSend)
+  private[this] val actorSelector = new ActorSelector(repo.seenActors, selectedActors, repo.state, thrownExceptions, upstreamConnection.send)
   private[this] val messageFilter = new MessageFilter(seenMessages, selectedMessages, selectedActors)
   private[this] val messagesPanel = new MessagesPanel(selectedActors)
   private[this] val asksPanel = new AsksPanel(selectedActors)
@@ -138,18 +140,47 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
   private[this] val graphView = new GraphView(showUnconnected, actorSelector.toggleActor, ActorStateAsNodeRenderer.render)
   private[this] val maxRetries = 10
 
-  private[this] var upstreamConnection: js.UndefOr[Upstream] = js.undefined
-
-  private def upstreamSend(msg: protocol.ApiClientMessage): Unit = {
-    upstreamConnection.fold {
-      console.log("Upstream is not available now")
-    } {
-      up =>
-        up.send(msg)
-    }
-  }
-
   def main(): Unit = {
+
+    upstreamConnection.status.foreach {
+      case ApiConnection.Connecting =>
+        connectionAlert.warning("Connecting...")
+      case ApiConnection.Connected =>
+        connectionAlert.success("Connected!")
+        connectionAlert.fadeOut()
+      case ApiConnection.Disconnected =>
+        connectionAlert.error("Disconnected")
+      case ApiConnection.Reconnecting(retry, maxRetries) =>
+        connectionAlert.warning(s"Retrying ${retry}/${maxRetries}...")
+      case ApiConnection.GaveUp =>
+        connectionAlert.error("Gave up, click to reconnect...", _ => upstreamConnection.connect())
+    }
+
+    monitoringStatus.triggerLater {
+      monitoringStatus.now match {
+        case Awaiting(s) =>
+          console.log("monitoring status: ", monitoringStatus.now.toString)
+          upstreamConnection.send(SetEnabled(s.asBoolean))
+        case _ =>
+          console.log("monitoring status: ", monitoringStatus.now.toString)
+      }
+    }
+
+    selectedMessages.triggerLater {
+      console.log(s"Will send allowedClasses: ${selectedMessages.now.mkString("[", ",", "]")}")
+      upstreamConnection.send(SetAllowedMessages(selectedMessages.now))
+    }
+
+    selectedActors.foreach {
+      selectedActors =>
+        console.log(s"Will send ObserveActors: ${selectedActors.mkString("[", ",", "]")}")
+        upstreamConnection.send(ObserveActors(selectedActors))
+    }
+
+    delayMillis.triggerLater {
+      import scala.concurrent.duration._
+      upstreamConnection.send(SetReceiveDelay(delayMillis.now.millis))
+    }
 
     repo.seenActors.triggerLater {
       repo.seenActors.now.foreach {
@@ -157,72 +188,6 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
           graphView.addActor(actor, repo.state(actor))
       }
     }
-
-    def setupApiConnection: Unit = {
-
-      val connection: Future[Upstream] = ApiConnection(
-        FrontendUtil.webSocketUrl("stream"),
-        upstream => {
-          upstream.send(SetAllowedMessages(selectedMessages.now))
-          upstream.send(ObserveActors(selectedActors.now))
-        },
-        handleDownstream(messagesPanel.messageReceived),
-        maxRetries
-      )
-
-      connection.foreach { upstream =>
-        upstreamConnection = upstream
-
-        connectionAlert.success("Connected!")
-        connectionAlert.fadeOut()
-
-        selectedMessages.triggerLater {
-          console.log(s"Will send allowedClasses: ${selectedMessages.now.mkString("[", ",", "]")}")
-          upstream.send(SetAllowedMessages(selectedMessages.now))
-        }
-
-        selectedActors.trigger {
-          console.log(s"Will send ObserveActors: ${selectedActors.now.mkString("[", ",", "]")}")
-          upstream.send(ObserveActors(selectedActors.now))
-        }
-
-        delayMillis.triggerLater {
-          import scala.concurrent.duration._
-          upstream.send(SetReceiveDelay(delayMillis.now.millis))
-        }
-
-        monitoringStatus.triggerLater {
-          monitoringStatus.now match {
-            case Awaiting(s) =>
-              console.log("monitoring status: ", monitoringStatus.now.toString)
-              upstream.send(SetEnabled(s.asBoolean))
-            case _ =>
-              console.log("monitoring status: ", monitoringStatus.now.toString)
-          }
-        }
-
-        upstream.onclose = { ce: CloseEvent =>
-          connectionAlert.warning("Reconnecting...")
-          console.log("ws closed, retrying in 2 seconds")
-          timers.setTimeout(2.seconds) {
-            setupApiConnection
-          }
-        }
-        upstream.onerror = { ce: ErrorEvent =>
-          connectionAlert.warning("Reconnecting...")
-          console.log("ws error, retrying in 2 seconds")
-          timers.setTimeout(2.seconds) {
-            setupApiConnection
-          }
-        }
-      }
-
-      connection.onFailure {
-        case _ => connectionAlert.error(s"Connection failed after $maxRetries retries. Try reloading the page.")
-      }
-    }
-
-    setupApiConnection
 
     connectionAlert.attach(document.body)
     actorSelector.attach(document.getElementById("actorselection"))
