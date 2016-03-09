@@ -1,7 +1,7 @@
 package akkaviz.frontend.components
 
-import akkaviz.frontend.DOMGlobalScope._
 import akkaviz.frontend.FrontendUtil
+import org.querki.jquery.JQueryStatic
 import org.scalajs.dom.Element
 
 import scala.scalajs.js.Dictionary
@@ -9,13 +9,15 @@ import scalatags.JsDom.all._
 
 class HierarchyPanel extends Component {
 
+  private val $ = JQueryStatic
+
   val seenActors: Dictionary[Unit] = Dictionary()
 
   private val ActorAttr = "actor-path".attr
 
   val hierarchy = div(
     ActorAttr := "root",
-    ul())
+    ul()).render
 
   private def node(ref: String) = li(
     ActorAttr := ref,
@@ -44,15 +46,16 @@ class HierarchyPanel extends Component {
   }
 
   private def insertSorted(parentRef: String, ref: String): Unit = {
-    val siblings = $(s"""[actor-path="$parentRef"]>ul>li""").asInstanceOf[scala.scalajs.js.Array[scala.scalajs.js.Any]]
-    val nextElementOpt = siblings.toList.dropWhile(s => $(s).attr("actor-path").asInstanceOf[String] < ref).headOption
+    val parentUl = $(s"""[actor-path="$parentRef"]>ul""").toArray.head
+    val siblings = $(s"""[actor-path="$parentRef"]>ul>li""").toArray
+    val nextElementOpt = siblings.toList.dropWhile(_.getAttribute("actor-path") < ref).headOption
     nextElementOpt match {
-      case Some(elem) => $(elem).before(node(ref).render)
-      case None => $(s"""[actor-path="$parentRef"]>ul""").append(node(ref).render)
+      case Some(elem) => parentUl.insertBefore(node(ref).render, elem)
+      case None => parentUl.appendChild(node(ref).render)
     }
   }
 
   private def exists(ref: String) = seenActors.contains(ref)
 
-  override def attach(parent: Element): Unit = parent.appendChild(hierarchy.render)
+  override def attach(parent: Element): Unit = parent.appendChild(hierarchy)
 }
