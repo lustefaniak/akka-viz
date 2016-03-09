@@ -1,13 +1,20 @@
 package akkaviz.frontend.components
 
+import akkaviz.frontend.ActorRepository.ActorState
 import akkaviz.frontend.FrontendUtil
+import akkaviz.protocol
 import org.querki.jquery.JQueryStatic
-import org.scalajs.dom.Element
+import org.scalajs.dom._
+import rx.Var
 
 import scala.scalajs.js.Dictionary
 import scalatags.JsDom.all._
 
-class HierarchyPanel extends Component {
+class HierarchyPanel(
+  currentActorState: (String) => Var[ActorState],
+  upstreamSend: protocol.ApiClientMessage => Unit
+)
+    extends Component {
 
   private val $ = JQueryStatic
 
@@ -17,7 +24,8 @@ class HierarchyPanel extends Component {
 
   val hierarchy = div(
     ActorAttr := "root",
-    ul()).render
+    ul()
+  ).render
 
   private def node(ref: String) = li(
     ActorAttr := ref,
@@ -27,10 +35,21 @@ class HierarchyPanel extends Component {
       "data-target".attr := s"""[actor-path="$ref"]>ul""",
       "data-toggle".attr := "collapse"
     ),
+    a(
+      "(details)",
+      href := "#",
+      onclick := { () => openTab(ref) }
+    ),
     ul(
       cls := "collapse"
     )
   )
+
+  def openTab(ref: String): Unit = {
+    val stateVar = currentActorState(ref)
+    val tab: ActorStateTab = new ActorStateTab(stateVar, upstreamSend)
+    tab.attach(document.querySelector("#right-pane"))
+  }
 
   private def shortName(ref: String) = {
     ref.stripPrefix("akka://").split("/").last
@@ -49,11 +68,11 @@ class HierarchyPanel extends Component {
 
   private def insertSorted(parentRef: String, ref: String): Unit = {
     val parentUl = $(s"""[actor-path="$parentRef"]>ul""").toArray.head
-    val siblings = $(s"""[actor-path="$parentRef"]>ul>li""").toArray
-    val nextElementOpt = siblings.toList.dropWhile(_.getAttribute("actor-path") < ref).headOption
+    val siblings = $(s"""[actor-path="$parentRef"]>ul>li""").toArray.toList
+    val nextElementOpt = siblings.dropWhile(_.getAttribute("actor-path") < ref).headOption
     nextElementOpt match {
       case Some(elem) => parentUl.insertBefore(node(ref).render, elem)
-      case None => parentUl.appendChild(node(ref).render)
+      case None       => parentUl.appendChild(node(ref).render)
     }
   }
 
