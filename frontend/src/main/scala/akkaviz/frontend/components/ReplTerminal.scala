@@ -1,7 +1,7 @@
 package akkaviz.frontend.components
 
 import akkaviz.frontend.terminal.{Terminal, TerminalOptions}
-import akkaviz.frontend.{NativeUtils, FrontendUtil}
+import akkaviz.frontend.{FrontendUtil, NativeUtils}
 import org.scalajs.dom.raw.HTMLButtonElement
 import org.scalajs.dom.{Event, MessageEvent, _}
 

@@ -1,9 +1,9 @@
 package akkaviz.frontend
 
-import rx.{Rx, Var}
+import rx.Var
 
 import scala.scalajs.js
-import scala.scalajs.js.{UndefOr, Date}
+import scala.scalajs.js.Date
 
 class ActorRepository {
 
