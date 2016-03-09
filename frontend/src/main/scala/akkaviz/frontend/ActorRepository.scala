@@ -1,6 +1,6 @@
 package akkaviz.frontend
 
-import rx.Var
+import rx.{Rx, Var}
 
 import scala.scalajs.js
 import scala.scalajs.js.{UndefOr, Date}
@@ -9,8 +9,10 @@ class ActorRepository {
 
   import ActorRepository._
 
-  private val currentActorState = js.Dictionary[Var[ActorState]]()
+  private[this] val currentActorState = js.Dictionary[Var[ActorState]]()
 
+  //TODO: make it visible on the outside as Rx[Set[String]] just in case
+  val newActors = Var[Set[String]](Set())
   val seenActors = Var[Set[String]](Set())
 
   def state(actor: String): Var[ActorState] = currentActorState.getOrElseUpdate(actor, Var(ActorState(actor, FrontendUtil.shortActorName(actor), FrontendUtil.systemName(actor))))
@@ -28,8 +30,10 @@ class ActorRepository {
   def addActorsToSeen(actors: Iterable[String]): Unit = {
     val previouslySeen = seenActors.now
     val newSeen = previouslySeen ++ actors
-    if (previouslySeen.size != newSeen.size)
+    if (previouslySeen.size != newSeen.size) {
+      newActors() = newSeen -- previouslySeen
       seenActors() = newSeen
+    }
   }
 
 }
