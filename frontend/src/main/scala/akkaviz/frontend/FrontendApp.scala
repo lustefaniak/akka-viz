@@ -190,6 +190,11 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
       }
     }
 
+    repo.newActors.foreach {
+      newActors =>
+        hierarchyView.insert(newActors)
+    }
+
     connectionAlert.attach(document.body)
     actorSelector.attach(document.getElementById("actorselection"))
     messageFilter.attach(document.getElementById("messagefiltering"))

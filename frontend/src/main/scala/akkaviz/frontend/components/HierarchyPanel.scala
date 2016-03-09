@@ -71,7 +71,9 @@ class HierarchyPanel(
     ref.stripPrefix("akka://").split("/").last
   }
 
-  def insert(ref: String) = innerInsert(ref.stripSuffix("/"))
+  def insert(ref: String): Unit = innerInsert(ref.stripSuffix("/"))
+
+  def insert(refs: Iterable[String]): Unit = refs.foreach(insert)
 
   private def innerInsert(ref: String): Unit = {
     if (!exists(ref)) {
