@@ -19,9 +19,9 @@ import scala.util.control.NonFatal
 
 trait WebSocketRepl {
 
-  def replPredef: String
+  protected def replPredef: String
 
-  def replArgs: Seq[Bind[_]]
+  protected def replArgs: Seq[Bind[_]]
 
   protected def nextThreadName: String = {
     s"Ammonite-REPL-${replCounter.incrementAndGet()}"
