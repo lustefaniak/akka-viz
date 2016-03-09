@@ -23,65 +23,57 @@ trait WebSocketRepl {
 
   def replArgs: Seq[Bind[_]]
 
-  def replThreadName: String = {
+  protected def nextThreadName: String = {
     s"Ammonite-REPL-${replCounter.incrementAndGet()}"
   }
 
-  private[this] var replCounter = new AtomicInteger()
+  private[this] val replCounter = new AtomicInteger()
 
-  def defaultReplPredef =
-    """
-      |import Predef.{println => _}
-      |import pprint.{pprintln => println}
-    """.stripMargin
+  private[this] implicit val ec = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(4))
 
-  implicit val ec = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(4))
-
-  def replWebSocket: Route = {
-
-    def runRepl(replServerClassLoader: ClassLoader, in: InputStream, out: OutputStream) = {
-      val homePath = Path(Path.makeTmp)
-      val sshOut = new SshOutputStream(out)
-
-      def withConsoleRedirection(fun: => Any): Unit = {
-        Console.withIn(in) {
-          Console.withOut(sshOut) {
-            Console.withErr(sshOut) {
-              fun
-            }
-          }
+  private[this] def withConsoleRedirection(in: InputStream, out: OutputStream)(fun: => Any): Unit = {
+    Console.withIn(in) {
+      Console.withOut(out) {
+        Console.withErr(out) {
+          fun
         }
       }
+    }
+  }
 
-      val replSessionEnv = Environment(replServerClassLoader, in, sshOut)
-      val runnable = new Runnable {
-        override def run(): Unit = {
-          try {
-            Environment.withEnvironment(replSessionEnv) {
-              withConsoleRedirection {
-                val predef = defaultReplPredef + "\n" + replPredef
-                val repl = new Repl(in, sshOut, sshOut, Ref(Storage(homePath, None)), predef, replArgs)
-                repl.run()
-                repl
-              }
+  protected def runRepl(replServerClassLoader: ClassLoader, in: InputStream, out: OutputStream): Thread = {
+    val homePath = Path(Path.makeTmp)
+    val sshOut = new SshOutputStream(out)
+
+    val replSessionEnv = Environment(replServerClassLoader, in, sshOut)
+    val runnable = new Runnable {
+      override def run(): Unit = {
+        try {
+          Environment.withEnvironment(replSessionEnv) {
+            withConsoleRedirection(in, sshOut) {
+              val repl = new Repl(in, sshOut, sshOut, Ref(Storage(homePath, None)), replPredef, replArgs)
+              repl.run()
+              repl
             }
-          } catch {
-            case NonFatal(t) =>
-              val sshClientOutput = new PrintStream(sshOut)
-              sshClientOutput.println("What a terrible failure, the REPL just blow up!")
-              t.printStackTrace(sshClientOutput)
-              sshOut.flush()
-              sshOut.close()
-          } finally {
-            Try(in.close())
-            Try(sshOut.close())
           }
+        } catch {
+          case NonFatal(t) =>
+            val sshClientOutput = new PrintStream(sshOut)
+            sshClientOutput.println("What a terrible failure, the REPL just blow up!")
+            t.printStackTrace(sshClientOutput)
+            sshOut.flush()
+            sshOut.close()
+        } finally {
+          Try(in.close())
+          Try(sshOut.close())
         }
       }
-
-      new Thread(runnable, replThreadName)
     }
 
+    new Thread(runnable, nextThreadName)
+  }
+
+  def replWebSocket: Route = {
     val wsFlow: Flow[Message, Message, _] = {
 
       val in = Flow[Message].flatMapConcat {
@@ -111,11 +103,11 @@ trait WebSocketRepl {
   }
 
   private[this] class SshOutputStream(out: OutputStream) extends OutputStream {
-    override def close() = {
+    override def close(): Unit = {
       out.close()
     }
 
-    override def flush() = {
+    override def flush(): Unit = {
       out.flush()
     }
 
@@ -160,7 +152,7 @@ trait WebSocketRepl {
     /**
      * Collects information about current environment
      */
-    def collect() = Environment(
+    def collect(): Environment = Environment(
       Thread.currentThread(),
       Thread.currentThread().getContextClassLoader,
       System.in,

@@ -160,6 +160,8 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directi
 
   override def replPredef: String =
     """
+      |import Predef.{println => _}
+      |import pprint.{pprintln => println}
       |import akkaviz.events.ActorSystems.systems
       |import scala.concurrent.duration._
       |import akka.actor._
