@@ -11,29 +11,29 @@ import scalatags.JsDom.all._
 
 class AsksPanel(selectedActors: Var[Set[String]]) extends Component with PrettyJson {
 
-  private val asks: mutable.Set[Question] = mutable.Set()
+  private[this] val asks: mutable.Set[Question] = mutable.Set()
 
   override def attach(parent: Element): Unit = {
     parent.appendChild(panelBody.render)
   }
 
-  lazy val panelBody = div(
+  private[this] lazy val panelBody = div(
     cls := "panel-body",
     id := "askspanelbody",
     panelTable
   )
 
-  lazy val panelTable = table(
+  private[this] lazy val panelTable = table(
     cls := "table table-striped table-hover",
     tableHead,
     tableBody
   )
 
-  lazy val tableHead = thead(
+  private[this] lazy val tableHead = thead(
     tr(th("From"), th("To"), th("Status"))
   )
 
-  lazy val tableBody = tbody().render
+  private[this] lazy val tableBody = tbody().render
 
   def receivedQuestion(q: Question): Unit = {
     asks += q
@@ -56,16 +56,16 @@ class AsksPanel(selectedActors: Var[Set[String]]) extends Component with PrettyJ
     }
   }
 
-  private def tableRowAwaiting(question: Question) =
+  private[this] def tableRowAwaiting(question: Question) =
     tableRow(question, None)
 
-  private def tableRowAnswered(question: Question, answer: Answer) =
+  private[this] def tableRowAnswered(question: Question, answer: Answer) =
     tableRow(question, Some(answer))
 
-  private def tableRowAnswerFailed(question: Question, ansFailed: AnswerFailed) =
+  private[this] def tableRowAnswerFailed(question: Question, ansFailed: AnswerFailed) =
     tableRow(question, Some(ansFailed)).apply(cls := "danger")
 
-  private def tableRow(question: Question, result: Option[AskResult]) = {
+  private[this] def tableRow(question: Question, result: Option[AskResult]) = {
     val details = detailsView(question, result)
     val status = statusText(result)
     tr(
@@ -83,26 +83,26 @@ class AsksPanel(selectedActors: Var[Set[String]]) extends Component with PrettyJ
     )
   }
 
-  def detailsView(question: Question, result: Option[AskResult]) = result match {
+  private[this] def detailsView(question: Question, result: Option[AskResult]) = result match {
     case None                          => unansweredQuestionDetails(question)
     case Some(ans: Answer)             => answeredQuestionDetails(question, ans)
     case Some(ansFailed: AnswerFailed) => failedAnswerDetails(question, ansFailed)
   }
 
-  def statusText(result: Option[AskResult]) = result match {
+  private[this] def statusText(result: Option[AskResult]) = result match {
     case None                          => "Waiting for answer"
     case Some(ans: Answer)             => "Answered"
     case Some(ansFailed: AnswerFailed) => "Failed to answer"
   }
 
-  def unansweredQuestionDetails(q: Question) =
+  private[this] def unansweredQuestionDetails(q: Question) =
     div(
       questionHeader(q),
       pre(prettyPrintJson(q.message)),
       h4(s"Waiting for answer from ${q.actorRef}")
     )
 
-  def answeredQuestionDetails(q: Question, a: Answer) =
+  private[this] def answeredQuestionDetails(q: Question, a: Answer) =
     div(
       questionHeader(q),
       pre(prettyPrintJson(q.message)),
@@ -110,7 +110,7 @@ class AsksPanel(selectedActors: Var[Set[String]]) extends Component with PrettyJ
       pre(prettyPrintJson(a.message))
     )
 
-  def failedAnswerDetails(q: Question, af: AnswerFailed) =
+  private[this] def failedAnswerDetails(q: Question, af: AnswerFailed) =
     div(
       questionHeader(q),
       pre(prettyPrintJson(q.message)),
@@ -118,7 +118,7 @@ class AsksPanel(selectedActors: Var[Set[String]]) extends Component with PrettyJ
       pre(af.ex)
     )
 
-  def questionHeader(q: Question) = q.sender match {
+  private[this] def questionHeader(q: Question) = q.sender match {
     case Some(s) => h3(s"Question from $s")
     case None    => h3("Question(no sender)")
   }
