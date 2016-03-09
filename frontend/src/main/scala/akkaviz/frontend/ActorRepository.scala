@@ -15,7 +15,10 @@ class ActorRepository {
   val newActors = Var[Set[String]](Set())
   val seenActors = Var[Set[String]](Set())
 
-  def state(actor: String): Var[ActorState] = currentActorState.getOrElseUpdate(actor, Var(ActorState(actor, FrontendUtil.shortActorName(actor), FrontendUtil.systemName(actor))))
+  def state(actor: String): Var[ActorState] = currentActorState.getOrElseUpdate(
+    actor,
+    Var(ActorState(actor, FrontendUtil.shortActorName(actor), FrontendUtil.systemName(actor)))
+  )
 
   def mutateActor(actor: String)(fn: ActorState => ActorState) = {
     state(actor)() = fn(state(actor).now.copy(lastUpdatedAt = new js.Date()))
