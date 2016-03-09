@@ -138,6 +138,7 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
   private[this] val unconnectedOnOff = new UnconnectedOnOff(showUnconnected)
   private[this] val replTerminal = new ReplTerminal()
   private[this] val graphView = new GraphView(showUnconnected, actorSelector.toggleActor, ActorStateAsNodeRenderer.render)
+  private[this] val hierarchyView = new HierarchyPanel()
   private[this] val maxRetries = 10
 
   def main(): Unit = {
@@ -199,6 +200,7 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
     unconnectedOnOff.attach(document.getElementById("graphsettings"))
     replTerminal.attach(document.getElementById("repl"))
     graphView.attach(document.getElementById("graphview"))
+    hierarchyView.attach(document.getElementById("hierarchy-view"))
 
     DOMGlobalScope.$.material.init()
 

@@ -36,4 +36,13 @@ object FrontendUtil {
   @inline
   def systemName(actorRef: String): String = actorRef.split('/')(2)
 
+  def parent(actor: String): Option[String] = {
+    val isRoot = actor == "akka:/"
+    if (isRoot)
+      None
+    else {
+      val parentPath = actor.reverse.dropWhile(_ != '/').drop(1).reverse
+      Some(parentPath)
+    }
+  }
 }
