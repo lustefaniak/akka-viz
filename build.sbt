@@ -130,11 +130,11 @@ lazy val monitoring =
     .settings(aspectjSettings)
     .settings(
       fork := true,
-      addCompilerPlugin("org.scalamacros" % "paradise" % "2.0.1" cross CrossVersion.full),
+      addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
       libraryDependencies += "com.wacai" %% "config-annotation" % "0.3.4" % "compile",
       libraryDependencies += "org.clapper" %% "classutil" % "1.0.6",
       libraryDependencies += "me.chrons" %%% "boopickle" % boopickleVersion,
-      libraryDependencies += "com.lihaoyi" % "ammonite-repl" % "0.5.5" cross CrossVersion.full,
+      libraryDependencies += "com.lihaoyi" % "ammonite-repl" % "0.5.6" cross CrossVersion.full,
       libraryDependencies += "com.typesafe.akka" %% "akka-http-experimental" % akkaVersion, // FIXME: shadow that dependency and hide it
       libraryDependencies += "org.scalatest" %%% "scalatest" % scalatestVersion % "test",
       scalacOptions += "-Xmacro-settings:conf.output.dir=" + baseDirectory.value / "src/main/resources/",
