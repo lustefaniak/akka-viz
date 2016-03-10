@@ -39,7 +39,6 @@ trait Tab extends Component {
 
 class ActorStateTab(actorState: Var[ActorState], upstreamSend: protocol.ApiClientMessage => Unit)(implicit co: Ctx.Owner) extends ClosableTab {
   import scalatags.rx.all._
-  import akkaviz.frontend.PrettyJson._
   import ActorStateTab._
   import akkaviz.frontend.PrettyJson._
 
@@ -51,11 +50,17 @@ class ActorStateTab(actorState: Var[ActorState], upstreamSend: protocol.ApiClien
   def renderState(state: Var[ActorState]) = {
 
     lazy val fsmDiv = div(cls := s"fsm-graph", height := 250.px).render
-    val fsmGraph = new FsmGraph(fsmDiv)
+    def disableMaybe(isDead: Boolean): Modifier = if (isDead) disabled := "disabled" else ()
 
     val rendered = div(
       cls := "panel-body",
-      refreshButton(state.path)(disableMaybe), killButton(state.path)(disableMaybe), poisonPillButton(state.path)(disableMaybe),
+      div(state.map(_.isDead).map { isDead =>
+        div(
+          refreshButton(state.now.path)(disableMaybe(isDead)),
+          killButton(state.now.path)(disableMaybe(isDead)),
+          poisonPillButton(state.now.path)(disableMaybe(isDead))
+        ).render
+      }),
       fsmDiv,
       div(strong("Class: "), Rx(state().className.getOrElse[String]("Unknown class"))),
       div(strong("Is dead: "), Rx(state().isDead.toString)),
@@ -72,6 +77,7 @@ class ActorStateTab(actorState: Var[ActorState], upstreamSend: protocol.ApiClien
     ).render
 
     tabBody.appendChild(rendered)
+    val fsmGraph = new FsmGraph(fsmDiv)
     state.map(_.fsmTransitions).foreach(fsmGraph.displayFsm)
   }
 

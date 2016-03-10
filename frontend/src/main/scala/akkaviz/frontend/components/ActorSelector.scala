@@ -4,8 +4,6 @@ import akkaviz.frontend.{FrontendUtil, PrettyJson}
 import akkaviz.protocol.ActorFailure
 import org.scalajs.dom.html._
 import org.scalajs.dom.{Element => domElement, console, document}
-import rx.{Rx, Var}
-import org.scalajs.dom.{Element => domElement, Node, console, document}
 import rx.{Ctx, Rx, Var}
 
 import scala.scalajs.js.ThisFunction0
@@ -16,8 +14,7 @@ class ActorSelector(
     seenActors: Var[Set[String]],
     selectedActors: Var[Set[String]],
     actorFailures: Var[Seq[ActorFailure]],
-    detailsOpener: (String) => Unit,
-    upstreamSend: protocol.ApiClientMessage => Unit
+    detailsOpener: (String) => Unit
 )(implicit co: Ctx.Owner) extends PrettyJson with Component {
 
   def attach(parent: domElement): Unit = {
