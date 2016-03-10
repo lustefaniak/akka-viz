@@ -61,12 +61,12 @@ class ActorStateTab(actorState: Var[ActorState], upstreamSend: protocol.ApiClien
       div(strong("Is dead: "), Rx(state().isDead.toString)),
       div(strong("Internal state: "), pre(Rx(state().internalState.map(prettyPrintJson).getOrElse[String]("Internal state unknown")))),
       div(strong("Is FSM: "), Rx(state().fsmState.isDefined.toString)),
-      Rx(state().fsmState.map { fs =>
+      div(Rx(state().fsmState.map { fs =>
         div(
           div(strong("FSM data:"), pre(prettyPrintJson(fs.currentData))),
           div(strong("FSM state:"), pre(prettyPrintJson(fs.currentState)))
         ).render
-      }.getOrElse(div().render)),
+      }.getOrElse(div().render))),
       div(strong("Mailbox size: "), Rx(state().mailboxSize.map(_.toString).getOrElse[String]("Unknown"))),
       div(strong("Last updated: "), Rx(state().lastUpdatedAt.toISOString()))
     ).render
