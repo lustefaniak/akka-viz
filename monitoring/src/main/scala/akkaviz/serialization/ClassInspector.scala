@@ -1,5 +1,7 @@
 package akkaviz.serialization
 
+import java.lang.reflect.Field
+
 import scala.collection.mutable
 
 trait ClassInspector {
@@ -8,7 +10,7 @@ trait ClassInspector {
 
   def fields: Seq[ClassInspector.ClassField]
 
-  def allFieldNames = fields.map(_.name).toSet
+  def allFieldNames: Set[String]
 
   def isScalaObject: Boolean
 
@@ -25,6 +27,8 @@ trait ClassInspector {
 
 object ClassInspector {
 
+  case class Accessor(fieldName: String, field: Field)
+
   sealed trait FieldType
 
   case object Val extends FieldType
@@ -35,7 +39,7 @@ object ClassInspector {
 
   private val rm = scala.reflect.runtime.currentMirror
 
-  case class UnableToInspectField(t: Throwable)
+  case object UnableToInspectField
 
   def of(clazz: Class[_]): ClassInspector = {
     val t = rm.classSymbol(clazz).toType
@@ -56,23 +60,33 @@ object ClassInspector {
     new ClassInspector {
       val underlyingClass: Class[_] = clazz
       private[this] val f = reflectedFields.toSeq
+      private[this] val accessors: List[Accessor] = f.flatMap {
+        cf =>
+          try {
+            val field = underlyingClass.getDeclaredField(cf.name)
+            field.setAccessible(true)
+            Some(Accessor(cf.name, field))
+          } catch {
+            case t: Throwable => None
+          }
+      }.toList
+
+      override val allFieldNames: Set[String] = f.map(_.name).toSet
 
       override def inspect(obj: Any, fieldNames: Set[String] = allFieldNames): Map[String, Any] = {
         val result = mutable.Map[String, Any]()
-        fieldNames.foreach {
-          fieldName =>
+        accessors.foreach {
+          case Accessor(fieldName, field) =>
             try {
               // It will fail if field is passed as default class constructor and is not referenced in class
-              // There is also a bug in scalac, which makes it unavailable if it was referenced from closure
+              // There is also a bug(?) in scalac, which makes it unavailable if it was referenced from closure
               // That happens eg. in FSM trait, as there are only closures
               // Fields are usually available in the class, but their names are mangled so it is not obvious where
               // to find them reliably
-              val field = underlyingClass.getDeclaredField(fieldName)
-              field.setAccessible(true)
               result += (fieldName -> field.get(obj))
             } catch {
               case t: Throwable =>
-                result += (fieldName -> UnableToInspectField(t))
+                result += (fieldName -> UnableToInspectField)
             }
         }
         result.toMap
