@@ -10,6 +10,7 @@ val akkaVersion = "2.4.2"
 val scalatestVersion = "3.0.0-M15"
 
 lazy val commonSettings: Seq[sbt.Setting[_]] = SbtScalariform.defaultScalariformSettings ++ Seq(
+  ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) },
   updateOptions := updateOptions.value.withCachedResolution(true),
   ScalariformKeys.preferences := ScalariformKeys.preferences.value
     .setPreference(AlignSingleLineCaseStatements, true)
