@@ -47,7 +47,7 @@ class ActorStateTab(actorState: Var[ActorState], upstreamSend: protocol.ApiClien
 
   renderState(actorState)
 
-  def renderState(state: Var[ActorState]) = {
+  private[this] def renderState(state: Var[ActorState]) = {
 
     lazy val fsmDiv = div(cls := s"fsm-graph", height := 250.px).render
     def disableMaybe(isDead: Boolean): Modifier = if (isDead) disabled := "disabled" else ()
