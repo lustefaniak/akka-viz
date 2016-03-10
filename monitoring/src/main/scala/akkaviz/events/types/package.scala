@@ -37,7 +37,7 @@ package object types {
 
   case class Instantiated(actorRef: ActorRef, actor: Actor) extends InternalEvent with BackendEvent
 
-  case class AvailableMessageTypes(classes: List[Class[_ <: Any]]) extends BackendEvent
+  case class AvailableMessageTypes(classes: Set[Class[_ <: Any]]) extends BackendEvent
 
   case class FSMTransition(
     actorRef: ActorRef,
