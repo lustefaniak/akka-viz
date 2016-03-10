@@ -2,8 +2,8 @@ package akkaviz.frontend.components
 
 import akkaviz.frontend.ActorRepository.ActorState
 import akkaviz.protocol
-import org.scalajs.dom.{Element => domElement}
-import rx.Var
+import org.scalajs.dom.{Element => domElement, _}
+import rx.{Ctx, Rx, Var}
 
 import scalatags.JsDom.all._
 
@@ -37,49 +37,46 @@ trait Tab extends Component {
 
 }
 
-class ActorStateTab(actorState: Var[ActorState], upstreamSend: protocol.ApiClientMessage => Unit) extends ClosableTab {
-
+class ActorStateTab(actorState: Var[ActorState], upstreamSend: protocol.ApiClientMessage => Unit)(implicit co: Ctx.Owner) extends ClosableTab {
+  import scalatags.rx.all._
+  import akkaviz.frontend.PrettyJson._
   import ActorStateTab._
   import akkaviz.frontend.PrettyJson._
 
   val name = actorState.now.path
   val tabId = stateTabId(actorState.now.path)
 
-  private[this] val stateObs = actorState.foreach(renderState)
+  renderState(actorState)
 
-  private[this] def renderState(state: ActorState) = {
-    lazy val fsmDiv = div(cls := s"fsm-graph").render
-    lazy val fsmGraph = new FsmGraph(fsmDiv)
-    def disableMaybe: Modifier = if (state.isDead) disabled := "disabled" else ()
+  def renderState(state: Var[ActorState]) = {
+
+    lazy val fsmDiv = div(cls := s"fsm-graph", height := 250.px).render
+    val fsmGraph = new FsmGraph(fsmDiv)
 
     val rendered = div(
       cls := "panel-body",
       refreshButton(state.path)(disableMaybe), killButton(state.path)(disableMaybe), poisonPillButton(state.path)(disableMaybe),
       fsmDiv,
-      div(strong("ActorRef: "), state.path),
-      div(strong("Class: "), state.className.getOrElse[String]("Unknown class")),
-      div(strong("Is dead: "), state.isDead.toString),
-      div(strong("Internal state: "), pre(state.internalState.map(prettyPrintJson).getOrElse[String]("Internal state unknown"))),
-      div(strong("Is FSM: "), state.fsmState.isDefined.toString),
-      state.fsmState.map[Frag] {
-        fsm =>
-          Seq(
-            div(strong("FSM State: "), pre(prettyPrintJson(fsm.currentState))),
-            div(strong("FSM Data: "), pre(prettyPrintJson(fsm.currentData)))
-          )
-      }.getOrElse(()),
-      div(strong("Mailbox size: "), state.mailboxSize.map(_.toString).getOrElse[String]("Unknown")),
-      div(strong("Last updated: "), state.lastUpdatedAt.toISOString())
+      div(strong("Class: "), Rx(state().className.getOrElse[String]("Unknown class"))),
+      div(strong("Is dead: "), Rx(state().isDead.toString)),
+      div(strong("Internal state: "), pre(Rx(state().internalState.map(prettyPrintJson).getOrElse[String]("Internal state unknown")))),
+      div(strong("Is FSM: "), Rx(state().fsmState.isDefined.toString)),
+      Rx(state().fsmState.map { fs =>
+        div(
+          div(strong("FSM data:"), pre(prettyPrintJson(fs.currentData))),
+          div(strong("FSM state:"), pre(prettyPrintJson(fs.currentState)))
+        ).render
+      }.getOrElse(div().render)),
+      div(strong("Mailbox size: "), Rx(state().mailboxSize.map(_.toString).getOrElse[String]("Unknown"))),
+      div(strong("Last updated: "), Rx(state().lastUpdatedAt.toISOString()))
     ).render
 
-    tabBody.innerHTML = ""
     tabBody.appendChild(rendered)
-    fsmGraph.displayFsm(state.fsmTransitions)
+    state.map(_.fsmTransitions).foreach(fsmGraph.displayFsm)
   }
 
   override def onClose(): Unit = {
     super.onClose()
-    stateObs.kill()
   }
 
   private[this] def refreshButton(actorRef: String) =

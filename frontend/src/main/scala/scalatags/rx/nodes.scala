@@ -19,7 +19,7 @@ trait RxNodeInstances {
   implicit class rxStringFrag(v: Rx[String])(implicit val ctx: Ctx.Owner) extends jsdom.Frag {
     def render: dom.Text = {
       val node = dom.document.createTextNode(v.now)
-      v foreach { s => node.replaceData(0, node.length, s)} attachTo node
+      v foreach { s => node.replaceData(0, node.length, s) } attachTo node
       node
     }
   }
@@ -38,7 +38,7 @@ trait RxNodeInstances {
 
   implicit class bindRxElements(e: Rx[immutable.Iterable[Element]])(implicit val ctx: Ctx.Owner) extends Modifier {
     def applyTo(t: Element) = {
-      val nonEmpty = e.map { t => if (t.isEmpty) List(new Comment) else t}
+      val nonEmpty = e.map { t => if (t.isEmpty) List(new Comment) else t }
       val fragments = new AtomicReference(nonEmpty.now)
       nonEmpty.now foreach t.appendChild
       nonEmpty triggerLater {
