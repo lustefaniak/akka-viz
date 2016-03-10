@@ -1,6 +1,7 @@
 package akkaviz.serialization
 
 import org.clapper.classutil.ClassFinder
+import scala.collection.breakOut
 
 trait SerializerFinder {
   private[this] val rm = scala.reflect.runtime.currentMirror
@@ -23,7 +24,7 @@ trait SerializerFinder {
               rm.reflectClass(classSymbol).reflectConstructor(constructor).apply().asInstanceOf[AkkaVizSerializer]
           }
         }
-    }.toList
+    }(breakOut)
   }
 
 }

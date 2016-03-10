@@ -14,6 +14,7 @@ import akkaviz.protocol
 import akkaviz.serialization.MessageSerialization
 import ammonite.repl.Bind
 
+import scala.collection.breakOut
 import scala.concurrent.duration._
 
 class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directives with SubscriptionSession with WebSocketRepl {
@@ -147,8 +148,8 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directi
       protocol.ReportingEnabled
     case SnapshotAvailable(s) =>
       protocol.SnapshotAvailable(
-        s.liveActors.map(ref => ref -> s.classNameFor(ref)).toMap,
-        s.dead.map(ref => ref -> s.classNameFor(ref)).toMap,
+        s.liveActors.map(ref => ref -> s.classNameFor(ref))(breakOut),
+        s.dead.map(ref => ref -> s.classNameFor(ref))(breakOut),
         s.receivedFrom
       )
   }

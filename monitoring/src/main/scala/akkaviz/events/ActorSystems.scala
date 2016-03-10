@@ -3,6 +3,7 @@ package akkaviz.events
 import akka.actor.{ActorPath, ActorRef, ActorSystem}
 import akka.viz.ActorCellInstrumentation
 
+import scala.collection.breakOut
 import scala.ref.WeakReference
 import scala.util.Try
 
@@ -14,7 +15,7 @@ object ActorSystems {
     case (name, ref) => ref.get.map {
       system => name -> system
     }
-  }.toMap
+  }(breakOut)
 
   def registerSystem(system: ActorSystem): Unit = {
     systemReferences.update(system.name, WeakReference(system))

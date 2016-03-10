@@ -53,7 +53,7 @@ class EventPublisherActor extends Actor with ActorLogging {
     subscribers += s
     context.watch(s)
     s ! (if (EventSystem.isEnabled()) ReportingEnabled else ReportingDisabled)
-    s ! AvailableMessageTypes(availableTypes.toList)
+    s ! AvailableMessageTypes(availableTypes)
     s ! SnapshotAvailable(snapshot)
     snapshotQueue.foreach(s ! _)
   }
@@ -92,7 +92,7 @@ class EventPublisherActor extends Actor with ActorLogging {
   private[this] def trackMsgType(msg: Any): Unit = {
     if (!availableTypes.contains(msg.getClass)) {
       availableTypes += msg.getClass
-      subscribers.foreach(_ ! AvailableMessageTypes(availableTypes.toList))
+      subscribers.foreach(_ ! AvailableMessageTypes(availableTypes))
     }
   }
 }

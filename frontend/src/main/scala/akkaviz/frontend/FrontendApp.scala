@@ -37,7 +37,7 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
         addActorLink(rcv.sender, rcv.receiver)
 
       case ac: AvailableClasses =>
-        seenMessages() = ac.availableClasses.toSet
+        seenMessages() = seenMessages.now ++ ac.availableClasses
 
       case Spawned(child) =>
         repo.mutateActor(child) {

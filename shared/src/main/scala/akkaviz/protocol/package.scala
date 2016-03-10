@@ -12,7 +12,7 @@ package object protocol {
 
   case class Received(eventId: Long, sender: String, receiver: String, payloadClass: String, payload: Option[String], handled: Boolean) extends ApiServerMessage
 
-  case class AvailableClasses(availableClasses: List[String]) extends ApiServerMessage
+  case class AvailableClasses(availableClasses: Set[String]) extends ApiServerMessage
 
   case class Spawned(ref: String) extends ApiServerMessage
 
