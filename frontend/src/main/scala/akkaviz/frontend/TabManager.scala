@@ -2,8 +2,9 @@ package akkaviz.frontend
 
 import akkaviz.frontend.components.ActorStateTab
 import org.scalajs.dom._
+import rx.Ctx
 
-class TabManager(repo: ActorRepository, upstreamConnection: ApiConnection.Upstream) {
+class TabManager(repo: ActorRepository, upstreamConnection: ApiConnection.Upstream)(implicit ctx: Ctx.Owner) {
 
   def openActorDetails(actorRef: String): Unit = {
     //FIXME: prevent opening same actor tab multiple times, focus instead
