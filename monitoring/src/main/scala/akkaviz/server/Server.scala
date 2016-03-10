@@ -11,10 +11,10 @@ import scala.concurrent.duration.Duration
 import scala.util.{Failure, Success}
 
 object Server {
-  private lazy val system: ActorSystem = ActorSystem(Config.internalSystemName)
-  private lazy val materializer = ActorMaterializer()(system)
-  private lazy val service = new Webservice()(materializer, system)
-  private lazy val binding = Http(system).bindAndHandle(service.route, Config.interface, Config.port)(materializer)
+  private[this] lazy val system: ActorSystem = ActorSystem(Config.internalSystemName)
+  private[this] lazy val materializer = ActorMaterializer()(system)
+  private[this] lazy val service = new Webservice()(materializer, system)
+  private[this] lazy val binding = Http(system).bindAndHandle(service.route, Config.interface, Config.port)(materializer)
 
   def start(): Unit = {
     binding.onComplete {

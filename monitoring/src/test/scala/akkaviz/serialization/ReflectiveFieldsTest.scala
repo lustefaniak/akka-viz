@@ -19,7 +19,7 @@ class ReflectiveFieldsTest extends FlatSpec with Matchers {
 
     var city: Option[String] = None
 
-    private val y: Option[T] = None
+    private[this] val y: Option[T] = None
 
     def gggg = y
   }

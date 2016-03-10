@@ -5,9 +5,9 @@ import upickle.Js
 
 trait ReflectiveSerialization {
 
-  private val maxSerializationDepth = Config.maxSerializationDepth
+  private[this] val maxSerializationDepth = Config.maxSerializationDepth
 
-  private val shouldInspectObjects = Config.inspectObjects
+  private[this] val shouldInspectObjects = Config.inspectObjects
 
   @inline
   protected def fieldSelector(inspector: ClassInspector): Set[String] = {
@@ -24,7 +24,7 @@ trait ReflectiveSerialization {
   }
 
   @inline
-  private def inspect(obj: Any, context: SerializationContext): Js.Value = {
+  private[this] final def inspect(obj: Any, context: SerializationContext): Js.Value = {
     val inspector = CachingClassInspector.of(obj.getClass)
     if (!inspector.isScalaObject || shouldInspectObjects) {
       val fields = inspector.inspect(obj, fieldSelector(inspector))
@@ -41,12 +41,12 @@ trait ReflectiveSerialization {
   }
 
   @inline
-  private def maxDepthReached: Js.Value = {
+  private[this] final def maxDepthReached: Js.Value = {
     Js.Obj("$error" -> Js.Str(s"Max serialization depth of ${maxSerializationDepth} reached"))
   }
 
   @inline
-  private def shallowModuleSerialization(module: Any): Js.Value = {
+  private[this] final def shallowModuleSerialization(module: Any): Js.Value = {
     Js.Obj("$object" -> Js.Str(module.getClass.getName.stripSuffix("$")))
   }
 

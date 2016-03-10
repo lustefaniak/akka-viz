@@ -8,7 +8,7 @@ import scala.collection.mutable
 
 object DefaultSerializers {
 
-  private implicit def fnToAkkaVizSerializer[T](fn: (T) => Js.Value) = {
+  private[this] implicit def fnToAkkaVizSerializer[T](fn: (T) => Js.Value) = {
     new AkkaVizSerializer {
       override def serialize(obj: Any, context: SerializationContext): Value = fn(obj.asInstanceOf[T])
 
@@ -37,7 +37,7 @@ object DefaultSerializers {
     classOf[java.lang.Boolean] -> ((b: java.lang.Boolean) => if (b) Js.True else Js.False)
   ) ++ internalMappers
 
-  private def internalMappers = mutable.Map[Class[_], AkkaVizSerializer](
+  private[this] def internalMappers = mutable.Map[Class[_], AkkaVizSerializer](
     UnableToInspectField.getClass -> ((e: UnableToInspectField.type) => Js.Obj(
       "$error" -> Js.Str(s"Field is not available using reflection")
     ))

@@ -41,7 +41,7 @@ object AskDemo {
     }
   }
 
-  private def toRunnable(thunk: => Any) = new Runnable {
+  private[this] def toRunnable(thunk: => Any) = new Runnable {
     override def run(): Unit = thunk
   }
 }

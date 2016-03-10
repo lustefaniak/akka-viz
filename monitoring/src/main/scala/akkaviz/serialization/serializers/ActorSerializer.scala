@@ -6,7 +6,7 @@ import upickle.Js
 
 case object ActorSerializer extends AkkaVizSerializer with ReflectiveSerialization {
 
-  private val actorDefaultFields = CachingClassInspector.of(classOf[Actor]).fields.map(_.name).toSet
+  private[this] val actorDefaultFields = CachingClassInspector.of(classOf[Actor]).fields.map(_.name).toSet
 
   override def fieldSelector(inspector: ClassInspector): Set[String] = {
     inspector.allFieldNames -- actorDefaultFields

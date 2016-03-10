@@ -9,7 +9,7 @@ import org.aspectj.lang.annotation._
 @Aspect
 class ActorSystemInstrumentation {
 
-  private val internalSystemName = Config.internalSystemName
+  private[this] val internalSystemName = Config.internalSystemName
 
   @Pointcut("execution(akka.actor.ActorSystem.new(..)) && this(system)")
   def actorSystemCreation(system: ActorSystem): Unit = {}

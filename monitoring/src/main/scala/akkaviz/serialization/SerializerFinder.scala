@@ -3,7 +3,7 @@ package akkaviz.serialization
 import org.clapper.classutil.ClassFinder
 
 trait SerializerFinder {
-  private val rm = scala.reflect.runtime.currentMirror
+  private[this] val rm = scala.reflect.runtime.currentMirror
 
   def findSerializers: List[AkkaVizSerializer] = {
     val finder = ClassFinder()

@@ -18,7 +18,7 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
 
   private[this] val repo = new ActorRepository()
 
-  private def handleDownstream(messageReceived: (Received) => Unit)(message: protocol.ApiServerMessage): Unit = {
+  private[this] def handleDownstream(messageReceived: (Received) => Unit)(message: protocol.ApiServerMessage): Unit = {
 
     def addActorLink(sender: String, receiver: String): Unit = {
       val actors = Seq(sender, receiver).filter(FrontendUtil.isUserActor)

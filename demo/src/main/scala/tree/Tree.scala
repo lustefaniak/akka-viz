@@ -31,7 +31,7 @@ object TreeDemo {
 
   }
 
-  private val makeItGrowProps = Props[TreeActor]
+  private[this] val makeItGrowProps = Props[TreeActor]
 
   def run(system: ActorSystem): Unit = {
 

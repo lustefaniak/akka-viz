@@ -10,7 +10,7 @@ object FilteringRule {
 }
 
 case class AllowedClasses(names: Set[String]) extends (Any => Boolean) {
-  @transient private val allowedClasses = names.flatMap { name =>
+  @transient private[this] val allowedClasses = names.flatMap { name =>
     val loaded: Try[Class[_]] = Try(getClass.getClassLoader.loadClass(name))
     loaded.failed.foreach(thr => println(s"class loading failed: $thr"))
     loaded.toOption
@@ -22,7 +22,7 @@ case class AllowedClasses(names: Set[String]) extends (Any => Boolean) {
 }
 
 case class ActorRefFilter(actors: Set[String]) extends (ActorRef => Boolean) {
-  @transient private val paths = actors.flatMap {
+  @transient private[this] val paths = actors.flatMap {
     path =>
       Try {
         ActorPath.fromString(path)

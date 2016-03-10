@@ -15,8 +15,8 @@ import scala.util.{Failure, Success}
 @Aspect
 class AskInstrumentation {
 
-  private val askCounter: AtomicLong = new AtomicLong(0)
-  private val internalSystemName = Config.internalSystemName
+  private[this] val askCounter: AtomicLong = new AtomicLong(0)
+  private[this] val internalSystemName = Config.internalSystemName
 
   @Pointcut("execution (* akka.pattern..*.internalAsk$extension(..)) && args(recipient, msg, timeout, sender)")
   def internalAskPointcut(
@@ -41,7 +41,7 @@ class AskInstrumentation {
     }
   }
 
-  private def isSystemActor(ref: ActorRef) =
+  private[this] def isSystemActor(ref: ActorRef) =
     ref.path.address.system == internalSystemName
 
   def publishQuestion(

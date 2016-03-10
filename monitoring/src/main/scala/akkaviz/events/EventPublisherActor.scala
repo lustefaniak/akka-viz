@@ -80,16 +80,16 @@ class EventPublisherActor extends Actor with ActorLogging {
   }
 
   @inline
-  private def nextEventNumber(): Long = {
+  private[this] def nextEventNumber(): Long = {
     eventCounter += 1
     eventCounter
   }
 
-  private def unsubscribe(s: ActorRef): Unit = {
+  private[this] def unsubscribe(s: ActorRef): Unit = {
     subscribers -= s
   }
 
-  private def trackMsgType(msg: Any): Unit = {
+  private[this] def trackMsgType(msg: Any): Unit = {
     if (!availableTypes.contains(msg.getClass)) {
       availableTypes += msg.getClass
       subscribers.foreach(_ ! AvailableMessageTypes(availableTypes.toList))

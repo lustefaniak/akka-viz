@@ -37,7 +37,7 @@ object ClassInspector {
 
   case class ClassField(name: String, fullName: String, fieldType: FieldType, resultClass: Class[_], signature: String)
 
-  private val rm = scala.reflect.runtime.currentMirror
+  private[this] val rm = scala.reflect.runtime.currentMirror
 
   case object UnableToInspectField
 
