@@ -24,8 +24,8 @@ class HierarchyPanel(detailsOpener: (String) => Unit) extends Component {
   private[this] def node(actorRef: String) = li(
     ActorAttr := actorRef,
     span(
-      i(cls := "glyphicon glyphicon-leaf"),
-      shortName(actorRef),
+      i(cls := "material-icons"),
+      shortName(actorRef) + " ",
       title := actorRef,
       "data-target".attr := s"""[actor-path="$actorRef"]>ul""",
       "data-toggle".attr := "collapse",
@@ -48,9 +48,9 @@ class HierarchyPanel(detailsOpener: (String) => Unit) extends Component {
     if (!isEmpty) {
       val isExpanded = node.find("ul").first.hasClass("in")
       if (isExpanded)
-        node.find("span>i").first.removeClass("glyphicon-minus").addClass("glyphicon-plus")
+        node.find("span>i").first.text("keyboard_arrow_right")
       else
-        node.find("span>i").first.removeClass("glyphicon-plus").addClass("glyphicon-minus")
+        node.find("span>i").first.text("keyboard_arrow_down")
     }
   }
 
@@ -79,9 +79,9 @@ class HierarchyPanel(detailsOpener: (String) => Unit) extends Component {
         val newNode = node(ref).render
         nextElementOpt match {
           case Some(elem) => parentUl.insertBefore(newNode, elem)
-          case None       => parentUl.appendChild(newNode)
+          case None => parentUl.appendChild(newNode)
         }
-        $(parentUl).parent.find("span>i").first.removeClass("glyphicon-leaf").addClass("glyphicon-plus")
+        $(parentUl).parent.find("span>i").first.text("keyboard_arrow_right")
     }
   }
 
