@@ -16,7 +16,7 @@ class TabManager(repo: ActorRepository, upstreamConnection: ApiConnection.Upstre
       val stateVar = repo.state(actorRef)
       val tab: ActorStateTab = new ActorStateTab(stateVar, upstreamConnection.send)
       tab.attach(document.querySelector("#right-pane"))
-      tab.tab.querySelector("a.close-tab").onClick({() => close(tab)})
+      tab.tab.querySelector("a.close-tab").onClick({ () => close(tab) })
       tab.tab.querySelector("a[data-toggle]").addEventListener("click", handleMiddleClick(tab) _)
       tab
     }))
@@ -27,22 +27,22 @@ class TabManager(repo: ActorRepository, upstreamConnection: ApiConnection.Upstre
   }
 
   def close(target: ClosableTab): Unit = {
-    if(target.isActive) activateSiblingOf(target)
+    if (target.isActive) activateSiblingOf(target)
     target.tab.parentNode.removeChild(target.tab)
     target.tabBody.parentNode.removeChild(target.tabBody)
     target.onClose()
     tabs.delete(target.tabId)
   }
 
-  private def activateSiblingOf(ct: ClosableTab): Unit = {
+  private[this] def activateSiblingOf(ct: ClosableTab): Unit = {
     Option(ct.tab.nextElementSibling).orElse(Option(ct.tab.previousElementSibling)).map { s =>
       s.querySelector("a[data-toggle]").asInstanceOf[HTMLElement]
-    }.foreach{ _.click() }
+    }.foreach { _.click() }
 
   }
 
-  private def handleMiddleClick(tab: ClosableTab)(e: MouseEvent): Unit = {
-    if(e.button == 1) {
+  private[this] def handleMiddleClick(tab: ClosableTab)(e: MouseEvent): Unit = {
+    if (e.button == 1) {
       e.preventDefault()
       close(tab)
     }
