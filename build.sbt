@@ -10,7 +10,8 @@ val akkaVersion = "2.4.2"
 val scalatestVersion = "3.0.0-M15"
 
 lazy val commonSettings: Seq[sbt.Setting[_]] = SbtScalariform.defaultScalariformSettings ++ Seq(
-  ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) },
+  scalaVersion := "2.11.7",
+  crossScalaVersions := Seq("2.11.7"),
   updateOptions := updateOptions.value.withCachedResolution(true),
   ScalariformKeys.preferences := ScalariformKeys.preferences.value
     .setPreference(AlignSingleLineCaseStatements, true)
@@ -18,12 +19,9 @@ lazy val commonSettings: Seq[sbt.Setting[_]] = SbtScalariform.defaultScalariform
     .setPreference(DoubleIndentClassDeclaration, true),
   git.useGitDescribe := true,
   organization := "com.blstream.akkaviz",
-  scalaVersion := "2.11.7",
-  crossScalaVersions := Seq("2.11.7"),
   licenses +=("MIT", url("http://opensource.org/licenses/MIT")),
   git.uncommittedSignifier := None,
   publishArtifact in Test := false,
-  scalaVersion := "2.11.7",
   homepage := Some(url("https://github.com/blstream/akka-viz")),
   description := "A visual debugger for Akka actor systems",
   pomExtra :=
