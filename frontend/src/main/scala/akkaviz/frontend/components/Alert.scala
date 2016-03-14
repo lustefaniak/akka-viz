@@ -12,7 +12,7 @@ class Alert extends Component {
     "Connecting...",
     cls := "alert fade in",
     id := "connectionStatus",
-    position.fixed, right := 0.px
+    position.fixed, right := 0.px, zIndex := 90210
   ).render
 
   override def attach(parent: Element): Unit = {
