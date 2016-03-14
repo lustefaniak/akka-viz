@@ -181,7 +181,7 @@ lazy val plugin = (project in file("plugin"))
     sbtPlugin := true,
     buildInfoPackage := "akkaviz.sbt",
 
-    addSbtPlugin("com.typesafe.sbt" % "sbt-aspectj" % "0.10.4"),
+    addSbtPlugin("com.typesafe.sbt" % "sbt-aspectj" % "0.10.5"),
 
     scriptedLaunchOpts := {
       scriptedLaunchOpts.value ++
