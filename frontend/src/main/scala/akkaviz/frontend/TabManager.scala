@@ -17,6 +17,7 @@ class TabManager(repo: ActorRepository, upstreamConnection: ApiConnection.Upstre
       val tab: ActorStateTab = new ActorStateTab(stateVar, upstreamConnection.send)
       tab.attach(document.querySelector("#right-pane"))
       tab.tab.querySelector("a.close-tab").onClick({() => close(tab)})
+      tab.tab.querySelector("a[data-toggle]").addEventListener("click", handleMiddleClick(tab) _)
       tab
     }))
   }
@@ -38,5 +39,12 @@ class TabManager(repo: ActorRepository, upstreamConnection: ApiConnection.Upstre
       s.querySelector("a[data-toggle]").asInstanceOf[HTMLElement]
     }.foreach{ _.click() }
 
+  }
+
+  private def handleMiddleClick(tab: ClosableTab)(e: MouseEvent): Unit = {
+    if(e.button == 1) {
+      e.preventDefault()
+      close(tab)
+    }
   }
 }
