@@ -25,6 +25,7 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directi
     } ~
       path("frontend-launcher.js")(getFromResource("frontend-launcher.js")) ~
       path("frontend-fastopt.js")(getFromResource("frontend-fastopt.js")) ~
+      path("frontend-fastopt.js.map")(getFromResource("frontend-fastopt.js.map")) ~
       path("frontend-jsdeps.js")(getFromResource("frontend-jsdeps.js")) ~
       path("stream") {
         handleWebSocketMessages(tracingEventsFlow.mapMaterializedValue(EventSystem.subscribe))
