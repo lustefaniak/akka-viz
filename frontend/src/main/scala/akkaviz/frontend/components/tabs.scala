@@ -8,14 +8,11 @@ import rx.{Ctx, Rx, Var}
 import scalatags.JsDom.all._
 
 trait ClosableTab extends Tab {
-  def onClose(): Unit = {
-    tab.parentNode.removeChild(tab)
-    tabBody.parentNode.removeChild(tabBody)
-  }
+  def onClose(): Unit = {}
 
   override def attach(tabbedPane: domElement): Unit = {
     super.attach(tabbedPane)
-    tab.appendChild(a(cls := "glyphicon glyphicon-remove", href := "#", float.left, onclick := onClose _).render)
+    tab.appendChild(a(cls := "glyphicon glyphicon-remove close-tab", href := "#", float.left, onclick := onClose _).render)
   }
 }
 
@@ -23,6 +20,8 @@ trait Tab extends Component {
   def name: String
 
   def tabId: String
+
+  def isActive: Boolean = tab.classList.contains("active")
 
   lazy val activateA = a(href := s"#$tabId", "data-toggle".attr := "tab", s"$name", float.left).render
   lazy val tab = li(activateA).render
@@ -79,10 +78,6 @@ class ActorStateTab(actorState: Var[ActorState], upstreamSend: protocol.ApiClien
     tabBody.appendChild(rendered)
     val fsmGraph = new FsmGraph(fsmDiv)
     state.map(_.fsmTransitions).foreach(fsmGraph.displayFsm)
-  }
-
-  override def onClose(): Unit = {
-    super.onClose()
   }
 
   private[this] def refreshButton(actorRef: String) =

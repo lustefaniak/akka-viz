@@ -41,3 +41,14 @@ object FrontendUtil {
     else Some("akka://" + path.init.mkString("/"))
   }
 }
+
+object UndefUtil {
+  implicit class MayBeUndefOrNull[T](val maybeDefined: T) extends AnyVal {
+    def ?() = maybeDefined.asInstanceOf[js.UndefOr[T]].filter(_ != null)
+  }
+
+  implicit class RichUndefOps[T](val ud: js.UndefOr[T]) extends AnyVal {
+    def ||(other: js.UndefOr[T]) = ud.orElse(other)
+  }
+
+}
