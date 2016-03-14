@@ -68,6 +68,10 @@ lazy val commonSettings: Seq[sbt.Setting[_]] = SbtScalariform.defaultScalariform
   }
 ) ++ useJGit ++ bintraySettings
 
+val commonJava8Settings: Seq[sbt.Setting[_]] = Seq(
+  scalacOptions ++= Seq("-Ybackend:GenBCode", "-Ydelambdafy:method", "-target:jvm-1.8"),
+  javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint")
+)
 
 lazy val bintraySettings: Seq[sbt.Setting[_]] = Seq(
   bintrayCredentialsFile := file(".bintray_credentials"),
@@ -79,6 +83,7 @@ lazy val akkaviz =
     .disablePlugins(RevolverPlugin)
     .enablePlugins(GitVersioning)
     .settings(commonSettings)
+    .settings(commonJava8Settings)
     .aggregate(api, frontend, monitoring, plugin)
     .settings(
         publish := {},
@@ -90,6 +95,7 @@ lazy val frontend =
     .disablePlugins(RevolverPlugin, SbtScalariform)
     .enablePlugins(ScalaJSPlugin, GitVersioning)
     .settings(commonSettings)
+    .settings(commonJava8Settings)
     .settings(
       persistLauncher in Compile := true,
       persistLauncher in Test := false,
@@ -113,6 +119,7 @@ lazy val api =
     .enablePlugins(GitVersioning)
     .disablePlugins(RevolverPlugin)
     .settings(commonSettings)
+    .settings(commonJava8Settings)
     .settings(
       exportJars := true,
       //FIXME: don't use AST from Js.Value, define one inside api module
@@ -125,6 +132,7 @@ lazy val monitoring =
     .disablePlugins(SbtScalariform, RevolverPlugin)
     .enablePlugins(GitVersioning)
     .settings(commonSettings)
+    .settings(commonJava8Settings)
     .settings(aspectjSettings)
     .settings(
       fork := true,
@@ -155,6 +163,7 @@ lazy val demo =
     .disablePlugins(SbtScalariform)
     .enablePlugins(GitVersioning, RevolverPlugin)
     .settings(commonSettings)
+    .settings(commonJava8Settings)
     .settings(aspectjSettings)
     .settings(
       publishArtifact := false,
