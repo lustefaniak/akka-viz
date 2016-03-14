@@ -141,7 +141,8 @@ lazy val monitoring =
       (resourceGenerators in Compile) <+=
         (fastOptJS in Compile in frontend, packageScalaJSLauncher in Compile in frontend, packageJSDependencies in Compile in frontend)
           .map((f1, f2, f3) => {
-            Seq(f1.data, f2.data, f3)
+            val f1SourceMap = f1.data.getParentFile / (f1.data.getName + ".map")
+            Seq(f1.data, f2.data, f3, f1SourceMap)
           }),
       watchSources <++= (watchSources in frontend),
       AspectjKeys.compileOnly in Aspectj := true,
