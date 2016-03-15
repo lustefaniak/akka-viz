@@ -76,17 +76,14 @@ div.terminal {
     padding: 10px;
 }
 
-.actor-tree ul {
-    list-style-type: none;
-    padding-left: 25px;
+.actor-tree .list-group {
+    margin-bottom: 0;
 }
 
-.actor-tree>ul {
-    padding-left: 0px;
-}
-
-.actor-tree li span {
-    cursor: pointer;
+.actor-tree .list-group-item {
+    border: 1px solid #ddd
+    height: 24px;
+    line-height: 24px;
 }
 
 .actor-tree i.material-icons {

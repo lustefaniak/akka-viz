@@ -11,51 +11,54 @@ class HierarchyPanel(detailsOpener: (String) => Unit) extends Component {
 
   private[this] val $ = JQueryStatic
 
+  private[this] val indentPx = 15
+  private[this] val arrowRight = "keyboard_arrow_right"
+  private[this] val arrowDown = "keyboard_arrow_down"
+  private[this] val actorAttr = "actor-path".attr
+
   private[this] val seenActors: Dictionary[Unit] = Dictionary()
 
-  private[this] val ActorAttr = "actor-path".attr
-
   private[this] val hierarchy = div(
-    cls := "actor-tree",
-    ActorAttr := "root",
-    ul()
+    cls := "actor-tree list-group",
+    actorAttr := "root"
   ).render
 
-  private[this] def node(actorRef: String) = li(
-    ActorAttr := actorRef,
-    span(
-      i(cls := "material-icons"),
-      shortName(actorRef) + " ",
-      title := actorRef,
-      "data-target".attr := s"""[actor-path="$actorRef"]>ul""",
-      "data-toggle".attr := "collapse",
-      onclick := { () => nodeClicked(actorRef) }
-    ),
+  private[this] def depth(actorRef: String): Int = actorRef.count(_ == '/') - 2
+
+  private[this] def node(actorRef: String) = a(
+    actorAttr := actorRef,
+    cls := "list-group-item",
+    href := "#",
+    paddingLeft := (indentPx * depth(actorRef)).px,
+    title := actorRef,
+    "data-target".attr := s"""[actor-path="$actorRef"].list-group""",
+    "data-toggle".attr := "collapse",
+    onclick := { () => nodeClicked(actorRef) },
+    i(cls := "material-icons"),
+    lastPathElement(actorRef) + " ",
     a(
       "(details)",
       href := "#",
-      onclick := { () => detailsOpener(actorRef) }
-    ),
-    ul(
-      cls := "collapse"
+      onclick := { (event: Event) =>
+        event.stopPropagation()
+        detailsOpener(actorRef)
+      }
     )
   )
 
   private[this] def nodeClicked(ref: String) = {
-    val node = $(s"""[actor-path="$ref"]""")
-    val nodeUl = node.find("ul").first
-    val isEmpty = nodeUl.find("ul").first.length == 0
-    if (!isEmpty) {
-      val isExpanded = node.find("ul").first.hasClass("in")
+    val itemClicked = findItem(ref)
+    val group = findGroup(ref)
+    val isEmpty = group.children().length == 0
+    val isCollapsing = group.hasClass("collapsing")
+    if (!isEmpty && !isCollapsing) {
+      val isExpanded = group.hasClass("in")
       if (isExpanded)
-        node.find("span>i").first.text("keyboard_arrow_right")
-      else
-        node.find("span>i").first.text("keyboard_arrow_down")
+        itemClicked.find("i.material-icons").first.text(arrowRight)
+      else {
+        itemClicked.find("i.material-icons").first.text(arrowDown)
+      }
     }
-  }
-
-  private[this] def shortName(ref: String) = {
-    ref.stripPrefix("akka://").split("/").lastOption.getOrElse("")
   }
 
   def insert(ref: String): Unit = innerInsert(ref.stripSuffix("/"))
@@ -72,21 +75,35 @@ class HierarchyPanel(detailsOpener: (String) => Unit) extends Component {
   }
 
   private[this] def insertSorted(parentRef: String, ref: String): Unit = {
-    $(s"""[actor-path="$parentRef"]>ul""").toArray.headOption.map {
-      parentUl =>
-        val siblings = $(s"""[actor-path="$parentRef"]>ul>li""").toArray.toList
+    val parentQuery = findGroup(parentRef)
+    parentQuery.toArray.headOption.map {
+      parent =>
+        val siblings = parentQuery.children(".list-group-item").toArray.toList
         val nextElementOpt = siblings.dropWhile(_.getAttribute("actor-path") < ref).headOption
         val newNode = node(ref).render
         nextElementOpt match {
-          case Some(elem) => parentUl.insertBefore(newNode, elem)
-          case None => parentUl.appendChild(newNode)
+          case Some(elem) => parent.insertBefore(newNode, elem)
+          case None =>
+            parent.appendChild(newNode)
+            findItem(parentRef).find("i.material-icons").first.text(arrowRight)
         }
-        $(parentUl).parent.find("span>i").first.text("keyboard_arrow_right")
+        $(newNode).after(listGroupElement(ref))
     }
   }
+
+  private[this] def listGroupElement(ref: String) =
+    div(cls := "list-group collapse", actorAttr := ref).render
+
+  private[this] def lastPathElement(ref: String) =
+    ref.stripPrefix("akka://").split("/").lastOption.getOrElse("")
+
+  private[this] def findGroup(actorRef: String) =
+    $(s"""[actor-path="$actorRef"].list-group""")
+
+  private[this] def findItem(actorRef: String) =
+    $(s"""[actor-path="$actorRef"].list-group-item""")
 
   private[this] def exists(ref: String) = seenActors.contains(ref)
 
   override def attach(parent: Element): Unit = parent.appendChild(hierarchy)
-
 }
