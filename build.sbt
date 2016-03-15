@@ -70,7 +70,8 @@ lazy val commonSettings: Seq[sbt.Setting[_]] = SbtScalariform.defaultScalariform
 
 val commonJava8Settings: Seq[sbt.Setting[_]] = Seq(
   scalacOptions ++= Seq("-Ybackend:GenBCode", "-Ydelambdafy:method", "-target:jvm-1.8"),
-  javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint")
+  javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint"),
+  libraryDependencies += "org.scala-lang.modules" %% "scala-java8-compat" % "0.7.0"
 )
 
 lazy val bintraySettings: Seq[sbt.Setting[_]] = Seq(
