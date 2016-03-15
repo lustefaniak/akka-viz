@@ -13,4 +13,8 @@ object PersistenceSources {
     db.run(Queries.getAllFor)(ref).toReactive
   }
 
+  def between(ref: String, ref2: String): Publisher[ReceivedRecord] = {
+    db.run(Queries.getBetween)(ref, ref2, From)
+  }
+
 }

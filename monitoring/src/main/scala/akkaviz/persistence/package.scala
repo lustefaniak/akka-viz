@@ -6,9 +6,9 @@ import io.getquill._
 
 package object persistence {
 
-  val From = "<-"
+  val From = "<"
 
-  val To = "->"
+  val To = ">"
 
   case class ReceivedRecord(id: UUID, first: String, direction: String, second: String, data: String)
 
@@ -20,13 +20,8 @@ package object persistence {
     }
 
     val getBetween = quote {
-      (actorRef: String, actorRef2: String) =>
-        getAllFor(actorRef).filter(_.second == actorRef2)
-    }
-
-    val getFrom = quote {
-      (actorRef: String, actorRef2: String) =>
-        getBetween(actorRef, actorRef2).filter(_.direction == From)
+      (actorRef: String, actorRef2: String, direction: String) =>
+        getAllFor(actorRef).filter(_.second == actorRef2).filter(_.direction == direction)
     }
 
   }

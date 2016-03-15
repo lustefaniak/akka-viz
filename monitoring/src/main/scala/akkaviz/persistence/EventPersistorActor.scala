@@ -1,7 +1,7 @@
 package akkaviz.persistence
 
 import akka.actor.{Actor, ActorLogging}
-import akkaviz.events.Helpers
+import akkaviz.events.{FilteringRule, Helpers}
 import akkaviz.events.types._
 import akkaviz.serialization.MessageSerialization
 import com.datastax.driver.core.utils.UUIDs
@@ -24,7 +24,10 @@ class EventPersistorActor extends Actor with ActorLogging {
   }
 
   override def receive = {
-    case r: ReceivedWithId =>
+    case DoInsert =>
+      doInsert()
+
+    case r: ReceivedWithId if FilteringRule.isUserActor(r.actorRef) && FilteringRule.isUserActor(r.sender) =>
       val records = List(
         ReceivedRecord(UUIDs.timeBased(), Helpers.actorRefToString(r.sender), To, Helpers.actorRefToString(r.actorRef), MessageSerialization.render(r.message)),
         ReceivedRecord(UUIDs.timeBased(), Helpers.actorRefToString(r.actorRef), From, Helpers.actorRefToString(r.sender), MessageSerialization.render(r.message))
@@ -33,8 +36,6 @@ class EventPersistorActor extends Actor with ActorLogging {
       if (queue.size >= maxItemsInQueue) {
         doInsert()
       }
-    case DoInsert =>
-      doInsert()
 
     case _ => {}
 
