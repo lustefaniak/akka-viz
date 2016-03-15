@@ -20,7 +20,6 @@ class Player extends Actor with ActorLogging {
 
     case Revolver(0) =>
       Thread.sleep(2000)
-      log.info("BANG!")
       if (sender() != nextGuy) {
         sender() ! Next(nextGuy)
         nextGuy.tell(Revolver(Random.nextInt(6)), sender())
@@ -29,7 +28,6 @@ class Player extends Actor with ActorLogging {
 
     case Revolver(x) =>
       Thread.sleep(2000)
-      log.info("CLICK")
       nextGuy ! Revolver(x - 1)
       nextGuy ! "Unhandled message"
   }

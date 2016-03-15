@@ -72,6 +72,21 @@ div.terminal {
     height: 400px;
 }
 
-.actor-tree ul {
-    list-style-type: none;
+.actor-tree {
+    padding: 10px;
+}
+
+.actor-tree .list-group {
+    margin-bottom: 0;
+}
+
+.actor-tree .list-group-item {
+    border: 1px solid #ddd
+    height: 24px;
+    line-height: 24px;
+}
+
+.actor-tree i.material-icons {
+    vertical-align: middle;
+    min-width: 25px;
 }
