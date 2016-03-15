@@ -1,57 +1,41 @@
 package akkaviz.server
 
 import akka.actor.{ActorRef, ActorSystem, Kill, PoisonPill}
-import akka.http.scaladsl.marshalling.Marshaller
-import akka.http.scaladsl.marshalling.Marshalling.WithFixedContentType
+import akka.http.scaladsl.coding.Gzip
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.ws.{BinaryMessage, Message}
 import akka.http.scaladsl.server.Directives
 import akka.stream.scaladsl._
 import akka.stream.{Materializer, OverflowStrategy}
-import akka.util.ByteString
 import akkaviz.config.Config
 import akkaviz.events._
 import akkaviz.events.types._
-import akkaviz.persistence.{PersistenceSources, ReceivedRecord}
 import akkaviz.protocol
 import akkaviz.serialization.MessageSerialization
-import ammonite.repl.Bind
 
 import scala.collection.breakOut
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
-class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directives with SubscriptionSession with WebSocketRepl with AkkaHttpHelpers {
+class Webservice(implicit materializer: Materializer, system: ActorSystem)
+    extends Directives with SubscriptionSession with ReplSupport with AkkaHttpHelpers with ArchiveSupport with FrontendResourcesSupport with ProtocolSerializationSupport {
 
-
-  def route: Flow[HttpRequest, HttpResponse, Any] = get {
-    pathSingleSlash {
-      getFromResource("web/index.html")
-    } ~
-      path("frontend-launcher.js")(getFromResource("frontend-launcher.js")) ~
-      path("frontend-fastopt.js")(getFromResource("frontend-fastopt.js")) ~
-      path("frontend-fastopt.js.map")(getFromResource("frontend-fastopt.js.map")) ~
-      path("frontend-jsdeps.js")(getFromResource("frontend-jsdeps.js")) ~
+  def route: Flow[HttpRequest, HttpResponse, Any] = encodeResponseWith(Gzip) {
+    get {
       path("stream") {
         handleWebSocketMessages(tracingEventsFlow.mapMaterializedValue(EventSystem.subscribe))
-      } ~
-      pathPrefix("messages") {
-        path("of" / Segment) {
-          ref =>
-            completeAsJson(PersistenceSources.of(ref))
-        }
-      } ~
-      path("repl") {
-        replWebSocket
       }
-  } ~
-    getFromResourceDirectory("web")
+    } ~
+      archiveRouting ~
+      replRouting ~
+      frontendResourcesRouting
+  }
 
   def tracingEventsFlow: Flow[Message, Message, ActorRef] = {
     val eventSrc = Source.actorRef[BackendEvent](Config.bufferSize, OverflowStrategy.dropNew)
 
     val wsIn = Flow[Message]
-      .via(wsMessageToClientMessage)
+      .via(websocketMessageToClientMessage)
       .via(handleUserCommand)
       .scan(defaultSettings)(updateSettings)
       .expand(r => Iterator.continually(r))
@@ -61,7 +45,7 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directi
         case (settings, r: BackendEvent) if settings.eventAllowed(r) => r
       }.via(internalToApi)
       .keepAlive(10.seconds, () => protocol.Ping)
-      .via(eventSerialization)
+      .via(protocolServerMessageToByteString)
       .map(BinaryMessage.Strict(_))
 
     out
@@ -79,7 +63,7 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directi
       EventSystem.receiveDelay = duration
       Nil
     case protocol.SetEnabled(isEnabled) =>
-      system.log.info(s"Setting EventSystem.setEnabled(${isEnabled})")
+      system.log.info(s"Setting EventSystem.setEnabled($isEnabled)")
       EventSystem.setEnabled(isEnabled)
       Nil
     case protocol.RefreshInternalState(actor) =>
@@ -91,11 +75,6 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directi
     case protocol.KillActor(actor) =>
       ActorSystems.tell(actor, Kill)
       Nil
-  }
-
-  private[this] val wsMessageToClientMessage = Flow[Message].collect {
-    case BinaryMessage.Strict(msg) =>
-      protocol.IO.readClient(msg.asByteBuffer)
   }
 
   @inline
@@ -170,19 +149,4 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directi
     java.time.Instant.ofEpochMilli(ts).toString
   }
 
-  private[this] def eventSerialization: Flow[protocol.ApiServerMessage, ByteString, Any] = Flow[protocol.ApiServerMessage].map {
-    msg => ByteString(protocol.IO.write(msg))
-  }
-
-  protected override def replArgs: Seq[Bind[_]] = Nil
-
-  protected override def replPredef: String =
-    """
-      |import Predef.{println => _}
-      |import pprint.{pprintln => println}
-      |import akkaviz.events.ActorSystems.systems
-      |import scala.concurrent.duration._
-      |import akka.actor._
-      |import akka.pattern._
-    """.stripMargin
 }
