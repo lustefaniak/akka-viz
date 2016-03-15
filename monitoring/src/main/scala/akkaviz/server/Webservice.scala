@@ -1,6 +1,8 @@
 package akkaviz.server
 
 import akka.actor.{ActorRef, ActorSystem, Kill, PoisonPill}
+import akka.http.scaladsl.marshalling.Marshaller
+import akka.http.scaladsl.marshalling.Marshalling.WithFixedContentType
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.ws.{BinaryMessage, Message}
 import akka.http.scaladsl.server.Directives
@@ -10,14 +12,17 @@ import akka.util.ByteString
 import akkaviz.config.Config
 import akkaviz.events._
 import akkaviz.events.types._
+import akkaviz.persistence.{PersistenceSources, ReceivedRecord}
 import akkaviz.protocol
 import akkaviz.serialization.MessageSerialization
 import ammonite.repl.Bind
 
 import scala.collection.breakOut
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
-class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directives with SubscriptionSession with WebSocketRepl {
+class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directives with SubscriptionSession with WebSocketRepl with AkkaHttpHelpers {
+
 
   def route: Flow[HttpRequest, HttpResponse, Any] = get {
     pathSingleSlash {
@@ -29,6 +34,12 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directi
       path("frontend-jsdeps.js")(getFromResource("frontend-jsdeps.js")) ~
       path("stream") {
         handleWebSocketMessages(tracingEventsFlow.mapMaterializedValue(EventSystem.subscribe))
+      } ~
+      pathPrefix("messages") {
+        path("of" / Segment) {
+          ref =>
+            completeAsJson(PersistenceSources.of(ref))
+        }
       } ~
       path("repl") {
         replWebSocket
@@ -88,7 +99,7 @@ class Webservice(implicit fm: Materializer, system: ActorSystem) extends Directi
   }
 
   @inline
-  private[this] implicit val actorRefToString = Helpers.actorRefToString _
+  private[this] implicit val actorRefToString: Function1[ActorRef, String] = Helpers.actorRefToString
 
   private[this] def internalToApi: Flow[BackendEvent, protocol.ApiServerMessage, Any] = Flow[BackendEvent].map {
     case ReceivedWithId(eventId, sender, receiver, message, handled) =>
