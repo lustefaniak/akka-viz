@@ -3,7 +3,7 @@ package akkaviz.frontend
 import akkaviz.frontend.components._
 import org.scalajs.dom._
 import org.scalajs.dom.raw.HTMLElement
-import rx.{Var, Ctx}
+import rx.Ctx
 
 import scala.scalajs.js
 
@@ -43,8 +43,6 @@ class TabManager(
     tab
   }
 
-  private[this] def attachDom(tab: Tab): Unit = {
-    tab.attach(document.querySelector("#right-pane"))
   private[this] def attachTab(tab: Tab): Tab = {
     tab.attach(document.querySelector("#right-pane"))
     tab.onCreate()
