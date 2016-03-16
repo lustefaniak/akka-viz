@@ -210,7 +210,17 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
     hierarchyView.attach(document.getElementById("hierarchy-view"))
 
     js.Dynamic.global.$.material.init()
+    initResizable()
 
+  }
+
+  private[this] def initResizable(): Unit = {
+    val $ = js.Dynamic.global.$
+    $("#thebox").resizable(js.Dictionary("handles" -> "e"))
+    $("#top-menu").resizable(js.Dictionary(
+      "handles" -> "s",
+      "stop" -> (() => $("#top-menu").css("width", ""))
+    ))
   }
 
 }

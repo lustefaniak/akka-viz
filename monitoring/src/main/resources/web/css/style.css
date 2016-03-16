@@ -1,15 +1,38 @@
-html {
+html,body {
     height: 100%;
+}
+
+body {
+    display: flex;
+    flex-direction: row;
+}
+
+#thebox {
+    display: flex;
+    flex-direction: column;
+    min-width: 350px;
+    width: 480px;
+    height: 100%;
+}
+
+#top-menu {
+    height: 50%;
+}
+
+#bottom-menu {
+    flex: 1;
+}
+
+.menu {
+    min-height: 150px;
+    display:flex;
+    flex-direction: column;
 }
 
 #right-pane {
     display: block;
-    position: absolute;
-    left: 481px;
-    top: 0;
+    flex: 1;
     overflow: auto;
-    bottom: 0;
-    right: 0;
 }
 
 #right-pane .nav-tabs {
@@ -18,21 +41,8 @@ html {
 }
 
 #graphview {
-    position: absolute;
-    bottom: 0;
-    top: 0;
-    left: 0;
-    right: 0;
-    margin: 0;
-}
-
-#thebox {
-    left: 0;
-    top: 0;
-    display: block;
-    position: absolute;
-    width: 480px;
-    bottom: 0px;
+    width: 100vw;
+    height: 100vh;
 }
 
 .nav-tabs .active {
@@ -40,8 +50,7 @@ html {
 }
 
 #thebox .tab-content {
-    max-height: 300px;
-    overflow: scroll;
+    overflow: auto;
 }
 
 .popover {

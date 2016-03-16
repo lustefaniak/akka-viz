@@ -12,6 +12,7 @@
     <link href="//fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link href='https://fonts.googleapis.com/css?family=Inconsolata:400,700' rel='stylesheet' type='text/css'>
 
+    <link href='https://code.jquery.com/ui/1.11.4/themes/start/jquery-ui.css' rel='stylesheet' type='text/css'>
     <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css"
           integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
@@ -24,48 +25,50 @@
     <script src="js/term.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-material-design/0.5.7/js/material.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.11.4/jquery-ui.min.js"></script>
     <script src="frontend-fastopt.js"></script>
-
 </head>
 <body>
+<div id="thebox">
+    <div id="top-menu" class="menu">
+        <ul class="nav nav-tabs">
+            <li class="active"><a href="#actorselection" data-toggle="tab">Actor filter</a></li>
+            <li><a href="#messagefiltering" data-toggle="tab">Message filter</a></li>
+            <li><a href="#globalsettings" data-toggle="tab">Global settings</a></li>
+            <li style="float:right"><a href="#terminal" data-toggle="modal" data-target="#repl-modal">REPL</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane fade active in panel panel-default" id="actorselection"></div>
+            <div class="tab-pane fade panel panel-default" id="messagefiltering"></div>
+            <div class="tab-pane fade panel panel-default" id="globalsettings">
+                <div id="onoffsettings" class="panel panel-default"></div>
+                <div class="panel panel-default">
+                    <div id="graphsettings" class="panel-body"></div>
+                </div>
+                <div id="receivedelay" class="panel panel-default"></div>
+                <div id="graphsettings" class="panel panel-defaul"></div>
+            </div>
+        </div>
+    </div>
+    <div id="bottom-menu" class="menu">
+        <ul class="nav nav-tabs">
+            <li class="active"><a href="#messagelist" data-toggle="tab">Messages</a></li>
+            <li><a href="#asklist" data-toggle="tab">Asks</a></li>
+            <li><a href="#hierarchy-view" data-toggle="tab">Hierarchy</a></li>
+        </ul>
+        <div class="tab-content">
+            <div id="messagelist" class="tab-pane fade active in panel panel-default"></div>
+            <div id="asklist" class="tab-pane fade panel panel-default"></div>
+            <div id="hierarchy-view" class="tab-pane fade panel panel-default"></div>
+        </div>
+    </div>
+</div>
 <div id="right-pane">
     <ul class="nav nav-tabs">
         <li class="active"><a href="#graphview" data-toggle="tab">Message graph</a></li>
     </ul>
     <div class="tab-content">
         <div class="tab-pane active panel panel-default active" id="graphview"></div>
-    </div>
-</div>
-
-<div id="thebox">
-    <ul class="nav nav-tabs">
-        <li class="active"><a href="#actorselection" data-toggle="tab">Actor filter</a></li>
-        <li><a href="#messagefiltering" data-toggle="tab">Message filter</a></li>
-        <li><a href="#globalsettings" data-toggle="tab">Global settings</a></li>
-        <li style="float:right"><a href="#terminal" data-toggle="modal" data-target="#repl-modal">REPL</a></li>
-    </ul>
-    <div class="tab-content">
-        <div class="tab-pane fade active in panel panel-default" id="actorselection"></div>
-        <div class="tab-pane fade panel panel-default" id="messagefiltering"></div>
-        <div class="tab-pane fade panel panel-default" id="globalsettings">
-            <div id="onoffsettings" class="panel panel-default"></div>
-            <div class="panel panel-default">
-                <div id="graphsettings" class="panel-body"></div>
-            </div>
-            <div id="receivedelay" class="panel panel-default"></div>
-            <div id="graphsettings" class="panel panel-defaul"></div>
-        </div>
-    </div>
-
-    <ul class="nav nav-tabs">
-        <li class="active"><a href="#messagelist" data-toggle="tab">Messages</a></li>
-        <li><a href="#asklist" data-toggle="tab">Asks</a></li>
-        <li><a href="#hierarchy-view" data-toggle="tab">Hierarchy</a></li>
-    </ul>
-    <div class="tab-content">
-        <div id="messagelist" class="tab-pane fade active in panel panel-default"></div>
-        <div id="asklist" class="tab-pane fade panel panel-default"></div>
-        <div id="hierarchy-view" class="tab-pane fade panel panel-default"></div>
     </div>
 </div>
 <div class="modal fade" id="failures-modal" tabindex="-1" role="dialog">
@@ -117,7 +120,6 @@
         </div>
     </div>
 </div>
-
 
 <script src="frontend-launcher.js"></script>
 </body>
