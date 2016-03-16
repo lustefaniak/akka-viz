@@ -1,6 +1,6 @@
 package akkaviz.frontend.components
 
-import akkaviz.frontend.{FrontendUtil, PrettyJson}
+import akkaviz.frontend.{ActorPath, FrontendUtil, PrettyJson}
 import akkaviz.protocol.ActorFailure
 import org.scalajs.dom.html._
 import org.scalajs.dom.{Element => domElement, console, document}
@@ -11,10 +11,10 @@ import scala.util.Try
 import scalatags.JsDom.all._
 
 class ActorSelector(
-    seenActors: Var[Set[String]],
-    selectedActors: Var[Set[String]],
+    seenActors: Var[Set[ActorPath]],
+    selectedActors: Var[Set[ActorPath]],
     actorFailures: Var[Seq[ActorFailure]],
-    detailsOpener: (String) => Unit
+    detailsOpener: (ActorPath) => Unit
 )(implicit co: Ctx.Owner) extends PrettyJson with Component {
 
   def attach(parent: domElement): Unit = {
@@ -49,7 +49,7 @@ class ActorSelector(
       )
     ).render
 
-  private[this] def exceptionsButton(actorRef: String, failures: Seq[ActorFailure]) =
+  private[this] def exceptionsButton(actorRef: ActorPath, failures: Seq[ActorFailure]) =
     span(
       style := "color: red",
       `class` := "imgbtn glyphicon glyphicon-exclamation-sign",
@@ -62,7 +62,7 @@ class ActorSelector(
       }
     )
 
-  private[this] def detailsButton(actorRef: String) =
+  private[this] def detailsButton(actorRef: ActorPath) =
     span(
       `class` := "glyphicon glyphicon-info-sign",
       onclick := { () =>
@@ -70,7 +70,7 @@ class ActorSelector(
       }
     )
 
-  private[this] def actorExceptionsIndicator(actorRef: String, failures: Seq[ActorFailure]): _root_.scalatags.JsDom.Modifier =
+  private[this] def actorExceptionsIndicator(actorRef: ActorPath, failures: Seq[ActorFailure]): _root_.scalatags.JsDom.Modifier =
     if (failures.isEmpty) ""
     else span(b(s"${failures.length} "), exceptionsButton(actorRef, failures))
 
@@ -101,7 +101,7 @@ class ActorSelector(
     actorTreeTbody.appendChild(content.render)
   }
 
-  def toggleActor(actorRef: String): Unit = {
+  def toggleActor(actorRef: ActorPath): Unit = {
     if (selectedActors.now contains actorRef) {
       console.log(s"Unselected '$actorRef' actor")
       selectedActors() = selectedActors.now - actorRef

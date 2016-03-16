@@ -53,6 +53,54 @@ Please check [lustefaniak/akka-viz-demo](https://github.com/lustefaniak/akka-viz
 
 ## Running
 
+## Configuration
+To change one of the akka-viz default settings create `application.conf` file as defined in [Typesafe Config documentation](https://github.com/typesafehub/config#standard-behavior)
+ 
+Default settings are:
+ 
+```
+akkaviz {
+  internalSystemName = akka-viz
+  interface = 127.0.0.1
+  port = 8888
+  bufferSize = 10000
+  maxSerializationDepth = 3
+  inspectObjects = false
+  autoStartReporting = true
+  enableArchive = true
+  cassandra {
+    keyspace = akkaviz
+    preparedStatementCacheSize = 100
+    session {
+      contactPoint = 127.0.0.1
+    }
+  }
+}
+
+```
+
+## Message archive
+
+Akka-viz can use Cassandra database to store all messages so they could be replayed in the frontend for easier debugging.
+
+To use it make sure `akkaviz.enableArchive = true` and `akkaviz.cassandra` points to correct Cassandra configuration.
+
+You need to manually create keyspace and tables:
+
+```
+CREATE KEYSPACE IF NOT EXISTS akkaviz WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };
+
+CREATE TABLE IF NOT EXISTS akkaviz.received_record (
+  id TIMEUUID,
+  first TEXT,
+  direction TEXT,
+  second TEXT,
+  data TEXT,
+  PRIMARY KEY (first, direction, second, id)
+);
+```
+
+
 ### Demos
 We supply a few demos with the source code, so you can explore without hooking up to an existing ActorSystem.
 

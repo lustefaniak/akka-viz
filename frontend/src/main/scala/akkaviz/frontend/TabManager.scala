@@ -1,6 +1,6 @@
 package akkaviz.frontend
 
-import akkaviz.frontend.components.{ClosableTab, Tab, ActorStateTab}
+import akkaviz.frontend.components.{ActorStateTab, ClosableTab, LinkStateTab, Tab}
 import org.scalajs.dom._
 import org.scalajs.dom.raw.HTMLElement
 import rx.Ctx
@@ -11,7 +11,7 @@ class TabManager(repo: ActorRepository, upstreamConnection: ApiConnection.Upstre
 
   val tabs: js.Dictionary[Tab] = js.Dictionary.empty
 
-  def openActorDetails(actorRef: String): Unit = {
+  def openActorDetails(actorRef: ActorPath): Unit = {
     activate(tabs.getOrElseUpdate(ActorStateTab.stateTabId(actorRef), {
       val stateVar = repo.state(actorRef)
       val tab: ActorStateTab = new ActorStateTab(stateVar, upstreamConnection.send)
@@ -20,6 +20,17 @@ class TabManager(repo: ActorRepository, upstreamConnection: ApiConnection.Upstre
       tab.tab.querySelector("a[data-toggle]").addEventListener("click", handleMiddleClick(tab) _)
       tab
     }))
+  }
+
+  def openLinkDetails(link: ActorLink): Unit = {
+    activate(tabs.getOrElseUpdate(LinkStateTab.stateTabId(link), {
+      val tab: LinkStateTab = new LinkStateTab(link)
+      tab.attach(document.querySelector("#right-pane"))
+      tab.tab.querySelector("a.close-tab").onClick({ () => close(tab) })
+      tab.tab.querySelector("a[data-toggle]").addEventListener("click", handleMiddleClick(tab) _)
+      tab
+    }))
+
   }
 
   def activate(tab: Tab): Unit = {

@@ -10,7 +10,9 @@ val akkaVersion = "2.4.2"
 val scalatestVersion = "3.0.0-M15"
 
 lazy val commonSettings: Seq[sbt.Setting[_]] = SbtScalariform.defaultScalariformSettings ++ Seq(
-  ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) },
+  ivyScala := ivyScala.value map {
+    _.copy(overrideScalaVersion = true)
+  },
   updateOptions := updateOptions.value.withCachedResolution(true),
   ScalariformKeys.preferences := ScalariformKeys.preferences.value
     .setPreference(AlignSingleLineCaseStatements, true)
@@ -44,12 +46,11 @@ lazy val commonSettings: Seq[sbt.Setting[_]] = SbtScalariform.defaultScalariform
           <id>JJag</id>
           <url>https://github.com/JJag</url>
         </developer>
-      </developers>,
-  {
+      </developers>, {
     import scala.xml.{Node => XmlNode, NodeSeq => XmlNodeSeq, _}
     import scala.xml.transform.{RewriteRule, RuleTransformer}
 
-    def omitDep(e:Elem): XmlNodeSeq = {
+    def omitDep(e: Elem): XmlNodeSeq = {
       val organization = e.child.filter(_.label == "groupId").flatMap(_.text).mkString
       val artifact = e.child.filter(_.label == "artifactId").flatMap(_.text).mkString
       val version = e.child.filter(_.label == "version").flatMap(_.text).mkString
@@ -83,9 +84,9 @@ lazy val akkaviz =
     .settings(commonSettings)
     .aggregate(api, frontend, monitoring, plugin)
     .settings(
-        publish := {},
-        publishLocal := {}
-      )
+      publish := {},
+      publishLocal := {}
+    )
 
 lazy val frontend =
   (project in file("frontend"))
@@ -137,6 +138,7 @@ lazy val monitoring =
       libraryDependencies += "com.lihaoyi" % "ammonite-repl" % "0.5.6" cross CrossVersion.full,
       libraryDependencies += "com.typesafe.akka" %% "akka-http-experimental" % akkaVersion, // FIXME: shadow that dependency and hide it
       libraryDependencies += "org.scalatest" %%% "scalatest" % scalatestVersion % "test",
+      libraryDependencies += "io.getquill" %% "quill-cassandra" % "0.4.1",
       scalacOptions += "-Xmacro-settings:conf.output.dir=" + baseDirectory.value / "src/main/resources/",
       (resourceGenerators in Compile) <+=
         (fastOptJS in Compile in frontend, packageScalaJSLauncher in Compile in frontend, packageJSDependencies in Compile in frontend)

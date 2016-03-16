@@ -7,8 +7,8 @@ import scala.scalajs.js
 
 object FrontendUtil {
   @inline
-  final def isUserActor(ref: String): Boolean = {
-    val split = ref.split('/')
+  final def isUserActor(actorRef: ActorPath): Boolean = {
+    val split = actorRef.split('/')
     split.length > 3 && split(3) == "user"
   }
 
@@ -30,12 +30,12 @@ object FrontendUtil {
   }
 
   @inline
-  def shortActorName(actorRef: String) = actorRef.split('/').drop(3).mkString("/")
+  def shortActorName(actorRef: ActorPath) = actorRef.split('/').drop(3).mkString("/")
 
   @inline
-  def systemName(actorRef: String): String = actorRef.split('/')(2)
+  def systemName(actorRef: ActorPath): String = actorRef.split('/')(2)
 
-  def parent(actor: String): Option[String] = {
+  def parent(actor: ActorPath): Option[String] = {
     val path = actor.stripPrefix("akka://").split("/")
     if (path.length <= 1) None
     else Some("akka://" + path.init.mkString("/"))

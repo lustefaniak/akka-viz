@@ -5,6 +5,7 @@ import akka.pattern._
 import akka.util.Timeout
 import akkaviz.config.Config
 import akkaviz.events.types._
+import akkaviz.persistence.EventPersistorActor
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -16,8 +17,13 @@ object EventSystem {
 
   private[this] val publisher = system.actorOf(Props(classOf[EventPublisherActor]).withDispatcher(
     "control-aware-dispatcher"
-  ))
-  private[this] val globalSettings = system.actorOf(Props(classOf[GlobalSettingsActor]))
+  ), "publisher")
+
+  if (Config.enableArchive) {
+    system.actorOf(Props(classOf[EventPersistorActor], publisher), "persistor")
+  }
+
+  private[this] val globalSettings = system.actorOf(Props(classOf[GlobalSettingsActor]), "global-settings")
   private[this] val autoStartReporting = Config.autoStartReporting
 
   globalSettings ! publisher

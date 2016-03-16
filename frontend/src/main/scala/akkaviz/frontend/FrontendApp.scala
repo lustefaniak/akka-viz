@@ -131,7 +131,9 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
   private[this] val thrownExceptions = Var[Seq[ActorFailure]](Seq())
   private[this] val showUnconnected = Var[Boolean](false)
   private[this] val tabManager = new TabManager(repo, upstreamConnection)
-  private[this] val actorSelector = new ActorSelector(repo.seenActors, selectedActors, thrownExceptions, tabManager.openActorDetails)
+  private[this] val actorSelector = new ActorSelector(
+    repo.seenActors, selectedActors, thrownExceptions, tabManager.openActorDetails
+  )
   private[this] val messageFilter = new MessageFilter(seenMessages, selectedMessages, selectedActors)
   private[this] val messagesPanel = new MessagesPanel(selectedActors)
   private[this] val asksPanel = new AsksPanel(selectedActors)
@@ -139,7 +141,9 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
   private[this] val connectionAlert = new Alert()
   private[this] val unconnectedOnOff = new UnconnectedOnOff(showUnconnected)
   private[this] val replTerminal = new ReplTerminal()
-  private[this] val graphView = new GraphView(showUnconnected, actorSelector.toggleActor, ActorStateAsNodeRenderer.render)
+  private[this] val graphView = new GraphView(
+    showUnconnected, actorSelector.toggleActor, tabManager.openLinkDetails, ActorStateAsNodeRenderer.render
+  )
   private[this] val hierarchyView = new HierarchyPanel(tabManager.openActorDetails)
   private[this] val maxRetries = 10
 

@@ -4,10 +4,9 @@ import akkaviz.frontend.vis
 import akkaviz.frontend.vis.{NetworkData, NetworkOptions}
 import org.scalajs.dom.html.Element
 import org.scalajs.dom.{Element => domElement}
-import scala.collection.breakOut
 
+import scala.collection.breakOut
 import scala.scalajs.js
-import scala.scalajs.js.JSConverters._
 
 class FsmGraph(parent: Element) {
 
@@ -28,7 +27,7 @@ class FsmGraph(parent: Element) {
       val allStates = transitions.flatMap { case (from, to) => Set(from, to) }
       val nodes: js.Array[vis.Node] = allStates.map(state => vis.Node(state, simplifyStateName(state), state))(breakOut)
       val edges: js.Array[vis.Edge] = transitions.map {
-        case (from, to) => vis.Edge(s"${from}->${to}", from, to)
+        case (from, to) => vis.Edge(s"${from}>${to}", from, to)
       }(breakOut)
       networkNodes.clear()
       networkNodes.add(nodes)
