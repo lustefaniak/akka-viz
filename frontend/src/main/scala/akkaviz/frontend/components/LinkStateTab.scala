@@ -1,25 +1,22 @@
 package akkaviz.frontend.components
 
-import akkaviz.frontend.{Router, FrontendUtil, ActorLink, ActorPath}
-import akkaviz.frontend.ActorRepository.ActorState
-import akkaviz.{rest, protocol}
+import akkaviz.frontend.{ActorLink, FrontendUtil, Router}
+import akkaviz.rest
 import org.scalajs.dom
 import org.scalajs.dom.ext.Ajax
 import org.scalajs.dom.{Element => domElement, console}
-import rx.{Ctx, Rx, Var}
+import rx.Ctx
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.scalajs.js
-import scala.scalajs.js.{Date, JSON}
+import scala.scalajs.js.Date
 import scalatags.JsDom.all._
-import scala.concurrent.ExecutionContext.Implicits.global
 
 class LinkStateTab(link: ActorLink)(implicit co: Ctx.Owner) extends ClosableTab {
 
   import LinkStateTab._
   import akkaviz.frontend.PrettyJson._
-
-  import scalatags.rx.all._
 
   val tabId = stateTabId(link)
   val name = s"${FrontendUtil.shortActorName(link.from)} → ${FrontendUtil.shortActorName(link.to)}"
@@ -30,6 +27,8 @@ class LinkStateTab(link: ActorLink)(implicit co: Ctx.Owner) extends ClosableTab 
 
   private[this] def loadBetween(): Unit = {
     if (loading.isEmpty) {
+      messagesTbody.innerHTML = ""
+      messagesTbody.appendChild(loadingTbodyContent)
       val f = Ajax.get(url)
       f.onComplete(_ => loading = js.undefined)
       f.onSuccess {
@@ -55,7 +54,7 @@ class LinkStateTab(link: ActorLink)(implicit co: Ctx.Owner) extends ClosableTab 
     tr(
       td(FrontendUtil.shortActorName(rcv.from)),
       td(FrontendUtil.shortActorName(rcv.to)),
-      td(new Date(rcv.timestamp.toDouble).toLocaleDateString())
+      td(new Date(rcv.timestamp.toDouble).toLocaleString())
     ),
     tr(
       td(colspan := 3)(pre(prettyPrintJson(rcv.payload)))
@@ -73,7 +72,8 @@ class LinkStateTab(link: ActorLink)(implicit co: Ctx.Owner) extends ClosableTab 
     "Refresh view"
   )
 
-  private[this] val messagesTbody = tbody.render
+  private[this] val loadingTbodyContent = tr(td(colspan := 3, "Loading...")).render
+  private[this] val messagesTbody = tbody(loadingTbodyContent).render
   private[this] val rendered = div(
     cls := "panel-body",
     div(
