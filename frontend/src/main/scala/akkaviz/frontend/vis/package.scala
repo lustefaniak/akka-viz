@@ -71,6 +71,8 @@ package object vis {
 
     def clear(): js.Array[String] = js.native
 
+    def getIds(options: js.Object): js.Array[String] = js.native
+
   }
 
   @js.native
@@ -297,11 +299,19 @@ package object vis {
   @js.native
   @JSName("vis.Graph2d")
   class Graph2d(
-    container: Element,
-    data: UndefOr[DataSet[Item]] = js.undefined,
-    groups: UndefOr[js.Array[Group] | DataSet[Group]] = js.undefined,
-    options: js.Any = js.undefined
-  ) extends js.Any
+      container: Element,
+      data: UndefOr[DataSet[Item]] = js.undefined,
+      groups: UndefOr[js.Array[Group] | DataSet[Group]] = js.undefined,
+      options: js.Any = js.undefined
+  ) extends js.Any {
+    def getWindow(): Window = js.native
+  }
+
+  @ScalaJSDefined
+  trait Window extends js.Object {
+    val start: js.Date
+    val end: js.Date
+  }
 
   @ScalaJSDefined
   class Group(
