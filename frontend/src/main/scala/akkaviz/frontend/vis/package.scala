@@ -4,8 +4,8 @@ import org.scalajs.dom.html.Canvas
 import org.scalajs.dom.{Element, Event}
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSName
-import scala.scalajs.js.|
+import scala.scalajs.js.annotation.{ScalaJSDefined, JSName}
+import scala.scalajs.js.{UndefOr, |}
 
 package object vis {
 
@@ -294,4 +294,38 @@ package object vis {
 
   }
 
+  @js.native
+  @JSName("vis.Graph2d")
+  class Graph2d(
+    container: Element,
+    data: UndefOr[DataSet[Item]] = js.undefined,
+    groups: UndefOr[js.Array[Group] | DataSet[Group]] = js.undefined,
+    options: js.Any = js.undefined
+  ) extends js.Any
+
+  @ScalaJSDefined
+  class Group(
+    val id: String | Double,
+    val content: String,
+    val className: js.UndefOr[String] = js.undefined,
+    val style: js.UndefOr[String] = js.undefined,
+    val options: js.UndefOr[js.Any] = js.undefined,
+    val visible: js.UndefOr[Boolean] = js.undefined
+  ) extends js.Object
+
+  @ScalaJSDefined
+  class Item(
+    val x: js.Date,
+    val y: Double,
+    val group: UndefOr[String | Double] = js.undefined,
+    val label: UndefOr[Label] = js.undefined
+  ) extends js.Object
+
+  @ScalaJSDefined
+  class Label(
+    val content: String,
+    val xOffset: UndefOr[Double] = js.undefined,
+    val yOffset: UndefOr[Double] = js.undefined,
+    val className: UndefOr[String] = js.undefined
+  ) extends js.Object
 }

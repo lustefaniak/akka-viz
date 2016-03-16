@@ -37,8 +37,6 @@ class GlobalSettingsActor extends Actor with ActorLogging {
       val sink = Sink.foreach[ThroughputMeasurement](ev => EventSystem.report(ev))
       val flow = src.via(ThroughputMeasurementFlow.apply(1.second)).to(sink).run()
 
-
-
     case DisableThroughput =>
       throughputSrcRef.foreach { ref =>
         ref ! PoisonPill

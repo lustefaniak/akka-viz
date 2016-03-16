@@ -114,12 +114,8 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
 
       case Ping => {}
 
-      case t @ ThroughputMeasurement(ref, msgPerSecond, ts) =>
-        repo.mutateActor(ref) { s =>
-          s.throughputLog.push(js.Dictionary("x" -> ts, "y" -> msgPerSecond))
-          if(s.throughputLog.length > MaxThroughputLogLen) s.throughputLog.shift()
-          s
-        }
+      case tm: ThroughputMeasurement =>
+        throughputTab.addMeasurement(tm)
     }
   }
 
@@ -139,6 +135,7 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
   private[this] val thrownExceptions = Var[Seq[ActorFailure]](Seq())
   private[this] val showUnconnected = Var[Boolean](false)
   private[this] val tabManager = new TabManager(repo, upstreamConnection)
+  private[this] val throughputTab = new ThroughputGraphViewTab()
   private[this] val actorSelector = new ActorSelector(repo.seenActors, selectedActors, thrownExceptions, tabManager.openActorDetails)
   private[this] val messageFilter = new MessageFilter(seenMessages, selectedMessages, selectedActors)
   private[this] val messagesPanel = new MessagesPanel(selectedActors)
@@ -216,6 +213,7 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
     replTerminal.attach(document.getElementById("repl"))
     graphView.attach(document.getElementById("graphview"))
     hierarchyView.attach(document.getElementById("hierarchy-view"))
+    tabManager.attachTab(throughputTab)
 
     js.Dynamic.global.$.material.init()
 

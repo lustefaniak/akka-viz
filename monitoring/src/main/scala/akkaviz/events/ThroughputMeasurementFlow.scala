@@ -14,9 +14,10 @@ object ThroughputMeasurementFlow {
       .map { refs =>
         refs.groupBy(identity).mapValues(_.length)
       }
-      .scan(Map[ActorRef, Int]()) { case (previous, current) =>
-        // produce zero for actors that have been measured previously but didn't receive any messages during `period`
-        current ++ (for { k <- current.keySet.diff(previous.keySet) } yield k -> 0)
+      .scan(Map[ActorRef, Int]()) {
+        case (previous, current) =>
+          // produce zero for actors that have been measured previously but didn't receive any messages during `period`
+          current ++ (for { k <- current.keySet.diff(previous.keySet) } yield k -> 0)
       }
       .mapConcat { m =>
         for {
