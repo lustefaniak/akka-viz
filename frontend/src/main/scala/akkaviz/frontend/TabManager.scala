@@ -22,6 +22,12 @@ class TabManager(repo: ActorRepository, upstreamConnection: ApiConnection.Upstre
     }))
   }
 
+  def openLinkDetails(link: ActorLink): Unit = {
+
+    console.log(link.toString)
+
+  }
+
   def activate(tab: Tab): Unit = {
     document.querySelector(s"""a[href*="${tab.tabId}"]""").asInstanceOf[HTMLElement].click()
   }

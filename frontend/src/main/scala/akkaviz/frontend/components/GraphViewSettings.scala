@@ -28,6 +28,7 @@ trait GraphViewSettings {
     opts.interaction.hover = true
     opts.interaction.hideEdgesOnDrag = true
     opts.interaction.multiselect = true
+    opts.interaction.selectConnectedEdges = false
 
     opts.physics = js.Dynamic.literal()
     //opts.physics.solver = "hierarchicalRepulsion"

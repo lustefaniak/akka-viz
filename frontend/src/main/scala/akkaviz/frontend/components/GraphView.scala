@@ -2,7 +2,7 @@ package akkaviz.frontend.components
 
 import akkaviz.frontend.ActorRepository.ActorState
 import akkaviz.frontend.components.GraphView.{AddNode, RemoveNode}
-import akkaviz.frontend.{ScheduledQueue, vis}
+import akkaviz.frontend.{ActorLink, ScheduledQueue, vis}
 import org.scalajs.dom._
 import rx.Var
 
@@ -13,6 +13,7 @@ import scala.scalajs.js.|._
 class GraphView(
     showUnconnected: Var[Boolean],
     actorSelectionToggler: (String) => Unit,
+    linkDetailsOpener: (ActorLink) => Unit,
     renderNode: (String, ActorState) => vis.Node
 ) extends Component with GraphViewSettings {
 
@@ -36,6 +37,18 @@ class GraphView(
     n.onDoubleClick {
       (event: vis.ClickEvent) =>
         event.nodes.foreach(actorSelectionToggler)
+    }
+    n.onSelectEdge {
+      (event: vis.ClickEvent) =>
+        val linkMaybe = event.edges.headOption.flatMap {
+          e =>
+            val parts = e.split('>')
+            if (parts.size == 2)
+              Some(ActorLink(parts(0), parts(1)))
+            else
+              None
+        }
+        linkMaybe.foreach(linkDetailsOpener(_))
     }
 
     network = n
