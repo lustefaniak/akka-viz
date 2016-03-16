@@ -87,4 +87,3 @@ object ActorStateTab {
     s"actor-state-${path.replaceAll("[\\/|\\.|\\\\|\\$]", "-").filterNot(_ == ':')}"
   }
 }
-

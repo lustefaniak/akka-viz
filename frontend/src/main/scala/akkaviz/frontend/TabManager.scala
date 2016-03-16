@@ -1,9 +1,10 @@
 package akkaviz.frontend
 
 import akkaviz.frontend.components.{ActorStateTab, ClosableTab, LinkStateTab, Tab}
+import akkaviz.frontend.components.{ActorStateTab, ClosableTab, Tab}
 import org.scalajs.dom._
 import org.scalajs.dom.raw.HTMLElement
-import rx.{Var, Ctx}
+import rx.Ctx
 
 import scala.scalajs.js
 
