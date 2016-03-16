@@ -30,14 +30,20 @@ body {
 }
 
 #right-pane {
-    display: block;
+    display: flex;
+    flex-direction: column;
     flex: 1;
-    overflow: auto;
+    overflow: hidden;
 }
 
 #right-pane .nav-tabs {
     z-index: 9999;
     position: relative;
+}
+
+#graphtab {
+    flex: 1;
+    overflow: hidden;
 }
 
 #graphview {
@@ -49,8 +55,18 @@ body {
     background-color: tomato;
 }
 
-#thebox .tab-content {
+#right-pane .tab-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.tab-content {
     overflow: auto;
+}
+
+.tab-content .panel {
+    margin-bottom: 0;
 }
 
 .popover {
