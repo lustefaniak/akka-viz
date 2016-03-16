@@ -3,44 +3,17 @@ package akkaviz.frontend.components
 import akkaviz.frontend.ActorPath
 import akkaviz.frontend.ActorRepository.ActorState
 import akkaviz.protocol
-import org.scalajs.dom.{Element => domElement, _}
+import org.scalajs.dom.{Element => domElement}
 import rx.{Ctx, Rx, Var}
 
 import scalatags.JsDom.all._
 
-trait ClosableTab extends Tab {
-  def onClose(): Unit = {}
-
-  override def attach(tabbedPane: domElement): Unit = {
-    super.attach(tabbedPane)
-    tab.appendChild(a(cls := "glyphicon glyphicon-remove close-tab", href := "#", float.left, onclick := onClose _).render)
-  }
-}
-
-trait Tab extends Component {
-  def name: String
-
-  def tabId: String
-
-  def isActive: Boolean = tab.classList.contains("active")
-
-  lazy val activateA = a(href := s"#$tabId", "data-toggle".attr := "tab", s"$name", float.left).render
-  lazy val tab = li(activateA).render
-
-  lazy val tabBody = div(`class` := "tab-pane panel panel-default ", id := s"$tabId").render
-
-  override def attach(tabbedPane: domElement): Unit = {
-    tabbedPane.querySelector("ul.nav-tabs").appendChild(tab)
-    tabbedPane.querySelector("div.tab-content").appendChild(tabBody)
-    activateA.click()
-  }
-
-}
-
 class ActorStateTab(actorState: Var[ActorState], upstreamSend: protocol.ApiClientMessage => Unit)(implicit co: Ctx.Owner) extends ClosableTab {
-  import scalatags.rx.all._
+
   import ActorStateTab._
   import akkaviz.frontend.PrettyJson._
+
+  import scalatags.rx.all._
 
   val name = actorState.now.path
   val tabId = stateTabId(actorState.now.path)

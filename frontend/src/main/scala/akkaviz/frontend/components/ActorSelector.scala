@@ -1,6 +1,6 @@
 package akkaviz.frontend.components
 
-import akkaviz.frontend.{ActorLink, ActorPath, FrontendUtil, PrettyJson}
+import akkaviz.frontend.{ActorPath, FrontendUtil, PrettyJson}
 import akkaviz.protocol.ActorFailure
 import org.scalajs.dom.html._
 import org.scalajs.dom.{Element => domElement, console, document}

@@ -4,10 +4,9 @@ import akkaviz.frontend.vis
 import akkaviz.frontend.vis.{NetworkData, NetworkOptions}
 import org.scalajs.dom.html.Element
 import org.scalajs.dom.{Element => domElement}
-import scala.collection.breakOut
 
+import scala.collection.breakOut
 import scala.scalajs.js
-import scala.scalajs.js.JSConverters._
 
 class FsmGraph(parent: Element) {
 
