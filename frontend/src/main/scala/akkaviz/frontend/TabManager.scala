@@ -1,6 +1,6 @@
 package akkaviz.frontend
 
-import akkaviz.frontend.components.{ClosableTab, Tab, ActorStateTab}
+import akkaviz.frontend.components.{ActorStateTab, ClosableTab, LinkStateTab, Tab}
 import org.scalajs.dom._
 import org.scalajs.dom.raw.HTMLElement
 import rx.Ctx
@@ -23,8 +23,13 @@ class TabManager(repo: ActorRepository, upstreamConnection: ApiConnection.Upstre
   }
 
   def openLinkDetails(link: ActorLink): Unit = {
-
-    console.log(link.toString)
+    activate(tabs.getOrElseUpdate(LinkStateTab.stateTabId(link), {
+      val tab: LinkStateTab = new LinkStateTab(link)
+      tab.attach(document.querySelector("#right-pane"))
+      tab.tab.querySelector("a.close-tab").onClick({ () => close(tab) })
+      tab.tab.querySelector("a[data-toggle]").addEventListener("click", handleMiddleClick(tab) _)
+      tab
+    }))
 
   }
 
