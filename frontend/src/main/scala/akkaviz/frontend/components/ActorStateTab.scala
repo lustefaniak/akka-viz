@@ -130,7 +130,20 @@ class ThroughputGraphViewTab extends Tab {
     val group = new Group(tm.actorRef, tm.actorRef)
     val date = new Date(js.Date.parse(tm.timestamp))
     val item = new Item(date, tm.msgPerSecond, tm.actorRef)
+    removeOldItems()
     groups.update(group)
     items.add(item)
+  }
+
+  def removeOldItems(): Unit = {
+    val range = graph.getWindow()
+    val interval = range.end.valueOf() - range.start.valueOf()
+
+    val oldIds = items.getIds(js.Dynamic.literal(
+        filter = { (item: Item) =>
+          item.x.valueOf() < (range.start.valueOf() - interval)
+        }
+    ))
+    items.remove(oldIds)
   }
 }
