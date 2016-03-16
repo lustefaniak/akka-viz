@@ -131,7 +131,8 @@ class ThroughputGraphViewTab extends Tab {
   val graphContainer = div(id := "thr-graph-container", width := 100.pct).render
   val options = js.Dynamic.literal(
     start = js.Date.now(),
-    end = js.Date.now() + 2.minutes.toMillis
+    end = js.Date.now() + 2.minutes.toMillis,
+    interpolation = false
   )
   val graph = new Graph2d(graphContainer, items, groups, options)
 
