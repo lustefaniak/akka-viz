@@ -10,7 +10,7 @@ import rx.{Ctx, Rx, Var}
 
 import scala.concurrent.Future
 import scala.scalajs.js
-import scala.scalajs.js.JSON
+import scala.scalajs.js.{Date, JSON}
 import scalatags.JsDom.all._
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -22,7 +22,7 @@ class LinkStateTab(link: ActorLink)(implicit co: Ctx.Owner) extends ClosableTab 
   import scalatags.rx.all._
 
   val tabId = stateTabId(link)
-  val name = s"${FrontendUtil.shortActorName(link.from)}>${FrontendUtil.shortActorName(link.to)}"
+  val name = s"${FrontendUtil.shortActorName(link.from)} → ${FrontendUtil.shortActorName(link.to)}"
 
   private[this] val url = Router.messagesBetween(link.from, link.to)
   console.log(url)
@@ -40,6 +40,13 @@ class LinkStateTab(link: ActorLink)(implicit co: Ctx.Owner) extends ClosableTab 
             messagesTbody.appendChild(messageRow(rcv).render)
           }
       }
+      f.onFailure {
+        case _ =>
+          messagesTbody.innerHTML = ""
+          messagesTbody.appendChild(
+            tr(td(colspan := 3, "Unable to download archive, please check server is connected to Cassandra.")).render
+          )
+      }
       loading = f
     }
   }
@@ -47,10 +54,11 @@ class LinkStateTab(link: ActorLink)(implicit co: Ctx.Owner) extends ClosableTab 
   private[this] def messageRow(rcv: rest.Received): Seq[Frag] = Seq(
     tr(
       td(FrontendUtil.shortActorName(rcv.from)),
-      td(FrontendUtil.shortActorName(rcv.to))
+      td(FrontendUtil.shortActorName(rcv.to)),
+      td(new Date(rcv.timestamp.toDouble).toLocaleDateString())
     ),
     tr(
-      td(colspan := 2)(pre(prettyPrintJson(rcv.payload)))
+      td(colspan := 3)(pre(prettyPrintJson(rcv.payload)))
     )
   )
 
@@ -76,7 +84,7 @@ class LinkStateTab(link: ActorLink)(implicit co: Ctx.Owner) extends ClosableTab 
       table(
         cls := "table table-striped table-hover",
         thead(
-          tr(th("From"), th("To"))
+          tr(th("From"), th("To"), th("Time"))
         ), messagesTbody
       ))
   ).render

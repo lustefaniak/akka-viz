@@ -19,8 +19,9 @@ object EventSystem {
     "control-aware-dispatcher"
   ), "publisher")
 
-  private[this] val persistor = system.actorOf(Props(classOf[EventPersistorActor]), "persistor")
-  subscribe(persistor)
+  if (Config.enableArchive) {
+    system.actorOf(Props(classOf[EventPersistorActor], publisher), "persistor")
+  }
 
   private[this] val globalSettings = system.actorOf(Props(classOf[GlobalSettingsActor]), "global-settings")
   private[this] val autoStartReporting = Config.autoStartReporting

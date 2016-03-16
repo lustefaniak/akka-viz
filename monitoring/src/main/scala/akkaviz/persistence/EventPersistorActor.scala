@@ -1,6 +1,7 @@
 package akkaviz.persistence
 
-import akka.actor.{Actor, ActorLogging}
+import akka.actor.{ActorRef, Actor, ActorLogging}
+import akkaviz.events.EventPublisherActor.Subscribe
 import akkaviz.events.{FilteringRule, Helpers}
 import akkaviz.events.types._
 import akkaviz.serialization.MessageSerialization
@@ -10,7 +11,7 @@ import io.getquill.naming._
 
 import scala.concurrent.duration._
 
-class EventPersistorActor extends Actor with ActorLogging {
+class EventPersistorActor(publisherRef: ActorRef) extends Actor with ActorLogging {
 
   import context.dispatcher
 
@@ -21,6 +22,7 @@ class EventPersistorActor extends Actor with ActorLogging {
   override def preStart(): Unit = {
     super.preStart()
     context.system.scheduler.schedule(30.seconds, 30.seconds, self, DoInsert)
+    publisherRef ! Subscribe
   }
 
   override def receive = {
@@ -50,7 +52,7 @@ class EventPersistorActor extends Actor with ActorLogging {
     }
   }
 
-  private[this] val db = source(new CassandraSyncSourceConfig[SnakeCase]("akkaviz.db.cassandra"))
+  private[this] val db = source(new CassandraSyncSourceConfig[SnakeCase]("akkaviz.cassandra"))
 
 }
 
