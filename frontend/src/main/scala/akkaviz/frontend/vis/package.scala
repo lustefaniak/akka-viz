@@ -73,6 +73,15 @@ package object vis {
 
     def getIds(options: js.Object): js.Array[String] = js.native
 
+    def on(event: String, callback: js.Function3[String, Properties[T], String | Double, Unit]): Unit = js.native
+
+  }
+
+  @js.native
+  trait Properties[T] extends js.Any {
+    val items: js.Array[String] = js.native
+    val oldData: js.UndefOr[js.Array[T]] = js.native
+    val data: js.UndefOr[js.Array[T]] = js.native
   }
 
   @js.native
@@ -299,12 +308,13 @@ package object vis {
   @js.native
   @JSName("vis.Graph2d")
   class Graph2d(
-    container: Element,
-    data: UndefOr[DataSet[Item]] = js.undefined,
-    groups: UndefOr[js.Array[Group] | DataSet[Group]] = js.undefined,
-    options: js.Any = js.undefined
+      container: Element,
+      data: UndefOr[DataSet[Item]] = js.undefined,
+      groups: UndefOr[js.Array[Group] | DataSet[Group]] = js.undefined,
+      options: js.Any = js.undefined
   ) extends js.Any {
     def getWindow(): Window = js.native
+    def setOptions(options: js.Any): Unit = js.native
   }
 
   @ScalaJSDefined

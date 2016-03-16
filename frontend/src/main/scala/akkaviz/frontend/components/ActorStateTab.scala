@@ -2,14 +2,17 @@ package akkaviz.frontend.components
 
 import akkaviz.frontend.ActorPath
 import akkaviz.frontend.ActorRepository.ActorState
-import akkaviz.frontend.vis.{Group, Item, DataSet, Graph2d}
+import akkaviz.frontend.vis._
 import akkaviz.protocol
 import akkaviz.protocol.ThroughputMeasurement
+import org.scalajs.dom.html.{Input, UList}
+import org.scalajs.dom.raw.HTMLInputElement
 import org.scalajs.dom.{Element => domElement, _}
 import rx.{Ctx, Rx, Var}
 
 import scala.scalajs.js
-import scala.scalajs.js.Date
+import scala.scalajs.js.{|, Date}
+import scalatags.JsDom.TypedTag
 import scalatags.JsDom.all._
 
 class ActorStateTab(
@@ -135,15 +138,13 @@ class ThroughputGraphViewTab extends Tab {
     items.add(item)
   }
 
-  def removeOldItems(): Unit = {
+  private[this] def removeOldItems(): Unit = {
     val range = graph.getWindow()
     val interval = range.end.valueOf() - range.start.valueOf()
 
-    val oldIds = items.getIds(js.Dynamic.literal(
-        filter = { (item: Item) =>
-          item.x.valueOf() < (range.start.valueOf() - interval)
-        }
-    ))
+    val oldIds = items.getIds(js.Dynamic.literal(filter = { (item: Item) =>
+      item.x.valueOf() < (range.start.valueOf() - interval)
+    }))
     items.remove(oldIds)
   }
 }
