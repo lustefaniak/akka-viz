@@ -3,27 +3,49 @@ package akkaviz.frontend
 import akkaviz.frontend.components.{ActorStateTab, ClosableTab, LinkStateTab, Tab}
 import org.scalajs.dom._
 import org.scalajs.dom.raw.HTMLElement
-import rx.Ctx
+import rx.{Var, Ctx}
 
 import scala.scalajs.js
 
 class TabManager(repo: ActorRepository, upstreamConnection: ApiConnection.Upstream)(implicit ctx: Ctx.Owner) {
 
-  val tabs: js.Dictionary[Tab] = js.Dictionary.empty
+  val openedTabs: js.Dictionary[Tab] = js.Dictionary.empty
 
-  def openActorDetails(actorRef: ActorPath): Unit = {
-    activate(tabs.getOrElseUpdate(ActorStateTab.stateTabId(actorRef), {
-      val stateVar = repo.state(actorRef)
-      val tab: ActorStateTab = new ActorStateTab(stateVar, upstreamConnection.send)
-      tab.attach(document.querySelector("#right-pane"))
-      tab.tab.querySelector("a.close-tab").onClick({ () => close(tab) })
-      tab.tab.querySelector("a[data-toggle]").addEventListener("click", handleMiddleClick(tab) _)
-      tab
-    }))
+  def attachTab[T <: Tab](tab: T): T = {
+    tab match {
+      case ct: ClosableTab =>
+        handleClose(ct)
+      case _ => ()
+    }
+    attachDom(tab)
+    tab
+  }
+
+  def openActorDetails(actorRef: String): Unit = {
+    activate(openedTabs.getOrElseUpdate(ActorStateTab.stateTabId(actorRef), createDetailTab(actorRef)))
+  }
+
+  def createDetailTab(actorRef: String): ActorStateTab = {
+    val stateVar = repo.state(actorRef)
+    val tab: ActorStateTab = new ActorStateTab(stateVar, upstreamConnection.send)
+    handleClose(tab)
+    attachDom(tab)
+    tab
+  }
+
+  def handleClose(tab: ClosableTab): ClosableTab = {
+    attachDom(tab)
+    tab.tab.querySelector("a.close-tab").onClick({ () => close(tab) })
+    tab.tab.querySelector("a[data-toggle]").addEventListener("click", handleMiddleClick(tab) _)
+    tab
+  }
+
+  private[this] def attachDom(tab: Tab): Unit = {
+    tab.attach(document.querySelector("#right-pane"))
   }
 
   def openLinkDetails(link: ActorLink): Unit = {
-    activate(tabs.getOrElseUpdate(LinkStateTab.stateTabId(link), {
+    activate(openedTabs.getOrElseUpdate(LinkStateTab.stateTabId(link), {
       val tab: LinkStateTab = new LinkStateTab(link)
       tab.attach(document.querySelector("#right-pane"))
       tab.tab.querySelector("a.close-tab").onClick({ () => close(tab) })
@@ -42,7 +64,7 @@ class TabManager(repo: ActorRepository, upstreamConnection: ApiConnection.Upstre
     target.tab.parentNode.removeChild(target.tab)
     target.tabBody.parentNode.removeChild(target.tabBody)
     target.onClose()
-    tabs.delete(target.tabId)
+    openedTabs.delete(target.tabId)
   }
 
   private[this] def activateSiblingOf(ct: ClosableTab): Unit = {

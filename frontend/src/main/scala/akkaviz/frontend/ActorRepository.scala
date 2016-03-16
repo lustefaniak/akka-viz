@@ -55,8 +55,7 @@ case object ActorRepository {
     className: js.UndefOr[String] = js.undefined,
     fsmState: js.UndefOr[FSMState] = js.undefined,
     fsmTransitions: Set[(String, String)] = Set(),
-    lastUpdatedAt: js.Date = new Date(),
-    throughputLog: js.Array[js.Dictionary[Any]] = new js.Array() // mutable but it's going to be updated frequently (once a second or so)
+    lastUpdatedAt: js.Date = new Date()
   )
 
 }
