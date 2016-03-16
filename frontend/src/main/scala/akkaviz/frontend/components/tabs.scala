@@ -1,5 +1,6 @@
 package akkaviz.frontend.components
 
+import akkaviz.frontend.ActorPath
 import akkaviz.frontend.ActorRepository.ActorState
 import akkaviz.protocol
 import org.scalajs.dom.{Element => domElement, _}
@@ -81,7 +82,7 @@ class ActorStateTab(actorState: Var[ActorState], upstreamSend: protocol.ApiClien
     state.map(_.fsmTransitions).foreach(fsmGraph.displayFsm)
   }
 
-  private[this] def refreshButton(actorRef: String) =
+  private[this] def refreshButton(actorRef: ActorPath) =
     a(cls := "btn btn-default", href := "#", role := "button", float.right,
       span(
         `class` := "imgbtn glyphicon glyphicon-refresh", " "
@@ -91,7 +92,7 @@ class ActorStateTab(actorState: Var[ActorState], upstreamSend: protocol.ApiClien
       },
       "Refresh state")
 
-  private[this] def killButton(actorRef: String) =
+  private[this] def killButton(actorRef: ActorPath) =
     a(cls := "btn btn-default", href := "#", role := "button", float.right,
       span(`class` := "glyphicons glyphicons-remove-sign"),
       onclick := { () =>
@@ -99,7 +100,7 @@ class ActorStateTab(actorState: Var[ActorState], upstreamSend: protocol.ApiClien
       },
       "Kill")
 
-  private[this] def poisonPillButton(actorRef: String) =
+  private[this] def poisonPillButton(actorRef: ActorPath) =
     a(cls := "btn btn-default", href := "#", role := "button", float.right,
       span(`class` := "glyphicons glyphicons-lab"),
       onclick := { () =>
@@ -109,7 +110,7 @@ class ActorStateTab(actorState: Var[ActorState], upstreamSend: protocol.ApiClien
 }
 
 object ActorStateTab {
-  def stateTabId(path: String): String = {
+  def stateTabId(path: ActorPath): String = {
     s"actor-state-${path.replaceAll("[\\/|\\.|\\\\|\\$]", "-").filterNot(_ == ':')}"
   }
 }

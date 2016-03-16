@@ -11,7 +11,7 @@ class TabManager(repo: ActorRepository, upstreamConnection: ApiConnection.Upstre
 
   val tabs: js.Dictionary[Tab] = js.Dictionary.empty
 
-  def openActorDetails(actorRef: String): Unit = {
+  def openActorDetails(actorRef: ActorPath): Unit = {
     activate(tabs.getOrElseUpdate(ActorStateTab.stateTabId(actorRef), {
       val stateVar = repo.state(actorRef)
       val tab: ActorStateTab = new ActorStateTab(stateVar, upstreamConnection.send)

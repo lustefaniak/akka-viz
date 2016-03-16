@@ -42,7 +42,7 @@ class GraphView(
   }
 
   def addLink(sender: String, receiver: String): Unit = {
-    val linkId = s"${sender}->${receiver}"
+    val linkId = s"${sender}>${receiver}"
     if (!createdLinks.contains(linkId)) {
       createdLinks.update(linkId, ())
       scheduler.enqueueOperation(GraphView.AddLink(sender, receiver, linkId))

@@ -1,6 +1,6 @@
 package akkaviz.frontend.components
 
-import akkaviz.frontend.FrontendUtil
+import akkaviz.frontend.{ActorPath, FrontendUtil}
 import org.querki.jquery.JQueryStatic
 import org.scalajs.dom._
 
@@ -23,9 +23,9 @@ class HierarchyPanel(detailsOpener: (String) => Unit) extends Component {
     actorAttr := "root"
   ).render
 
-  private[this] def depth(actorRef: String): Int = actorRef.count(_ == '/') - 2
+  private[this] def depth(actorRef: ActorPath): Int = actorRef.count(_ == '/') - 2
 
-  private[this] def node(actorRef: String) = a(
+  private[this] def node(actorRef: ActorPath) = a(
     actorAttr := actorRef,
     cls := "list-group-item",
     href := "#",
@@ -46,9 +46,9 @@ class HierarchyPanel(detailsOpener: (String) => Unit) extends Component {
     )
   )
 
-  private[this] def nodeClicked(ref: String) = {
-    val itemClicked = findItem(ref)
-    val group = findGroup(ref)
+  private[this] def nodeClicked(actorRef: ActorPath) = {
+    val itemClicked = findItem(actorRef)
+    val group = findGroup(actorRef)
     val isEmpty = group.children().length == 0
     val isCollapsing = group.hasClass("collapsing")
     if (!isEmpty && !isCollapsing) {
@@ -61,11 +61,11 @@ class HierarchyPanel(detailsOpener: (String) => Unit) extends Component {
     }
   }
 
-  def insert(ref: String): Unit = innerInsert(ref.stripSuffix("/"))
+  def insert(actorRef: ActorPath): Unit = innerInsert(actorRef.stripSuffix("/"))
 
-  def insert(refs: Iterable[String]): Unit = refs.foreach(insert)
+  def insert(actorRefs: Iterable[ActorPath]): Unit = actorRefs.foreach(insert)
 
-  private[this] def innerInsert(ref: String): Unit = {
+  private[this] def innerInsert(ref: ActorPath): Unit = {
     if (!exists(ref)) {
       val parentRef = FrontendUtil.parent(ref)
       parentRef.foreach(innerInsert)
@@ -74,7 +74,7 @@ class HierarchyPanel(detailsOpener: (String) => Unit) extends Component {
     }
   }
 
-  private[this] def insertSorted(parentRef: String, ref: String): Unit = {
+  private[this] def insertSorted(parentRef: ActorPath, ref: ActorPath): Unit = {
     val parentQuery = findGroup(parentRef)
     parentQuery.toArray.headOption.map {
       parent =>
@@ -91,19 +91,19 @@ class HierarchyPanel(detailsOpener: (String) => Unit) extends Component {
     }
   }
 
-  private[this] def listGroupElement(ref: String) =
+  private[this] def listGroupElement(ref: ActorPath) =
     div(cls := "list-group collapse", actorAttr := ref).render
 
-  private[this] def lastPathElement(ref: String) =
+  private[this] def lastPathElement(ref: ActorPath) =
     ref.stripPrefix("akka://").split("/").lastOption.getOrElse("")
 
-  private[this] def findGroup(actorRef: String) =
+  private[this] def findGroup(actorRef: ActorPath) =
     $(s"""[actor-path="$actorRef"].list-group""")
 
-  private[this] def findItem(actorRef: String) =
+  private[this] def findItem(actorRef: ActorPath) =
     $(s"""[actor-path="$actorRef"].list-group-item""")
 
-  private[this] def exists(ref: String) = seenActors.contains(ref)
+  private[this] def exists(ref: ActorPath) = seenActors.contains(ref)
 
   override def attach(parent: Element): Unit = parent.appendChild(hierarchy)
 }
