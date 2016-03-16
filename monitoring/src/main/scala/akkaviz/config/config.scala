@@ -11,6 +11,16 @@ private[akkaviz] trait akkaviz {
   val maxSerializationDepth = 3
   val inspectObjects = false
   val autoStartReporting = true
+  val enableArchive = true
+
+  val cassandra = new {
+    val keyspace = "akkaviz"
+    val preparedStatementCacheSize = 100
+    val session = new {
+      val contactPoint = "127.0.0.1"
+    }
+  }
+
 }
 
 case object Config extends akkaviz
