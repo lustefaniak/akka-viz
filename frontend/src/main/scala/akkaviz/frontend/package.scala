@@ -19,4 +19,8 @@ package object frontend {
     }
   }
 
+  type ActorPath = String
+
+  case class ActorLink(from: ActorPath, to: ActorPath)
+
 }
