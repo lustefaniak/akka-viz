@@ -73,6 +73,15 @@ package object vis {
 
     def getIds(options: js.Object): js.Array[String] = js.native
 
+    def on(event: String, callback: js.Function3[String, Properties[T], String | Double, Unit]): Unit = js.native
+
+  }
+
+  @js.native
+  trait Properties[T] extends js.Any {
+    val items: js.Array[String] = js.native
+    val oldData: js.UndefOr[js.Array[T]] = js.native
+    val data: js.UndefOr[js.Array[T]] = js.native
   }
 
   @js.native
@@ -305,6 +314,7 @@ package object vis {
       options: js.Any = js.undefined
   ) extends js.Any {
     def getWindow(): Window = js.native
+    def setOptions(options: js.Any): Unit = js.native
   }
 
   @ScalaJSDefined
