@@ -2,6 +2,7 @@ package akkaviz.frontend.components
 
 import akkaviz.frontend.ActorPath
 import akkaviz.frontend.ActorRepository.ActorState
+import akkaviz.frontend.{Persistence, FancyColors}
 import akkaviz.frontend.vis._
 import akkaviz.protocol
 import akkaviz.protocol.ThroughputMeasurement
@@ -109,7 +110,7 @@ object ActorStateTab {
   }
 }
 
-class ThroughputGraphViewTab(implicit ctx: Ctx.Owner) extends Tab {
+class ThroughputGraphViewTab(implicit ctx: Ctx.Owner) extends Tab with FancyColors with Persistence {
   import scala.concurrent.duration._
   import scalatags.rx.all._
 
@@ -125,13 +126,14 @@ class ThroughputGraphViewTab(implicit ctx: Ctx.Owner) extends Tab {
   val options = js.Dynamic.literal(
     start = js.Date.now(),
     end = js.Date.now() + 2.minutes.toMillis,
-    interpolation = false
+    interpolation = false,
+    drawPoints = false
   )
   val graph = new Graph2d(graphContainer, items, groups, options)
 
   private[this] val rxElement = Rx {
     ul(groupVisibility().map { v =>
-      li(input(tpe:="checkbox", if (v._2) checked else ()), v._1, onclick := {() => groupVisibility() = groupVisibility.now.updated(v._1, !v._2)})
+      li(input(tpe:="checkbox", if (v._2) checked else ()), " " + v._1, onclick := {() => groupVisibility() = groupVisibility.now.updated(v._1, !v._2)}, color := colorForString(v._1))
     }.toSeq).render
   }
 
@@ -141,7 +143,8 @@ class ThroughputGraphViewTab(implicit ctx: Ctx.Owner) extends Tab {
   tabBody.appendChild(selector)
 
   def addMeasurement(tm: ThroughputMeasurement): Unit = {
-    val group = new Group(tm.actorRef, tm.actorRef)
+    val color = colorForString(tm.actorRef)
+    val group = new Group(tm.actorRef, tm.actorRef, style = s"""fill: ${color}; stroke: ${color}; fill-opacity:0; stroke-width:2px; """)
     val date = new Date(js.Date.parse(tm.timestamp))
     val item = new Item(date, tm.msgPerSecond, tm.actorRef)
     removeOldItems()
