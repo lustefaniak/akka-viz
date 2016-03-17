@@ -121,8 +121,9 @@ object ActorStateTab {
   }
 }
 
-class ThroughputGraphViewTab extends Tab {
+class ThroughputGraphViewTab(implicit ctx: Ctx.Owner) extends Tab {
   import scala.concurrent.duration._
+  import scalatags.rx.all._
 
   override def name: String = "Throughput"
 
@@ -130,6 +131,7 @@ class ThroughputGraphViewTab extends Tab {
 
   private[this] val items = new DataSet[Item]()
   private[this] val groups = new DataSet[Group]()
+  private[this] val groupVisibility = Var[Map[String, Boolean]](Map.empty)
 
   val graphContainer = div(id := "thr-graph-container", width := 100.pct).render
   val options = js.Dynamic.literal(
@@ -139,7 +141,16 @@ class ThroughputGraphViewTab extends Tab {
   )
   val graph = new Graph2d(graphContainer, items, groups, options)
 
+  private[this] val rxElement = Rx {
+    ul(groupVisibility().map { v =>
+      li(input(tpe:="checkbox", if (v._2) checked else ()), v._1, onclick := {() => groupVisibility() = groupVisibility.now.updated(v._1, !v._2)})
+    }.toSeq).render
+  }
+
+  val selector = div(rxElement).render
+
   tabBody.appendChild(graphContainer)
+  tabBody.appendChild(selector)
 
   def addMeasurement(tm: ThroughputMeasurement): Unit = {
     val group = new Group(tm.actorRef, tm.actorRef)
@@ -150,6 +161,10 @@ class ThroughputGraphViewTab extends Tab {
     items.add(item)
   }
 
+  groups.on("add", { (event: String, p: Properties[Group], sender: String|Double) =>
+    groupVisibility() = groupVisibility.now ++ (p.items.map(_ -> true))
+  })
+
   private[this] def removeOldItems(): Unit = {
     val range = graph.getWindow()
     val interval = range.end.valueOf() - range.start.valueOf()
@@ -159,4 +174,13 @@ class ThroughputGraphViewTab extends Tab {
     }))
     items.remove(oldIds)
   }
+
+  private[this] val groupUpdate = groupVisibility.triggerLater {
+    val g = groupVisibility.now
+    val options = js.Dynamic.literal(groups = js.Dynamic.literal(
+      visibility = js.Dictionary[Boolean](g.toSeq : _*)))
+    console.log(options)
+    graph.setOptions(options)
+  }
+
 }
