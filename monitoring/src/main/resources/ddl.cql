@@ -2,6 +2,7 @@ CREATE KEYSPACE IF NOT EXISTS akkaviz WITH replication = { 'class' : 'SimpleStra
 
 CREATE TABLE IF NOT EXISTS akkaviz.received_record (
   id TIMEUUID,
+  millis BIGINT,
   first TEXT,
   direction TEXT,
   second TEXT,

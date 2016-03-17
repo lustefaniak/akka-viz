@@ -33,9 +33,10 @@ class EventPersistorActor(publisherRef: ActorRef) extends Actor with ActorLoggin
     case r: ReceivedWithId if FilteringRule.isUserActor(r.actorRef) && FilteringRule.isUserActor(r.sender) =>
       val msg = MessageSerialization.render(r.message)
       val id = UUIDs.timeBased()
+      val time = System.currentTimeMillis()
       val records = List(
-        ReceivedRecord(id, actorRefToString(r.sender), To, actorRefToString(r.actorRef), msg),
-        ReceivedRecord(id, actorRefToString(r.actorRef), From, actorRefToString(r.sender), msg)
+        ReceivedRecord(id, time, actorRefToString(r.sender), To, actorRefToString(r.actorRef), msg),
+        ReceivedRecord(id, time, actorRefToString(r.actorRef), From, actorRefToString(r.sender), msg)
       )
       queue ++= records
       if (queue.size >= maxItemsInQueue) {

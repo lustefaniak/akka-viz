@@ -30,7 +30,7 @@ trait ArchiveTab extends ClosableTab {
         case req: dom.XMLHttpRequest =>
           val content = upickle.default.read[List[rest.Received]](req.responseText)
           messagesTbody.innerHTML = ""
-          content.foreach { rcv =>
+          content.sortBy(_.timestamp).foreach { rcv =>
             messagesTbody.appendChild(messageRow(rcv).render)
           }
       }
@@ -45,16 +45,20 @@ trait ArchiveTab extends ClosableTab {
     }
   }
 
-  private[this] def messageRow(rcv: rest.Received): Seq[Frag] = Seq(
-    tr(
-      td(FrontendUtil.shortActorName(rcv.from)),
-      td(FrontendUtil.shortActorName(rcv.to)),
-      td(new Date(rcv.timestamp.toDouble).toLocaleString())
-    ),
-    tr(
-      td(colspan := 3)(pre(prettyPrintJson(rcv.payload)))
+  private[this] def messageRow(rcv: rest.Received): Seq[Frag] = {
+    val date = new Date(rcv.timestamp.toDouble)
+    Seq(
+      tr(
+        td(FrontendUtil.shortActorName(rcv.from)),
+        td(rcv.direction),
+        td(FrontendUtil.shortActorName(rcv.to)),
+        td(date.toISOString())
+      ),
+      tr(
+        td(colspan := 4)(pre(prettyPrintJson(rcv.payload)))
+      )
     )
-  )
+  }
 
   private[this] val refreshButton = a(
     cls := "btn btn-default", href := "#", role := "button", float.right,
@@ -67,7 +71,7 @@ trait ArchiveTab extends ClosableTab {
     "Refresh view"
   )
 
-  private[this] val loadingTbodyContent = tr(td(colspan := 3, "Loading...")).render
+  private[this] val loadingTbodyContent = tr(td(colspan := 4, "Loading...")).render
   private[this] val messagesTbody = tbody(loadingTbodyContent).render
   private[this] val rendered = div(
     cls := "panel-body",
@@ -79,7 +83,7 @@ trait ArchiveTab extends ClosableTab {
       table(
         cls := "table table-striped table-hover",
         thead(
-          tr(th("From"), th("To"), th("Time"))
+          tr(th("From"), th(""), th("To"), th("Time"))
         ), messagesTbody
       ))
   ).render
