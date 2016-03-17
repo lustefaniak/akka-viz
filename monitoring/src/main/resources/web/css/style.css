@@ -1,15 +1,39 @@
-html {
+html,body {
     height: 100%;
 }
 
+body {
+    display: flex;
+    flex-direction: row;
+}
+
+#thebox {
+    display: flex;
+    flex-direction: column;
+    min-width: 350px;
+    width: 480px;
+    height: 100%;
+}
+
+#top-menu {
+    height: 50%;
+}
+
+#bottom-menu {
+    flex: 1;
+}
+
+.menu {
+    min-height: 150px;
+    display:flex;
+    flex-direction: column;
+}
+
 #right-pane {
-    display: block;
-    position: absolute;
-    left: 481px;
-    top: 0;
-    overflow: auto;
-    bottom: 0;
-    right: 0;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
 }
 
 #right-pane .nav-tabs {
@@ -17,31 +41,32 @@ html {
     position: relative;
 }
 
-#graphview {
-    position: absolute;
-    bottom: 0;
-    top: 0;
-    left: 0;
-    right: 0;
-    margin: 0;
+#graphtab {
+    flex: 1;
+    overflow: hidden;
 }
 
-#thebox {
-    left: 0;
-    top: 0;
-    display: block;
-    position: absolute;
-    width: 480px;
-    bottom: 0px;
+#graphview {
+    width: 100vw;
+    height: 100vh;
 }
 
 .nav-tabs .active {
     background-color: tomato;
 }
 
-#thebox .tab-content {
-    max-height: 300px;
-    overflow: scroll;
+#right-pane .tab-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.tab-content {
+    overflow: auto;
+}
+
+.tab-content .panel {
+    margin-bottom: 0;
 }
 
 .popover {
