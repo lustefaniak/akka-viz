@@ -1,6 +1,6 @@
 package akkaviz.frontend
 
-import akkaviz.frontend.components.{ActorStateTab, ClosableTab, LinkStateTab, Tab}
+import akkaviz.frontend.components._
 import org.scalajs.dom._
 import org.scalajs.dom.raw.HTMLElement
 import rx.Ctx
@@ -11,26 +11,34 @@ class TabManager(repo: ActorRepository, upstreamConnection: ApiConnection.Upstre
 
   val tabs: js.Dictionary[Tab] = js.Dictionary.empty
 
+  private[this] def attachTab(tab: Tab): Tab = {
+    tab.attach(document.querySelector("#right-pane"))
+    tab match {
+      case tab: ClosableTab =>
+        tab.tab.querySelector("a.close-tab").onClick({ () => close(tab) })
+        tab.tab.querySelector("a[data-toggle]").addEventListener("click", handleMiddleClick(tab) _)
+      case _ =>
+    }
+    tab
+  }
+
   def openActorDetails(actorRef: ActorPath): Unit = {
     activate(tabs.getOrElseUpdate(ActorStateTab.stateTabId(actorRef), {
       val stateVar = repo.state(actorRef)
-      val tab: ActorStateTab = new ActorStateTab(stateVar, upstreamConnection.send)
-      tab.attach(document.querySelector("#right-pane"))
-      tab.tab.querySelector("a.close-tab").onClick({ () => close(tab) })
-      tab.tab.querySelector("a[data-toggle]").addEventListener("click", handleMiddleClick(tab) _)
-      tab
+      attachTab(new ActorStateTab(stateVar, upstreamConnection.send))
     }))
   }
 
   def openLinkDetails(link: ActorLink): Unit = {
     activate(tabs.getOrElseUpdate(LinkStateTab.stateTabId(link), {
-      val tab: LinkStateTab = new LinkStateTab(link)
-      tab.attach(document.querySelector("#right-pane"))
-      tab.tab.querySelector("a.close-tab").onClick({ () => close(tab) })
-      tab.tab.querySelector("a[data-toggle]").addEventListener("click", handleMiddleClick(tab) _)
-      tab
+      attachTab(new LinkStateTab(link))
     }))
+  }
 
+  def openActorMessages(actorRef: ActorPath): Unit = {
+    activate(tabs.getOrElseUpdate(ActorMessagesTab.stateTabId(actorRef), {
+      attachTab(new ActorMessagesTab(actorRef))
+    }))
   }
 
   def activate(tab: Tab): Unit = {
@@ -48,7 +56,9 @@ class TabManager(repo: ActorRepository, upstreamConnection: ApiConnection.Upstre
   private[this] def activateSiblingOf(ct: ClosableTab): Unit = {
     Option(ct.tab.nextElementSibling).orElse(Option(ct.tab.previousElementSibling)).map { s =>
       s.querySelector("a[data-toggle]").asInstanceOf[HTMLElement]
-    }.foreach { _.click() }
+    }.foreach {
+      _.click()
+    }
 
   }
 
