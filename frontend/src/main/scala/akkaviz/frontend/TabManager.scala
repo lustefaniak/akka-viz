@@ -7,7 +7,10 @@ import rx.Ctx
 
 import scala.scalajs.js
 
-class TabManager(repo: ActorRepository, upstreamConnection: ApiConnection.Upstream)(implicit ctx: Ctx.Owner) {
+class TabManager(
+    repo: ActorRepository,
+    upstreamConnection: ApiConnection.Upstream
+)(implicit ctx: Ctx.Owner) {
 
   val tabs: js.Dictionary[Tab] = js.Dictionary.empty
 
