@@ -23,23 +23,23 @@ class TabManager(repo: ActorRepository, upstreamConnection: ApiConnection.Upstre
     tab
   }
 
+  private[this] def openTabOrFocus(tabId: String, newTab: => Tab): Unit = {
+    activate(tabs.getOrElseUpdate(tabId, attachTab(newTab)))
+  }
+
   def openActorDetails(actorRef: ActorPath): Unit = {
-    activate(tabs.getOrElseUpdate(ActorStateTab.stateTabId(actorRef), {
+    openTabOrFocus(ActorStateTab.stateTabId(actorRef), {
       val stateVar = repo.state(actorRef)
-      attachTab(new ActorStateTab(stateVar, upstreamConnection.send))
-    }))
+      new ActorStateTab(stateVar, upstreamConnection.send, openActorMessages)
+    })
   }
 
   def openLinkDetails(link: ActorLink): Unit = {
-    activate(tabs.getOrElseUpdate(LinkStateTab.stateTabId(link), {
-      attachTab(new LinkStateTab(link))
-    }))
+    openTabOrFocus(LinkStateTab.stateTabId(link), new LinkStateTab(link))
   }
 
   def openActorMessages(actorRef: ActorPath): Unit = {
-    activate(tabs.getOrElseUpdate(ActorMessagesTab.stateTabId(actorRef), {
-      attachTab(new ActorMessagesTab(actorRef))
-    }))
+    openTabOrFocus(ActorMessagesTab.stateTabId(actorRef), new ActorMessagesTab(actorRef))
   }
 
   def activate(tab: Tab): Unit = {
