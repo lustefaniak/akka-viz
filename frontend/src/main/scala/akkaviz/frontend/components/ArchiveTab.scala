@@ -84,8 +84,9 @@ trait ArchiveTab extends ClosableTab {
       ))
   ).render
 
-  tabBody.appendChild(rendered)
+  override def onCreate(): Unit = {
+    tabBody.appendChild(rendered)
 
-  loadBetween()
-
+    loadBetween()
+  }
 }

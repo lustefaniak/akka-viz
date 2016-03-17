@@ -13,6 +13,7 @@ class TabManager(repo: ActorRepository, upstreamConnection: ApiConnection.Upstre
 
   private[this] def attachTab(tab: Tab): Tab = {
     tab.attach(document.querySelector("#right-pane"))
+    tab.onCreate()
     tab match {
       case tab: ClosableTab =>
         tab.tab.querySelector("a.close-tab").onClick({ () => close(tab) })

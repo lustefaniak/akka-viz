@@ -22,4 +22,6 @@ trait Tab extends Component {
     activateA.click()
   }
 
+  def onCreate(): Unit
+
 }

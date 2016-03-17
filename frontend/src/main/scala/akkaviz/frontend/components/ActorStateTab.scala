@@ -18,8 +18,6 @@ class ActorStateTab(actorState: Var[ActorState], upstreamSend: protocol.ApiClien
   val name = actorState.now.path
   val tabId = stateTabId(actorState.now.path)
 
-  renderState(actorState)
-
   private[this] def renderState(state: Var[ActorState]) = {
 
     lazy val fsmDiv = div(cls := s"fsm-graph", height := 250.px, clear.both).render
@@ -80,6 +78,9 @@ class ActorStateTab(actorState: Var[ActorState], upstreamSend: protocol.ApiClien
         upstreamSend(protocol.PoisonPillActor(actorRef))
       },
       "PoisonPill")
+  override def onCreate(): Unit = {
+    renderState(actorState)
+  }
 }
 
 object ActorStateTab {
