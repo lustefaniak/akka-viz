@@ -16,6 +16,8 @@ case class FsmTransition(fromStateClass: String, toStateClass: String)
 
 object FrontendApp extends JSApp with Persistence with PrettyJson with ManipulationsUI {
 
+  val MaxThroughputLogLen = 100
+
   private[this] val repo = new ActorRepository()
 
   private[this] def handleDownstream(messageReceived: (Received) => Unit)(message: protocol.ApiServerMessage): Unit = {
@@ -112,6 +114,8 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
 
       case Ping => {}
 
+      case tm: ThroughputMeasurement =>
+        throughputTab.addMeasurement(tm)
     }
   }
 
@@ -131,6 +135,7 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
   private[this] val thrownExceptions = Var[Seq[ActorFailure]](Seq())
   private[this] val showUnconnected = Var[Boolean](false)
   private[this] val tabManager = new TabManager(repo, upstreamConnection)
+  private[this] val throughputTab = new ThroughputGraphViewTab()
   private[this] val actorSelector = new ActorSelector(
     repo.seenActors, selectedActors, thrownExceptions, tabManager.openActorDetails
   )
@@ -212,6 +217,7 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
     replTerminal.attach(document.getElementById("repl"))
     graphView.attach(document.getElementById("graphview"))
     hierarchyView.attach(document.getElementById("hierarchy-view"))
+    tabManager.attachTab(throughputTab)
 
     js.Dynamic.global.$.material.init()
     initResizable()

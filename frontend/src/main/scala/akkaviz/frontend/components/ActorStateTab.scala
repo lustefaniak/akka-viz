@@ -2,10 +2,18 @@ package akkaviz.frontend.components
 
 import akkaviz.frontend.ActorPath
 import akkaviz.frontend.ActorRepository.ActorState
+import akkaviz.frontend.{Persistence, FancyColors}
+import akkaviz.frontend.vis._
 import akkaviz.protocol
-import org.scalajs.dom.{Element => domElement}
+import akkaviz.protocol.ThroughputMeasurement
+import org.scalajs.dom.html.{Input, UList}
+import org.scalajs.dom.raw.HTMLInputElement
+import org.scalajs.dom.{Element => domElement, _}
 import rx.{Ctx, Rx, Var}
 
+import scala.scalajs.js
+import scala.scalajs.js.{|, Date}
+import scalatags.JsDom.TypedTag
 import scalatags.JsDom.all._
 
 class ActorStateTab(
@@ -101,4 +109,3 @@ object ActorStateTab {
     s"actor-state-${path.replaceAll("[\\/|\\.|\\\\|\\$]", "-").filterNot(_ == ':')}"
   }
 }
-

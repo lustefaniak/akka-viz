@@ -77,4 +77,10 @@ package object types {
 
   case class SnapshotAvailable(snapshot: LightSnapshot) extends BackendEvent
 
+  case class ThroughputMeasurement(
+    actorRef: ActorRef,
+    msgsPerSecond: Double,
+    timestamp: Long = System.currentTimeMillis()
+  ) extends InternalEvent with BackendEvent
+
 }

@@ -19,7 +19,6 @@ trait Tab extends Component {
   override def attach(tabbedPane: domElement): Unit = {
     tabbedPane.querySelector("ul.nav-tabs").appendChild(tab)
     tabbedPane.querySelector("div.tab-content").appendChild(tabBody)
-    activateA.click()
   }
 
   def onCreate(): Unit
