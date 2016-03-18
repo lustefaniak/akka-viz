@@ -32,8 +32,14 @@ class ThroughputGraphViewTab(implicit ctx: Ctx.Owner) extends Tab with FancyColo
   val graph = new Graph2d(graphContainer, items, groups, options)
 
   private[this] val rxElement = Rx {
-    ul(groupVisibility().map { v =>
-      li(input(tpe := "checkbox", if (v._2) checked else ()), " " + v._1, onclick := { () => groupVisibility() = groupVisibility.now.updated(v._1, !v._2) }, color := colorForString(v._1))
+    ul(groupVisibility().map {
+      case (groupName, visible) =>
+        li(
+          input(tpe := "checkbox", if (visible) checked else ()),
+          " " + groupName, onclick := { () =>
+            groupVisibility() = groupVisibility.now.updated(groupName, visible)
+          }, color := colorForString(groupName)
+        )
     }.toSeq).render
   }
 
@@ -44,7 +50,8 @@ class ThroughputGraphViewTab(implicit ctx: Ctx.Owner) extends Tab with FancyColo
 
   def addMeasurement(tm: ThroughputMeasurement): Unit = {
     val color = colorForString(tm.actorRef)
-    val group = new Group(tm.actorRef, tm.actorRef, style = s"""fill: ${color}; stroke: ${color}; fill-opacity:0; stroke-width:2px; """)
+    val group = new Group(tm.actorRef, tm.actorRef,
+      style = s"""fill: ${color}; stroke: ${color}; fill-opacity:0; stroke-width:2px; """)
     val date = new Date(js.Date.parse(tm.timestamp))
     val item = new Item(date, tm.msgPerSecond, tm.actorRef)
     removeOldItems()
