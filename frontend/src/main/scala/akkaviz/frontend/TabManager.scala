@@ -15,48 +15,37 @@ class TabManager(
   val openedTabs: js.Dictionary[Tab] = js.Dictionary.empty
 
   def attachTab[T <: Tab](tab: T): T = {
+    console.log(tab.toString)
+    attachDom(tab)
     tab match {
       case ct: ClosableTab =>
         handleClose(ct)
       case _ => ()
     }
-    attachDom(tab)
+    tab.onCreate()
     tab
-  }
-
-  def openActorDetails(actorRef: String): Unit = {
-    activate(openedTabs.getOrElseUpdate(ActorStateTab.stateTabId(actorRef), createDetailTab(actorRef)))
   }
 
   def createDetailTab(actorRef: String): ActorStateTab = {
     val stateVar = repo.state(actorRef)
-    val tab: ActorStateTab = new ActorStateTab(stateVar, upstreamConnection.send)
+    val tab: ActorStateTab = new ActorStateTab(stateVar, upstreamConnection.send, openActorMessages)
     handleClose(tab)
-    attachDom(tab)
     tab
   }
 
   def handleClose(tab: ClosableTab): ClosableTab = {
-    attachDom(tab)
     tab.tab.querySelector("a.close-tab").onClick({ () => close(tab) })
     tab.tab.querySelector("a[data-toggle]").addEventListener("click", handleMiddleClick(tab) _)
     tab
   }
 
-  private[this] def attachTab(tab: Tab): Tab = {
+  private[this] def attachDom(tab: Tab): Tab = {
     tab.attach(document.querySelector("#right-pane"))
-    tab.onCreate()
-    tab match {
-      case tab: ClosableTab =>
-        tab.tab.querySelector("a.close-tab").onClick({ () => close(tab) })
-        tab.tab.querySelector("a[data-toggle]").addEventListener("click", handleMiddleClick(tab) _)
-      case _ =>
-    }
     tab
   }
 
   private[this] def openTabOrFocus(tabId: String, newTab: => Tab): Unit = {
-    activate(tabs.getOrElseUpdate(tabId, attachTab(newTab)))
+    activate(openedTabs.getOrElseUpdate(tabId, attachTab(newTab)))
   }
 
   def openActorDetails(actorRef: ActorPath): Unit = {
