@@ -117,6 +117,6 @@ package object protocol {
 
 package object rest {
 
-  case class Received(timestamp: Long, from: String, to: String, payload: String)
+  case class Received(timestamp: Long, direction: String, from: String, to: String, payload: String)
 
 }

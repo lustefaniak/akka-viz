@@ -8,7 +8,11 @@ import rx.{Ctx, Rx, Var}
 
 import scalatags.JsDom.all._
 
-class ActorStateTab(actorState: Var[ActorState], upstreamSend: protocol.ApiClientMessage => Unit)(implicit co: Ctx.Owner) extends ClosableTab {
+class ActorStateTab(
+    actorState: Var[ActorState],
+    upstreamSend: protocol.ApiClientMessage => Unit,
+    actorMessagesOpener: (ActorPath) => Unit
+)(implicit co: Ctx.Owner) extends ClosableTab {
 
   import ActorStateTab._
   import akkaviz.frontend.PrettyJson._
@@ -17,8 +21,6 @@ class ActorStateTab(actorState: Var[ActorState], upstreamSend: protocol.ApiClien
 
   val name = actorState.now.path
   val tabId = stateTabId(actorState.now.path)
-
-  renderState(actorState)
 
   private[this] def renderState(state: Var[ActorState]) = {
 
@@ -32,6 +34,7 @@ class ActorStateTab(actorState: Var[ActorState], upstreamSend: protocol.ApiClien
           refreshButton(state.now.path)(disableMaybe(isDead)),
           killButton(state.now.path)(disableMaybe(isDead)),
           poisonPillButton(state.now.path)(disableMaybe(isDead)),
+          actorMessagesButton(state.now.path),
           clear.both
         ).render
       }),
@@ -80,6 +83,17 @@ class ActorStateTab(actorState: Var[ActorState], upstreamSend: protocol.ApiClien
         upstreamSend(protocol.PoisonPillActor(actorRef))
       },
       "PoisonPill")
+
+  private[this] def actorMessagesButton(actorRef: ActorPath) =
+    a(cls := "btn btn-default", href := "#", role := "button", float.right,
+      onclick := { () =>
+        actorMessagesOpener(actorRef)
+      },
+      "All messages")
+
+  override def onCreate(): Unit = {
+    renderState(actorState)
+  }
 }
 
 object ActorStateTab {

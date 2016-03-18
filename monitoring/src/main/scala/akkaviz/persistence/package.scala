@@ -10,7 +10,7 @@ package object persistence {
 
   val To = ">"
 
-  case class ReceivedRecord(id: UUID, first: String, direction: String, second: String, data: String)
+  case class ReceivedRecord(id: UUID, millis: Long, first: String, direction: String, second: String, data: String)
 
   object Queries {
 

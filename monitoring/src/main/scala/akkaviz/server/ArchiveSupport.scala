@@ -40,7 +40,7 @@ trait ArchiveSupport {
 
   private[this] def receivedRecordToRestReceived = Flow[ReceivedRecord].map {
     rr =>
-      rest.Received(UUIDs.unixTimestamp(rr.id), rr.first, rr.second, rr.data)
+      rest.Received(rr.millis, rr.direction, rr.first, rr.second, rr.data)
   }
 
 }
