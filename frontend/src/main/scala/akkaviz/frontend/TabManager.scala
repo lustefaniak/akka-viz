@@ -20,7 +20,8 @@ class TabManager(
     tab match {
       case ct: ClosableTab =>
         handleClose(ct)
-      case _ => ()
+      case _ =>
+        tab.tab.querySelector("a[data-toggle]").addEventListener("click", ignoreMiddleClick(tab) _)
     }
     tab.onCreate()
     tab
@@ -89,5 +90,12 @@ class TabManager(
       e.preventDefault()
       close(tab)
     }
+  }
+
+  private[this] def ignoreMiddleClick(tab: Tab)(e: MouseEvent): Boolean = {
+    if (e.button == 1) {
+      e.preventDefault()
+    }
+    false
   }
 }
