@@ -4,6 +4,7 @@ import akkaviz.frontend.vis._
 import akkaviz.frontend.{Persistence, FancyColors}
 import akkaviz.protocol.ThroughputMeasurement
 import org.scalajs.dom._
+import org.scalajs.dom.ext.Color
 import rx.{Rx, Var, Ctx}
 
 import scala.scalajs.js
@@ -24,8 +25,8 @@ class ThroughputGraphViewTab(implicit ctx: Ctx.Owner) extends Tab with FancyColo
 
   val graphContainer = div(id := "thr-graph-container", width := 100.pct).render
   val options = js.Dynamic.literal(
-    start = js.Date.now(),
-    end = js.Date.now() + 2.minutes.toMillis,
+    start = js.Date.now() - 10.seconds.toMillis,
+    end = js.Date.now() - 1000,
     interpolation = false,
     drawPoints = false
   )
@@ -37,8 +38,8 @@ class ThroughputGraphViewTab(implicit ctx: Ctx.Owner) extends Tab with FancyColo
         li(
           input(tpe := "checkbox", if (visible) checked else ()),
           " " + groupName, onclick := { () =>
-            groupVisibility() = groupVisibility.now.updated(groupName, visible)
-          }, color := colorForString(groupName)
+            groupVisibility() = groupVisibility.now.updated(groupName, !visible)
+          }, color := colorForActor(groupName).toString()
         )
     }.toSeq).render
   }
@@ -49,7 +50,7 @@ class ThroughputGraphViewTab(implicit ctx: Ctx.Owner) extends Tab with FancyColo
   tabBody.appendChild(selector)
 
   def addMeasurement(tm: ThroughputMeasurement): Unit = {
-    val color = colorForString(tm.actorRef)
+    val color = colorForActor(tm.actorRef)
     val group = new Group(tm.actorRef, tm.actorRef,
       style = s"""fill: ${color}; stroke: ${color}; fill-opacity:0; stroke-width:2px; """)
     val date = new Date(js.Date.parse(tm.timestamp))
@@ -57,6 +58,10 @@ class ThroughputGraphViewTab(implicit ctx: Ctx.Owner) extends Tab with FancyColo
     removeOldItems()
     groups.update(group)
     items.add(item)
+  }
+
+  def colorForActor(ref: String): Color = {
+    colorForString(ref, 0.2, 0.2)
   }
 
   groups.on("add", { (event: String, p: Properties[Group], sender: String | Double) =>
@@ -73,8 +78,7 @@ class ThroughputGraphViewTab(implicit ctx: Ctx.Owner) extends Tab with FancyColo
     items.remove(oldIds)
   }
 
-  private[this] val groupUpdate = groupVisibility.triggerLater {
-    val g = groupVisibility.now
+  private[this] val groupUpdate = groupVisibility.foreach { g =>
     val options = js.Dynamic.literal(groups = js.Dynamic.literal(
       visibility = js.Dictionary[Boolean](g.toSeq: _*)
     ))

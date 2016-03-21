@@ -1,5 +1,8 @@
 package akkaviz.frontend
 
+import java.lang.Math.abs
+
+import org.scalajs.dom.ext.Color
 import org.scalajs.dom.{Element, window}
 
 import scala.annotation.tailrec
@@ -73,6 +76,34 @@ trait FancyColors {
   @inline
   def colorForString(str: String): String = {
     possibleColors(Math.abs(str.hashCode) % possibleColors.size)
+  }
+
+  def hsl(hue: Double, saturation: Double, lightness: Double): Color = {
+    val c: Double = 1 - abs(2*lightness - 1) * saturation
+    val x: Double = c * (1 - abs(((hue / 60) % 2) - 1))
+    val m: Double = lightness - c / 2
+
+    val (r: Double, g: Double, b: Double) =
+      if (hue < 60) (c, x, 0)
+      else if (hue < 120) (x, c, 0)
+      else if (hue < 180) (0, c, x)
+      else if (hue < 240) (0, x, c)
+      else if (hue < 300) (x, 0, c)
+      else if (hue < 360) (c, 0, x)
+      else throw new Exception("hsl out of range")
+
+    Color(((r + m)*255).toInt, ((g+m)*255).toInt, ((b+m)*255).toInt)
+  }
+
+  def goldenRatioHue(n: Int): Double = {
+    val goldenRatio = 0.61803398875
+    var maxHue = 360
+
+    ((n * goldenRatio) % 1) * maxHue
+  }
+
+  def colorForString(s: String, saturation: Double, lightness: Double): Color = {
+    hsl(goldenRatioHue(s.hashCode & 0xFFFF), saturation, lightness)
   }
 
 }
