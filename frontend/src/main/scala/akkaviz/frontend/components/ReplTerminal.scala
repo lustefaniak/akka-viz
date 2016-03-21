@@ -12,37 +12,38 @@ import scalatags.JsDom.all._
 class ReplTerminal extends Component {
 
   private[this] def options = js.Dynamic.literal(
-    cols = 120,
-    rows = 25
+    cols = 64,
+    rows = 15
   ).asInstanceOf[TerminalOptions]
 
   private[this] var ws: js.UndefOr[WebSocket] = js.undefined
 
-  private[this] lazy val terminal = new Terminal(options)
-  private[this] var connectButton: js.UndefOr[HTMLButtonElement] = js.undefined
+  private[this] var terminal: js.UndefOr[Terminal] = js.undefined
+  private[this] val connectButton: HTMLButtonElement = button(
+    tpe := "button", `class` := "btn btn-default", "Connect"
+  ).render
   private[this] var isConnected = false
 
   private[this] def connected(): Unit = {
     isConnected = true;
-    connectButton.foreach {
-      _.innerHTML = "Disconnect"
-    }
+    connectButton.innerHTML = "Disconnect"
   }
 
   private[this] def disconnected(): Unit = {
     isConnected = false
-    terminal.off("data")
-    terminal.write("\n\r\n\rDisconnected\n\r\n\r")
-    ws = js.undefined
-    connectButton.foreach {
-      _.innerHTML = "Connect"
+    terminal.foreach {
+      terminal =>
+        terminal.off("data")
+        terminal.write("\n\r\n\rDisconnected\n\r\n\r")
     }
+    ws = js.undefined
+    connectButton.innerHTML = "Connect"
   }
 
   private[this] def setupWebsocket(): Unit = {
 
     def writeToTerminal(s: String): Unit = {
-      terminal.write(s)
+      terminal.foreach(_.write(s))
     }
 
     def decodeArrayBuffer(buffer: ArrayBuffer): String = {
@@ -58,12 +59,14 @@ class ReplTerminal extends Component {
     _ws.onopen = (event: Event) => {
 
       connected()
+      terminal.foreach {
+        terminal =>
+          terminal.write("\n\r\n\rPlease wait, initializing server side REPL\n\r\n\r\r\r\n\r")
 
-      terminal.write("\n\r\n\rPlease wait, initializing server side REPL\n\r\n\r\r\r\n\r")
-
-      terminal.onData((caller: Any, d: String) => {
-        _ws.send(encodeArrayBuffer(d))
-      })
+          terminal.onData((caller: Any, d: String) => {
+            _ws.send(encodeArrayBuffer(d))
+          })
+      }
 
       _ws.onmessage = (msg: MessageEvent) => {
         msg.data match {
@@ -87,12 +90,14 @@ class ReplTerminal extends Component {
   }
 
   private[this] def setupReplTerminal(element: Element): Unit = {
-    terminal.open(element)
+    val term = new Terminal(options)
+    term.open(element)
+    terminal = term
+    js.Dynamic.global.terminal = terminal
   }
 
   override def attach(parent: Element): Unit = {
-    val b = button(tpe := "button", `class` := "btn btn-default", "Connect").render
-    b.onclick = (e: MouseEvent) => {
+    connectButton.onclick = (e: MouseEvent) => {
       if (isConnected) {
         ws.foreach {
           ws =>
@@ -103,10 +108,8 @@ class ReplTerminal extends Component {
         setupWebsocket()
       }
     }
-    connectButton = b
-    val d = div().render
-    setupReplTerminal(d)
-    parent.appendChild(b)
-    parent.appendChild(d)
+
+    parent.appendChild(connectButton)
+    setupReplTerminal(parent)
   }
 }

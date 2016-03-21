@@ -214,7 +214,7 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
     document.getElementById("receivedelay").appendChild(receiveDelayPanel.render) //FIXME: port to component
     monitoringOnOff.attach(document.getElementById("onoffsettings"))
     unconnectedOnOff.attach(document.getElementById("graphsettings"))
-    replTerminal.attach(document.getElementById("repl"))
+    replTerminal.attach(document.getElementById("repl-tab"))
     graphView.attach(document.getElementById("graphview"))
     hierarchyView.attach(document.getElementById("hierarchy-view"))
     tabManager.attachTab(throughputTab)
