@@ -23,7 +23,7 @@ class ThroughputGraphViewTab(implicit ctx: Ctx.Owner) extends Tab with FancyColo
   private[this] val groups = new DataSet[Group]()
   private[this] val groupVisibility = Var[Map[String, Boolean]](Map.empty)
 
-  val graphContainer = div(id := "thr-graph-container", width := 100.pct).render
+  val graphContainer = div(id := "thr-graph-container").render
   val options = js.Dynamic.literal(
     start = js.Date.now() - 10.seconds.toMillis,
     end = js.Date.now() - 1000,
@@ -86,5 +86,18 @@ class ThroughputGraphViewTab(implicit ctx: Ctx.Owner) extends Tab with FancyColo
     graph.setOptions(options)
   }
 
-  override def onCreate(): Unit = ()
+  override def onCreate(): Unit = {
+    window.requestAnimationFrame(autoScroll _)
+  }
+
+  def autoScroll(d: Double): Unit = {
+    val graphWindow = graph.getWindow()
+    val interval = graphWindow.end.valueOf() - graphWindow.start.valueOf()
+    val now = new Date().valueOf()
+    val start = new Date(now - interval)
+    val end = new Date(now)
+
+    graph.setWindow(start, end, js.Dynamic.literal(animation = false))
+    window.requestAnimationFrame(autoScroll _)
+  }
 }
