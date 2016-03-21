@@ -8,6 +8,7 @@ import org.scalajs.dom.ext.Color
 import rx.{Rx, Var, Ctx}
 
 import scala.scalajs.js
+import scala.scalajs.js.Dynamic.literal
 import scala.scalajs.js.{|, Date}
 import scalatags.JsDom.all._
 
@@ -24,11 +25,20 @@ class ThroughputGraphViewTab(implicit ctx: Ctx.Owner) extends Tab with FancyColo
   private[this] val groupVisibility = Var[Map[String, Boolean]](Map.empty)
 
   val graphContainer = div(id := "thr-graph-container").render
-  val options = js.Dynamic.literal(
+  val options = literal(
     start = js.Date.now() - 10.seconds.toMillis,
     end = js.Date.now() - 1000,
     interpolation = false,
-    drawPoints = false
+    drawPoints = false,
+    dataAxis = literal(
+      showMinorLabels = false,
+      left = literal(
+        range = literal(
+          min = 0
+        )
+
+      )
+    )
   )
   val graph = new Graph2d(graphContainer, items, groups, options)
 
@@ -39,7 +49,7 @@ class ThroughputGraphViewTab(implicit ctx: Ctx.Owner) extends Tab with FancyColo
           input(tpe := "checkbox", if (visible) checked else ()),
           " " + groupName, onclick := { () =>
             groupVisibility() = groupVisibility.now.updated(groupName, !visible)
-          }, color := colorForActor(groupName).toString()
+          }, color := colorForActor(groupName).toString(), cursor.pointer
         )
     }.toSeq, listStyleType.none).render
   }).render
@@ -70,14 +80,14 @@ class ThroughputGraphViewTab(implicit ctx: Ctx.Owner) extends Tab with FancyColo
     val range = graph.getWindow()
     val interval = range.end.valueOf() - range.start.valueOf()
 
-    val oldIds = items.getIds(js.Dynamic.literal(filter = { (item: Item) =>
+    val oldIds = items.getIds(literal(filter = { (item: Item) =>
       item.x.valueOf() < (range.start.valueOf() - interval)
     }))
     items.remove(oldIds)
   }
 
   private[this] val groupUpdate = groupVisibility.foreach { g =>
-    val options = js.Dynamic.literal(groups = js.Dynamic.literal(
+    val options = literal(groups = literal(
       visibility = js.Dictionary[Boolean](g.toSeq: _*)
     ))
     console.log(options)
@@ -95,7 +105,7 @@ class ThroughputGraphViewTab(implicit ctx: Ctx.Owner) extends Tab with FancyColo
     val start = new Date(now - interval)
     val end = new Date(now)
 
-    graph.setWindow(start, end, js.Dynamic.literal(animation = false))
+    graph.setWindow(start, end, literal(animation = false))
     window.requestAnimationFrame(autoScroll _)
   }
 }
