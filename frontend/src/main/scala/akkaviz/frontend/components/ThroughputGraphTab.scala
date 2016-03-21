@@ -63,7 +63,7 @@ class ThroughputGraphViewTab(implicit ctx: Ctx.Owner) extends Tab with FancyColo
   }
 
   groups.on("add", { (event: String, p: Properties[Group], sender: String | Double) =>
-    groupVisibility() = groupVisibility.now ++ (p.items.map(_ -> true))
+    groupVisibility() = groupVisibility.now ++ p.items.map(_ -> false)
   })
 
   private[this] def removeOldItems(): Unit = {
