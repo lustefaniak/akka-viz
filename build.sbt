@@ -25,7 +25,6 @@ lazy val commonSettings: Seq[sbt.Setting[_]] = SbtScalariform.defaultScalariform
   licenses +=("MIT", url("http://opensource.org/licenses/MIT")),
   git.uncommittedSignifier := None,
   publishArtifact in Test := false,
-  scalaVersion := "2.11.7",
   homepage := Some(url("https://github.com/blstream/akka-viz")),
   description := "A visual debugger for Akka actor systems",
   pomExtra :=
