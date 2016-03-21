@@ -105,7 +105,7 @@ lazy val frontend =
         "org.scalatest" %%% "scalatest" % scalatestVersion % "test"
       ),
       jsDependencies += RuntimeDOM,
-      unmanagedSourceDirectories in Compile += baseDirectory.value / ".." / "shared" / "src" / "main" / "scala",
+      unmanagedSourceDirectories in Compile += (baseDirectory in ThisBuild).value / "shared" / "src" / "main" / "scala",
       publish := {},
       publishLocal := {}
     )
@@ -149,7 +149,7 @@ lazy val monitoring =
       AspectjKeys.compileOnly in Aspectj := true,
       AspectjKeys.outXml in Aspectj := false,
       products in Compile <++= products in Aspectj,
-      unmanagedSourceDirectories in Compile += baseDirectory.value / ".." / "shared" / "src" / "main" / "scala"
+      unmanagedSourceDirectories in Compile += (baseDirectory in ThisBuild).value / "shared" / "src" / "main" / "scala"
     )
     .dependsOn(api)
 
