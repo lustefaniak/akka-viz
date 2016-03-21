@@ -32,7 +32,7 @@ class ThroughputGraphViewTab(implicit ctx: Ctx.Owner) extends Tab with FancyColo
   )
   val graph = new Graph2d(graphContainer, items, groups, options)
 
-  private[this] val rxElement = Rx {
+  val selector = div(Rx {
     ul(groupVisibility().map {
       case (groupName, visible) =>
         li(
@@ -41,10 +41,8 @@ class ThroughputGraphViewTab(implicit ctx: Ctx.Owner) extends Tab with FancyColo
             groupVisibility() = groupVisibility.now.updated(groupName, !visible)
           }, color := colorForActor(groupName).toString()
         )
-    }.toSeq).render
-  }
-
-  val selector = div(rxElement).render
+    }.toSeq, listStyleType.none).render
+  }).render
 
   tabBody.appendChild(graphContainer)
   tabBody.appendChild(selector)
