@@ -5,7 +5,7 @@ import org.scalajs.dom.{Element, Event}
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.{ScalaJSDefined, JSName}
-import scala.scalajs.js.{UndefOr, |}
+import scala.scalajs.js.{Date, UndefOr, |}
 
 package object vis {
 
@@ -314,6 +314,7 @@ package object vis {
       options: js.Any = js.undefined
   ) extends js.Any {
     def getWindow(): Window = js.native
+    def setWindow(start: String | Date | Double, end: String | Date | Double, options: js.Any = js.undefined): Unit = js.native
     def setOptions(options: js.Any): Unit = js.native
   }
 
