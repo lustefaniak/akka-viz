@@ -90,7 +90,8 @@ lazy val akkaviz =
 val visjs = "org.webjars.npm" % "vis" % "4.15.0"
 val bootstrap = "org.webjars.npm" % "bootstrap" % "3.3.6"
 val material = "org.webjars.bower" % "bootstrap-material-design" % "0.5.7" excludeAll(
-  ExclusionRule(name = "bootstrap"), ExclusionRule(name = "jquery"))  // fetches 4.0 even though pom says [3.0,)
+  ExclusionRule(name = "bootstrap"), ExclusionRule(name = "jquery"))  // fetches bs 4.0 even though pom says [3.0,)
+val jqueryUi = "org.webjars" % "jquery-ui" % "1.11.4"
 
 lazy val frontend =
   (project in file("frontend"))
@@ -115,7 +116,8 @@ lazy val frontend =
         "org.webjars.npm" % "term.js" % "0.0.7" / "term.js",
         bootstrap / "3.3.6/dist/js/bootstrap.js" minified "bootstrap/3.3.6/dist/js/bootstrap.min.js",
         material / "dist/js/material.js" dependsOn "jquery/2.2.1/jquery.js" dependsOn "3.3.6/dist/js/bootstrap.js",
-        visjs / "vis.js" minified "vis.min.js"
+        visjs / "vis.js" minified "vis.min.js",
+        jqueryUi / "jquery-ui.js" minified "jquery-ui.min.js" dependsOn "jquery.js"
       ),
       unmanagedSourceDirectories in Compile += (baseDirectory in ThisBuild).value / "shared" / "src" / "main" / "scala",
       jsManifestFilter := {
@@ -159,7 +161,7 @@ val servedAssets = Seq (
   visjs,
   material,
   bootstrap,
-  "org.webjars" % "jquery-ui" % "1.11.4"
+  jqueryUi
 )
 
 lazy val monitoring =
