@@ -25,7 +25,6 @@ lazy val commonSettings: Seq[sbt.Setting[_]] = SbtScalariform.defaultScalariform
   licenses +=("MIT", url("http://opensource.org/licenses/MIT")),
   git.uncommittedSignifier := None,
   publishArtifact in Test := false,
-  scalaVersion := "2.11.7",
   homepage := Some(url("https://github.com/blstream/akka-viz")),
   description := "A visual debugger for Akka actor systems",
   pomExtra :=
@@ -106,7 +105,7 @@ lazy val frontend =
         "org.scalatest" %%% "scalatest" % scalatestVersion % "test"
       ),
       jsDependencies += RuntimeDOM,
-      unmanagedSourceDirectories in Compile += baseDirectory.value / ".." / "shared" / "src" / "main" / "scala",
+      unmanagedSourceDirectories in Compile += (baseDirectory in ThisBuild).value / "shared" / "src" / "main" / "scala",
       publish := {},
       publishLocal := {}
     )
@@ -150,7 +149,7 @@ lazy val monitoring =
       AspectjKeys.compileOnly in Aspectj := true,
       AspectjKeys.outXml in Aspectj := false,
       products in Compile <++= products in Aspectj,
-      unmanagedSourceDirectories in Compile += baseDirectory.value / ".." / "shared" / "src" / "main" / "scala"
+      unmanagedSourceDirectories in Compile += (baseDirectory in ThisBuild).value / "shared" / "src" / "main" / "scala"
     )
     .dependsOn(api)
 

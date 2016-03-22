@@ -19,7 +19,8 @@ script:
   - if [[ -n $(git status -s) ]]; then git status && echo 'You need to format your code!' && exit 1; fi
   - ./.bintray_setup_credentials.sh
   - sbt clean compile package
-  - sbt test scripted
+  - sbt "set coverageEnabled in monitoring := true" test scripted
+  - sbt monitoring/coverageReport monitoring/codacyCoverage
   - rm -r -f $HOME/.ivy2/local/
 
 jdk:
@@ -31,3 +32,4 @@ notifications:
 
 after_success:
   - if [ "${TRAVIS_PULL_REQUEST}" = "false" ] && [ -n "$TRAVIS_TAG" -o "$TRAVIS_BRANCH" == "master" ]; then sbt publish; fi
+  - bash <(curl -s https://codecov.io/bash)
