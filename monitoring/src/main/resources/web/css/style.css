@@ -1,4 +1,4 @@
-html,body {
+html, body {
     height: 100%;
 }
 
@@ -25,7 +25,7 @@ body {
 
 .menu {
     min-height: 150px;
-    display:flex;
+    display: flex;
     flex-direction: column;
 }
 
@@ -63,6 +63,7 @@ body {
 
 .tab-content {
     overflow: auto;
+    height: 100%;
 }
 
 .tab-content .panel {
@@ -75,18 +76,6 @@ body {
 
 .tgl {
     cursor: pointer;
-}
-
-span.terminal-cursor {
-    border-left-color: #04663e;
-    border-left-width: 2px;
-    border-left-style: solid;
-    margin-left: -2px;
-}
-
-div.terminal {
-    font-family: Inconsolata, 'DejaVu Sans Mono', monospace;
-    padding: 10px;
 }
 
 .modal-dialog.modal-large {
@@ -114,4 +103,19 @@ div.terminal {
 .actor-tree i.material-icons {
     vertical-align: middle;
     min-width: 25px;
+}
+
+#repl-tab {
+}
+
+#repl-tab div.terminal {
+    font-family: Inconsolata, 'DejaVu Sans Mono', monospace;
+    padding: 10px;
+}
+
+#repl-tab div.terminal span.terminal-cursor {
+    border-left-color: #04663e;
+    border-left-width: 2px;
+    border-left-style: solid;
+    margin-left: -2px;
 }

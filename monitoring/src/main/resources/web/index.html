@@ -35,7 +35,7 @@
             <li class="active"><a href="#actorselection" data-toggle="tab">Actor filter</a></li>
             <li><a href="#messagefiltering" data-toggle="tab">Message filter</a></li>
             <li><a href="#globalsettings" data-toggle="tab">Global settings</a></li>
-            <li style="float:right"><a href="#terminal" data-toggle="modal" data-target="#repl-modal">REPL</a></li>
+            <li style="float:right"><a href="#repl-tab" data-toggle="tab">REPL</a></li>
         </ul>
         <div class="tab-content">
             <div class="tab-pane fade active in panel panel-default" id="actorselection"></div>
@@ -47,6 +47,8 @@
                 </div>
                 <div id="receivedelay" class="panel panel-default"></div>
                 <div id="graphsettings" class="panel panel-defaul"></div>
+            </div>
+            <div id="repl-tab" class="tab-pane fade panel panel-default">
             </div>
         </div>
     </div>
@@ -62,6 +64,7 @@
             <div id="hierarchy-view" class="tab-pane fade panel panel-default"></div>
         </div>
     </div>
+</div>
 </div>
 <div id="right-pane">
     <ul class="nav nav-tabs">
@@ -80,17 +83,6 @@
                 Failures for <span id="actor-name"></span>
             </div>
             <div id="actor-failures" class="modal-body">
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
-<div class="modal in" id="repl-modal" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-large" role="document">
-        <div class="modal-content">
-            <div id="repl" class="modal-body">
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
