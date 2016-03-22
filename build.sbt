@@ -125,6 +125,7 @@ lazy val api =
 val servedAssets = Seq (
   "org.webjars.npm" % "vis" % "4.15.0",
   "org.webjars.npm" % "term.js" % "0.0.7",
+  "org.webjars.npm" % "bootstrap-material-design" % "0.5.7" exclude("org.webjars.npm", "bootstrap"), // fetches 4.0 even though pom says [3.0,)
   "org.webjars.npm" % "bootstrap" % "3.3.6",
   "org.webjars" % "jquery-ui" % "1.11.4"
 )
