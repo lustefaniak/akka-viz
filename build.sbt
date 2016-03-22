@@ -122,6 +122,10 @@ lazy val api =
       autoScalaLibrary := false
     )
 
+val servedAssets = Seq (
+  "org.webjars.npm" % "vis" % "4.15.0"
+)
+
 lazy val monitoring =
   (project in file("monitoring"))
     .disablePlugins(SbtScalariform, RevolverPlugin)
@@ -138,6 +142,7 @@ lazy val monitoring =
       libraryDependencies += "com.typesafe.akka" %% "akka-http-experimental" % akkaVersion, // FIXME: shadow that dependency and hide it
       libraryDependencies += "org.scalatest" %%% "scalatest" % scalatestVersion % "test",
       libraryDependencies += "io.getquill" %% "quill-cassandra" % "0.4.1",
+      libraryDependencies ++= servedAssets,
       scalacOptions += "-Xmacro-settings:conf.output.dir=" + baseDirectory.value / "src/main/resources/",
       (resourceGenerators in Compile) <+=
         (fastOptJS in Compile in frontend, packageScalaJSLauncher in Compile in frontend, packageJSDependencies in Compile in frontend)
