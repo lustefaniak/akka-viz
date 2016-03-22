@@ -123,7 +123,8 @@ lazy val api =
     )
 
 val servedAssets = Seq (
-  "org.webjars.npm" % "vis" % "4.15.0"
+  "org.webjars.npm" % "vis" % "4.15.0",
+  "org.webjars.npm" % "term.js" % "0.0.7"
 )
 
 lazy val monitoring =
