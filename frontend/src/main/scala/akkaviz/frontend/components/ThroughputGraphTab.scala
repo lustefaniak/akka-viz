@@ -7,6 +7,7 @@ import org.scalajs.dom._
 import org.scalajs.dom.ext.Color
 import rx.{Rx, Var, Ctx}
 
+import scala.collection.immutable.TreeMap
 import scala.scalajs.js
 import scala.scalajs.js.Dynamic.literal
 import scala.scalajs.js.{|, Date}
@@ -22,7 +23,7 @@ class ThroughputGraphViewTab(implicit ctx: Ctx.Owner) extends Tab with FancyColo
 
   private[this] val items = new DataSet[Item]()
   private[this] val groups = new DataSet[Group]()
-  private[this] val groupVisibility = Var[Map[String, Boolean]](Map.empty)
+  private[this] val groupVisibility = Var[Map[String, Boolean]](TreeMap.empty)
 
   val graphContainer = div(id := "thr-graph-container").render
   val options = literal(
