@@ -114,7 +114,8 @@ lazy val frontend =
         "org.webjars" % "jquery" % "2.2.1" / "jquery/2.2.1/jquery.js" minified "jquery/2.2.1/jquery.min.js",
         "org.webjars.npm" % "term.js" % "0.0.7" / "term.js",
         bootstrap / "3.3.6/dist/js/bootstrap.js" minified "bootstrap/3.3.6/dist/js/bootstrap.min.js",
-        material / "dist/js/material.js" dependsOn "jquery/2.2.1/jquery.js" dependsOn "3.3.6/dist/js/bootstrap.js"
+        material / "dist/js/material.js" dependsOn "jquery/2.2.1/jquery.js" dependsOn "3.3.6/dist/js/bootstrap.js",
+        visjs / "vis.js" minified "vis.min.js"
       ),
       unmanagedSourceDirectories in Compile += (baseDirectory in ThisBuild).value / "shared" / "src" / "main" / "scala",
       jsManifestFilter := {
