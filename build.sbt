@@ -87,6 +87,9 @@ lazy val akkaviz =
       publishLocal := {}
     )
 
+val visjs = "org.webjars.npm" % "vis" % "4.15.0"
+val bootstrap = "org.webjars.npm" % "bootstrap" % "3.3.6"
+
 lazy val frontend =
   (project in file("frontend"))
     .disablePlugins(RevolverPlugin, SbtScalariform)
@@ -106,7 +109,8 @@ lazy val frontend =
       ),
       jsDependencies ++= Seq(
         RuntimeDOM,
-        "org.webjars.npm" % "term.js" % "0.0.7" / "term.js"
+        "org.webjars.npm" % "term.js" % "0.0.7" / "term.js",
+        bootstrap / "bootstrap.js" minified "bootstrap.min.js"
       ),
       unmanagedSourceDirectories in Compile += (baseDirectory in ThisBuild).value / "shared" / "src" / "main" / "scala",
       publish := {},
@@ -125,11 +129,11 @@ lazy val api =
       autoScalaLibrary := false
     )
 
-val visjs = "org.webjars.npm" % "vis" % "4.15.0"
+
 val servedAssets = Seq (
   visjs,
   "org.webjars.npm" % "bootstrap-material-design" % "0.5.7" exclude("org.webjars.npm", "bootstrap"), // fetches 4.0 even though pom says [3.0,)
-  "org.webjars.npm" % "bootstrap" % "3.3.6",
+  bootstrap,
   "org.webjars" % "jquery-ui" % "1.11.4"
 )
 
