@@ -90,7 +90,6 @@ class ThroughputGraphViewTab(implicit ctx: Ctx.Owner) extends Tab with FancyColo
     val options = literal(groups = literal(
       visibility = js.Dictionary[Boolean](g.toSeq: _*)
     ))
-    console.log(options)
     graph.setOptions(options)
   }
 

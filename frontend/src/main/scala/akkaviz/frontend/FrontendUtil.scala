@@ -79,7 +79,7 @@ trait FancyColors {
   }
 
   def hsl(hue: Double, saturation: Double, lightness: Double): Color = {
-    val c: Double = 1 - abs(2*lightness - 1) * saturation
+    val c: Double = 1 - abs(2 * lightness - 1) * saturation
     val x: Double = c * (1 - abs(((hue / 60) % 2) - 1))
     val m: Double = lightness - c / 2
 
@@ -92,12 +92,12 @@ trait FancyColors {
       else if (hue < 360) (c, 0, x)
       else throw new Exception("hsl out of range")
 
-    Color(((r + m)*255).toInt, ((g+m)*255).toInt, ((b+m)*255).toInt)
+    Color(((r + m) * 255).toInt, ((g + m) * 255).toInt, ((b + m) * 255).toInt)
   }
 
   def goldenRatioHue(n: Int): Double = {
     val goldenRatio = 0.61803398875
-    var maxHue = 360
+    val maxHue = 360
 
     ((n * goldenRatio) % 1) * maxHue
   }
