@@ -87,6 +87,12 @@ lazy val akkaviz =
       publishLocal := {}
     )
 
+val visjs = "org.webjars.npm" % "vis" % "4.15.0"
+val bootstrap = "org.webjars.npm" % "bootstrap" % "3.3.6"
+val material = "org.webjars.bower" % "bootstrap-material-design" % "0.5.7" excludeAll(
+  ExclusionRule(name = "bootstrap"), ExclusionRule(name = "jquery"))  // fetches bs 4.0 even though pom says [3.0,)
+val jqueryUi = "org.webjars" % "jquery-ui" % "1.11.4"
+
 lazy val frontend =
   (project in file("frontend"))
     .disablePlugins(RevolverPlugin, SbtScalariform)
@@ -104,8 +110,36 @@ lazy val frontend =
         "org.querki" %%% "jquery-facade" % "0.11",
         "org.scalatest" %%% "scalatest" % scalatestVersion % "test"
       ),
-      jsDependencies += RuntimeDOM,
+      jsDependencies ++= Seq(
+        RuntimeDOM,
+        "org.webjars" % "jquery" % "2.1.4" / "jquery/2.1.4/jquery.js" minified "jquery/2.1.4/jquery.min.js",
+        "org.webjars.npm" % "term.js" % "0.0.7" / "term.js",
+        bootstrap / "3.3.6/dist/js/bootstrap.js" minified "bootstrap/3.3.6/dist/js/bootstrap.min.js" dependsOn "jquery.js",
+        material / "dist/js/material.js" dependsOn "3.3.6/dist/js/bootstrap.js",
+        visjs / "vis.js" minified "vis.min.js",
+        jqueryUi / "jquery-ui.js" minified "jquery-ui.min.js" dependsOn "jquery.js",
+        ProvidedJS / "utils.js"
+      ),
       unmanagedSourceDirectories in Compile += (baseDirectory in ThisBuild).value / "shared" / "src" / "main" / "scala",
+      jsManifestFilter := {
+        import org.scalajs.core.tools.jsdep.{JSDependencyManifest, JSDependency}
+
+        (seq: Traversable[JSDependencyManifest]) => {
+          seq map { manifest =>
+            // exclude "naked" jquery.js dependency because of conflicts
+            def isOkToInclude(jsDep: JSDependency): Boolean = {
+              jsDep.resourceName != "jquery.js"
+            }
+
+            new JSDependencyManifest(
+              origin = manifest.origin,
+              libDeps = manifest.libDeps filter isOkToInclude,
+              requiresDOM = manifest.requiresDOM,
+              compliantSemantics = manifest.compliantSemantics
+            )
+          }
+        }
+      },
       publish := {},
       publishLocal := {}
     )
@@ -121,6 +155,14 @@ lazy val api =
       libraryDependencies += "com.lihaoyi" %% "upickle" % upickleVersion,
       autoScalaLibrary := false
     )
+
+
+val servedAssets = Seq (
+  visjs,
+  material,
+  bootstrap,
+  jqueryUi
+)
 
 lazy val monitoring =
   (project in file("monitoring"))
@@ -138,6 +180,7 @@ lazy val monitoring =
       libraryDependencies += "com.typesafe.akka" %% "akka-http-experimental" % akkaVersion, // FIXME: shadow that dependency and hide it
       libraryDependencies += "org.scalatest" %%% "scalatest" % scalatestVersion % "test",
       libraryDependencies += "io.getquill" %% "quill-cassandra" % "0.4.1",
+      libraryDependencies ++= servedAssets,
       scalacOptions += "-Xmacro-settings:conf.output.dir=" + baseDirectory.value / "src/main/resources/",
       (resourceGenerators in Compile) <+=
         (fastOptJS in Compile in frontend, packageScalaJSLauncher in Compile in frontend, packageJSDependencies in Compile in frontend)
