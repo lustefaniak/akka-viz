@@ -89,6 +89,8 @@ lazy val akkaviz =
 
 val visjs = "org.webjars.npm" % "vis" % "4.15.0"
 val bootstrap = "org.webjars.npm" % "bootstrap" % "3.3.6"
+val material = "org.webjars.bower" % "bootstrap-material-design" % "0.5.7" excludeAll(
+  ExclusionRule(name = "bootstrap"), ExclusionRule(name = "jquery"))  // fetches 4.0 even though pom says [3.0,)
 
 lazy val frontend =
   (project in file("frontend"))
@@ -109,10 +111,32 @@ lazy val frontend =
       ),
       jsDependencies ++= Seq(
         RuntimeDOM,
+        "org.webjars" % "jquery" % "2.2.1" / "jquery/2.2.1/jquery.js" minified "jquery/2.2.1/jquery.min.js",
         "org.webjars.npm" % "term.js" % "0.0.7" / "term.js",
-        bootstrap / "bootstrap.js" minified "bootstrap.min.js"
+        bootstrap / "3.3.6/dist/js/bootstrap.js" minified "bootstrap/3.3.6/dist/js/bootstrap.min.js",
+        material / "dist/js/material.js" dependsOn "jquery/2.2.1/jquery.js" dependsOn "3.3.6/dist/js/bootstrap.js"
       ),
       unmanagedSourceDirectories in Compile += (baseDirectory in ThisBuild).value / "shared" / "src" / "main" / "scala",
+      jsManifestFilter := {
+        import org.scalajs.core.tools.jsdep.{JSDependencyManifest, JSDependency}
+
+        (seq: Traversable[JSDependencyManifest]) => {
+          seq map { manifest =>
+            // exclude "naked" jquery.js dependency because of conflicts
+            def isOkToInclude(jsDep: JSDependency): Boolean = {
+              println(s"including $jsDep")
+              jsDep.resourceName != "jquery.js"
+            }
+
+            new JSDependencyManifest(
+              origin = manifest.origin,
+              libDeps = manifest.libDeps filter isOkToInclude,
+              requiresDOM = manifest.requiresDOM,
+              compliantSemantics = manifest.compliantSemantics
+            )
+          }
+        }
+      },
       publish := {},
       publishLocal := {}
     )
@@ -132,7 +156,7 @@ lazy val api =
 
 val servedAssets = Seq (
   visjs,
-  "org.webjars.npm" % "bootstrap-material-design" % "0.5.7" exclude("org.webjars.npm", "bootstrap"), // fetches 4.0 even though pom says [3.0,)
+  material,
   bootstrap,
   "org.webjars" % "jquery-ui" % "1.11.4"
 )
