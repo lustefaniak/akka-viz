@@ -32,3 +32,4 @@ notifications:
 
 after_success:
   - if [ "${TRAVIS_PULL_REQUEST}" = "false" ] && [ -n "$TRAVIS_TAG" -o "$TRAVIS_BRANCH" == "master" ]; then sbt publish; fi
+  - bash <(curl -s https://codecov.io/bash)
