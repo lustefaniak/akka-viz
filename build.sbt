@@ -112,10 +112,10 @@ lazy val frontend =
       ),
       jsDependencies ++= Seq(
         RuntimeDOM,
-        "org.webjars" % "jquery" % "2.2.1" / "jquery/2.2.1/jquery.js" minified "jquery/2.2.1/jquery.min.js",
+        "org.webjars" % "jquery" % "2.1.4" / "jquery/2.1.4/jquery.js" minified "jquery/2.1.4/jquery.min.js",
         "org.webjars.npm" % "term.js" % "0.0.7" / "term.js",
-        bootstrap / "3.3.6/dist/js/bootstrap.js" minified "bootstrap/3.3.6/dist/js/bootstrap.min.js",
-        material / "dist/js/material.js" dependsOn "jquery/2.2.1/jquery.js" dependsOn "3.3.6/dist/js/bootstrap.js",
+        bootstrap / "3.3.6/dist/js/bootstrap.js" minified "bootstrap/3.3.6/dist/js/bootstrap.min.js" dependsOn "jquery.js",
+        material / "dist/js/material.js" dependsOn "3.3.6/dist/js/bootstrap.js",
         visjs / "vis.js" minified "vis.min.js",
         jqueryUi / "jquery-ui.js" minified "jquery-ui.min.js" dependsOn "jquery.js",
         ProvidedJS / "utils.js"
@@ -128,7 +128,6 @@ lazy val frontend =
           seq map { manifest =>
             // exclude "naked" jquery.js dependency because of conflicts
             def isOkToInclude(jsDep: JSDependency): Boolean = {
-              println(s"including $jsDep")
               jsDep.resourceName != "jquery.js"
             }
 
