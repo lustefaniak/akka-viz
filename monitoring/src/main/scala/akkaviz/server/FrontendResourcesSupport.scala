@@ -15,9 +15,9 @@ trait FrontendResourcesSupport {
         path("frontend-fastopt.js.map")(getFromResource("frontend-fastopt.js.map")) ~
         path("frontend-jsdeps.js")(getFromResource("frontend-jsdeps.js")) ~
         getFromResourceDirectory("web") ~
-      pathPrefix("webjars") {
-        getFromResourceDirectory("META-INF/resources/webjars")
-      }
+        pathPrefix("webjars") {
+          getFromResourceDirectory("META-INF/resources/webjars")
+        }
     }
   }
 }
