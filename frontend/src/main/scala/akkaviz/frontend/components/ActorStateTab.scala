@@ -60,7 +60,7 @@ class ActorStateTab(
       }.getOrElse(div().render))),
       div(strong("Mailbox size: "), Rx(state().mailboxSize.map(_.toString).getOrElse[String]("Unknown"))),
       div(strong("Last updated: "), Rx(state().lastUpdatedAt.toISOString())),
-      div(strong("Failures"), failures.map(failureTable))
+      div(strong("Failures: "), failures.map(failureTable))
     ).render
 
     tabBody.appendChild(rendered)
@@ -68,18 +68,21 @@ class ActorStateTab(
     state.map(_.fsmTransitions).foreach(fsmGraph.displayFsm)
   }
 
-  private[this] def failureTable(failures: Seq[ActorFailure]) =
-    table(
-      id := "failures-table",
-      `class` := "table",
-      thead(
-        tr(th("Exception", cls := "col-md-6"), th("Supervisor decision", cls := "col-md-1"), th("Time", cls := "col-md-5"))
-      ),
-      tbody(
-        for (f <- failures)
-          yield tr(td(f.cause), td(f.decision), td(f.ts))
-      )
-    ).render
+  private[this] def failureTable(failures: Seq[ActorFailure]) = {
+    if (failures.isEmpty) em("No failures detected.").render
+    else
+      table(
+        id := "failures-table",
+        `class` := "table",
+        thead(
+          tr(th("Exception", cls := "col-md-6"), th("Supervisor decision", cls := "col-md-1"), th("Time", cls := "col-md-5"))
+        ),
+        tbody(
+          for (f <- failures)
+            yield tr(td(f.cause), td(f.decision), td(f.ts))
+        )
+      ).render
+  }
 
   private[this] def refreshButton(actorRef: ActorPath) =
     a(cls := "btn btn-default", href := "#", role := "button", float.right,
