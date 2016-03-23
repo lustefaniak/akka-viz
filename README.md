@@ -85,20 +85,7 @@ Akka-viz can use Cassandra database to store all messages so they could be repla
 
 To use it make sure `akkaviz.enableArchive = true` and `akkaviz.cassandra` points to correct Cassandra configuration.
 
-You need to manually create keyspace and tables:
-
-```
-CREATE KEYSPACE IF NOT EXISTS akkaviz WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };
-
-CREATE TABLE IF NOT EXISTS akkaviz.received_record (
-  id TIMEUUID,
-  first TEXT,
-  direction TEXT,
-  second TEXT,
-  data TEXT,
-  PRIMARY KEY (first, direction, second, id)
-);
-```
+You need to manually create keyspace and tables. Execute [included DDL](monitoring/src/main/resources/ddl.cql) via cqlsh
 
 
 ### Demos
