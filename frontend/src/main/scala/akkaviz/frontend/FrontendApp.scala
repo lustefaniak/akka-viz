@@ -134,7 +134,7 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
   private[this] val selectedMessages = persistedVar[Set[String]](Set(), "selectedMessages")
   private[this] val thrownExceptions = Var[Seq[ActorFailure]](Seq())
   private[this] val showUnconnected = Var[Boolean](false)
-  private[this] val tabManager = new TabManager(repo, upstreamConnection)
+  private[this] val tabManager = new TabManager(repo, upstreamConnection, thrownExceptions)
   private[this] val throughputTab = new ThroughputGraphViewTab()
   private[this] val actorSelector = new ActorSelector(
     repo.seenActors, selectedActors, thrownExceptions, tabManager.openActorDetails

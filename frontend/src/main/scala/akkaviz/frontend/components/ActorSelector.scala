@@ -36,29 +36,12 @@ class ActorSelector(
     parent.appendChild(elem)
   }
 
-  private[this] def failureTable(failures: Seq[ActorFailure]) =
-    table(
-      id := "failures-table",
-      `class` := "table",
-      thead(
-        tr(th("Exception", cls := "col-md-6"), th("Supervisor decision", cls := "col-md-1"), th("Time", cls := "col-md-5"))
-      ),
-      tbody(
-        for (f <- failures)
-          yield tr(td(f.cause), td(f.decision), td(f.ts))
-      )
-    ).render
-
   private[this] def exceptionsButton(actorRef: ActorPath, failures: Seq[ActorFailure]) =
     span(
       style := "color: red",
       `class` := "imgbtn glyphicon glyphicon-exclamation-sign",
-      "data-toggle".attr := "modal",
-      "data-target".attr := "#failures-modal",
       onclick := { () =>
-        document.getElementById("actor-name").innerHTML = actorRef
-        document.getElementById("actor-failures").innerHTML = ""
-        document.getElementById("actor-failures").appendChild(failureTable(failures))
+        detailsOpener(actorRef)
       }
     )
 
