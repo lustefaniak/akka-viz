@@ -1,15 +1,17 @@
 package akkaviz.frontend
 
 import akkaviz.frontend.components._
+import akkaviz.protocol.ActorFailure
 import org.scalajs.dom._
 import org.scalajs.dom.raw.HTMLElement
-import rx.Ctx
+import rx.{Rx, Ctx}
 
 import scala.scalajs.js
 
 class TabManager(
     repo: ActorRepository,
-    upstreamConnection: ApiConnection.Upstream
+    upstreamConnection: ApiConnection.Upstream,
+    failures: Rx[Seq[ActorFailure]]
 )(implicit ctx: Ctx.Owner) {
 
   val openedTabs: js.Dictionary[Tab] = js.Dictionary.empty
@@ -29,8 +31,8 @@ class TabManager(
 
   def createDetailTab(actorRef: String): ActorStateTab = {
     val stateVar = repo.state(actorRef)
-    val tab: ActorStateTab = new ActorStateTab(stateVar, upstreamConnection.send, openActorMessages)
-    handleClose(tab)
+    val actorFailures = failures.map(_.filter(_.actorRef == actorRef))
+    val tab: ActorStateTab = new ActorStateTab(stateVar, upstreamConnection.send, openActorMessages, actorFailures)
     tab
   }
 
@@ -52,7 +54,7 @@ class TabManager(
   def openActorDetails(actorRef: ActorPath): Unit = {
     openTabOrFocus(ActorStateTab.stateTabId(actorRef), {
       val stateVar = repo.state(actorRef)
-      new ActorStateTab(stateVar, upstreamConnection.send, openActorMessages)
+      createDetailTab(actorRef)
     })
   }
 
