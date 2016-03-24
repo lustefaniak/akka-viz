@@ -59,13 +59,15 @@ class ThroughputGraphViewTab(implicit ctx: Ctx.Owner) extends Tab with FancyColo
   tabBody.appendChild(selector)
 
   def addMeasurement(tm: ThroughputMeasurement): Unit = {
-    val color = colorForActor(tm.actorRef)
-    val group = new Group(tm.actorRef, tm.actorRef,
-      style = s"""fill: ${color}; stroke: ${color}; fill-opacity:0; stroke-width:2px; """)
     val date = new Date(js.Date.parse(tm.timestamp))
     val item = new Item(date, tm.msgPerSecond, tm.actorRef)
     removeOldItems()
-    groups.update(group)
+    if (groups.get(tm.actorRef) == null) {
+      val color = colorForActor(tm.actorRef)
+      val group = new Group(tm.actorRef, tm.actorRef,
+        style = s"""fill: ${color}; stroke: ${color}; fill-opacity:0; stroke-width:2px; """)
+      groups.update(group)
+    }
     items.add(item)
   }
 
