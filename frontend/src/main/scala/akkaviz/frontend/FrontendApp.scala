@@ -147,7 +147,7 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
   private[this] val unconnectedOnOff = new UnconnectedOnOff(showUnconnected)
   private[this] val replTerminal = new ReplTerminal()
   private[this] val graphView = new GraphView(
-    showUnconnected, actorSelector.toggleActor, tabManager.openLinkDetails, ActorStateAsNodeRenderer.render
+    showUnconnected, tabManager.openActorDetails, tabManager.openLinkDetails, ActorStateAsNodeRenderer.render
   )
   private[this] val hierarchyView = new HierarchyPanel(tabManager.openActorDetails)
   private[this] val maxRetries = 10

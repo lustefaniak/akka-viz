@@ -12,7 +12,7 @@ import scala.scalajs.js.|._
 
 class GraphView(
     showUnconnected: Var[Boolean],
-    actorSelectionToggler: (String) => Unit,
+    detailOpener: (String) => Unit,
     linkDetailsOpener: (ActorLink) => Unit,
     renderNode: (String, ActorState) => vis.Node
 ) extends Component with GraphViewSettings {
@@ -36,7 +36,7 @@ class GraphView(
     val n = new vis.Network(parent, data, graphSettings)
     n.onDoubleClick {
       (event: vis.ClickEvent) =>
-        event.nodes.foreach(actorSelectionToggler)
+        event.nodes.foreach(detailOpener)
     }
     n.onSelectEdge {
       (event: vis.ClickEvent) =>
