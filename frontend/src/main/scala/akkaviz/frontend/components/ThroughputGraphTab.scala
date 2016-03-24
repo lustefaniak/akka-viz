@@ -59,13 +59,15 @@ class ThroughputGraphViewTab(implicit ctx: Ctx.Owner) extends Tab with FancyColo
   tabBody.appendChild(selector)
 
   def addMeasurement(tm: ThroughputMeasurement): Unit = {
-    val color = colorForActor(tm.actorRef)
-    val group = new Group(tm.actorRef, tm.actorRef,
-      style = s"""fill: ${color}; stroke: ${color}; fill-opacity:0; stroke-width:2px; """)
     val date = new Date(js.Date.parse(tm.timestamp))
     val item = new Item(date, tm.msgPerSecond, tm.actorRef)
     removeOldItems()
-    groups.update(group)
+    if (groups.get(tm.actorRef) == null) {
+      val color = colorForActor(tm.actorRef)
+      val group = new Group(tm.actorRef, tm.actorRef,
+        style = s"""fill: ${color}; stroke: ${color}; fill-opacity:0; stroke-width:2px; """)
+      groups.update(group)
+    }
     items.add(item)
   }
 
@@ -99,13 +101,14 @@ class ThroughputGraphViewTab(implicit ctx: Ctx.Owner) extends Tab with FancyColo
   }
 
   def autoScroll(d: Double): Unit = {
-    val graphWindow = graph.getWindow()
-    val interval = graphWindow.end.valueOf() - graphWindow.start.valueOf()
-    val now = new Date().valueOf()
-    val start = new Date(now - interval)
-    val end = new Date(now)
-
-    graph.setWindow(start, end, literal(animation = false))
+    if (isActive && groupVisibility.now.exists(_._2)) {
+      val graphWindow = graph.getWindow()
+      val interval = graphWindow.end.valueOf() - graphWindow.start.valueOf()
+      val now = new Date().valueOf()
+      val start = new Date(now - interval)
+      val end = new Date(now)
+      graph.setWindow(start, end, literal(animation = false))
+    }
     window.requestAnimationFrame(autoScroll _)
   }
 }
