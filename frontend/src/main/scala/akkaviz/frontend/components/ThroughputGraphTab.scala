@@ -101,13 +101,14 @@ class ThroughputGraphViewTab(implicit ctx: Ctx.Owner) extends Tab with FancyColo
   }
 
   def autoScroll(d: Double): Unit = {
-    val graphWindow = graph.getWindow()
-    val interval = graphWindow.end.valueOf() - graphWindow.start.valueOf()
-    val now = new Date().valueOf()
-    val start = new Date(now - interval)
-    val end = new Date(now)
-
-    graph.setWindow(start, end, literal(animation = false))
+    if (isActive && groupVisibility.now.exists(_._2)) {
+      val graphWindow = graph.getWindow()
+      val interval = graphWindow.end.valueOf() - graphWindow.start.valueOf()
+      val now = new Date().valueOf()
+      val start = new Date(now - interval)
+      val end = new Date(now)
+      graph.setWindow(start, end, literal(animation = false))
+    }
     window.requestAnimationFrame(autoScroll _)
   }
 }
