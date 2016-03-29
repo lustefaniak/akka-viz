@@ -6,9 +6,13 @@ branches:
 
 cache:
   directories:
-    - $HOME/.m2/repository
     - $HOME/.sbt
     - $HOME/.ivy2
+
+before_cache:
+    - find $HOME/.sbt -name "*.lock" | xargs rm
+    - find $HOME/.ivy2 -name "ivydata-*.properties" | xargs rm
+    - rm -r -f $HOME/.ivy2/local/
 
 language: scala
 script:
@@ -21,8 +25,7 @@ script:
   - sbt clean compile package || exit 1
   - sbt "set coverageEnabled in monitoring := true" test || exit 1
   - sbt scripted || exit 1
-  - sbt monitoring/coverageReport monitoring/codacyCoverage 
-  - rm -r -f $HOME/.ivy2/local/
+  - sbt monitoring/coverageReport monitoring/codacyCoverage
 
 jdk:
   - oraclejdk8
