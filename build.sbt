@@ -170,7 +170,6 @@ lazy val monitoring =
     .settings(commonSettings)
     .settings(aspectjSettings)
     .settings(
-      fork := true,
       addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
       libraryDependencies += "com.wacai" %% "config-annotation" % "0.3.4" % "compile",
       libraryDependencies += "org.clapper" %% "classutil" % "1.0.6",
@@ -207,7 +206,7 @@ lazy val demo =
     .settings(aspectjSettings)
     .settings(
       publishArtifact := false,
-      fork := true,
+      fork in run := true,
       javaOptions <++= AspectjKeys.weaverOptions in Aspectj,
       javaOptions in reStart <++= AspectjKeys.weaverOptions in Aspectj,
       libraryDependencies ++= Seq(
