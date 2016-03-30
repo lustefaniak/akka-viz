@@ -11,9 +11,13 @@ import akka.stream.testkit.scaladsl._
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{FunSuite, Matchers}
 
+import scala.concurrent.duration._
+
 class AkkaHttpHelpersTest extends FunSuite with Matchers with ScalaFutures with ScalatestRouteTest {
 
   import AkkaHttpHelpers._
+
+  override implicit val patienceConfig: PatienceConfig = PatienceConfig(10.seconds)
 
   private[this] implicit val system: ActorSystem = ActorSystem()
   private[this] implicit val materializer = ActorMaterializer()(system)
