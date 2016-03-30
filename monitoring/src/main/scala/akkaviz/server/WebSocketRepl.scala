@@ -19,13 +19,17 @@ import scala.util.control.NonFatal
 
 trait WebSocketRepl {
 
-  protected def replPredef: String
+  protected def replPredef: String = ""
 
-  protected def replArgs: Seq[Bind[_]]
+  protected def replArgs: Seq[Bind[_]] = Nil
 
   protected def nextThreadName: String = {
     s"Ammonite-REPL-${replCounter.incrementAndGet()}"
   }
+
+  protected def replKeepAliveEvery: FiniteDuration = 30.seconds
+
+  protected def replKeepAliveMessage: Message = BinaryMessage.Strict(ByteString())
 
   private[this] val replCounter = new AtomicInteger()
 
@@ -41,6 +45,11 @@ trait WebSocketRepl {
     }
   }
 
+  protected def startReplProcessing(in: InputStream, out: OutputStream, err: OutputStream, homePath: Path): Unit = {
+    val repl = new Repl(in, out, out, Ref(Storage(homePath, None)), replPredef, replArgs)
+    repl.run()
+  }
+
   protected def runRepl(replServerClassLoader: ClassLoader, in: InputStream, out: OutputStream): Thread = {
     val homePath = Path(Path.makeTmp)
     val sshOut = new SshOutputStream(out)
@@ -51,9 +60,7 @@ trait WebSocketRepl {
         try {
           Environment.withEnvironment(replSessionEnv) {
             withConsoleRedirection(in, sshOut) {
-              val repl = new Repl(in, sshOut, sshOut, Ref(Storage(homePath, None)), replPredef, replArgs)
-              repl.run()
-              repl
+              startReplProcessing(in, sshOut, sshOut, homePath)
             }
           }
         } catch {
@@ -73,33 +80,32 @@ trait WebSocketRepl {
     new Thread(runnable, nextThreadName)
   }
 
-  def replWebSocket: Route = {
-    val wsFlow: Flow[Message, Message, _] = {
+  val replWebsocketFlow: Flow[Message, Message, _] = {
 
-      val in = Flow[Message].flatMapConcat {
-        case b: BinaryMessage => b.dataStream
-        case t: TextMessage   => t.textStream.map(str => ByteString(str.getBytes))
-      }.toMat(StreamConverters.asInputStream(1.hour))(Keep.right)
+    val in = Flow[Message].flatMapConcat {
+      case b: BinaryMessage => b.dataStream
+      case t: TextMessage   => t.textStream.map(str => ByteString(str.getBytes))
+    }.toMat(StreamConverters.asInputStream(1.hour))(Keep.right)
 
-      val out = StreamConverters.asOutputStream(1.hour)
-        .groupedWithin(1000, 100.millis)
-        .map(_.reduce(_ ++ _))
-        .map[Message](bs => BinaryMessage.Strict(bs))
+    val out = StreamConverters.asOutputStream(1.hour)
+      .groupedWithin(1000, 100.millis)
+      .map(_.reduce(_ ++ _))
+      .map[Message](bs => BinaryMessage.Strict(bs))
 
-      Flow.fromSinkAndSourceMat(in, out)(Keep.both).mapMaterializedValue {
-        case (in, out) => {
-          val thread = runRepl(this.getClass.getClassLoader, in, out)
-          thread.start()
-          thread
-        }
-      }.keepAlive(30.seconds, () => BinaryMessage.Strict(ByteString()))
-    }.watchTermination() {
-      (t: Thread, f: Future[Done]) =>
-        f.onComplete { _ => t.interrupt() }
-    }
+    Flow.fromSinkAndSourceMat(in, out)(Keep.both).mapMaterializedValue {
+      case (in, out) => {
+        val thread = runRepl(this.getClass.getClassLoader, in, out)
+        thread.start()
+        thread
+      }
+    }.keepAlive(replKeepAliveEvery, () => replKeepAliveMessage)
+  }.watchTermination() {
+    (t: Thread, f: Future[Done]) =>
+      f.onComplete { _ => t.interrupt() }
+  }
 
-    Directives.handleWebSocketMessages(wsFlow)
-
+  def replWebSocketRoute: Route = {
+    Directives.handleWebSocketMessages(replWebsocketFlow)
   }
 
   private[this] class SshOutputStream(out: OutputStream) extends OutputStream {
