@@ -94,8 +94,8 @@ package object protocol {
 
     import boopickle.Default._
 
-    implicit val serverPickler: Pickler[ApiServerMessage] = generatePickler[ApiServerMessage]
-    implicit val clientPickler: Pickler[ApiClientMessage] = generatePickler[ApiClientMessage]
+    private[this] implicit val serverPickler: Pickler[ApiServerMessage] = generatePickler[ApiServerMessage]
+    private[this] implicit val clientPickler: Pickler[ApiClientMessage] = generatePickler[ApiClientMessage]
 
     def readServer(bytes: ByteBuffer): ApiServerMessage = {
       Unpickle[ApiServerMessage].fromBytes(bytes)
