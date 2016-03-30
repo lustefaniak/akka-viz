@@ -90,7 +90,7 @@ lazy val akkaviz =
 val visjs = "org.webjars.npm" % "vis" % "4.15.0"
 val bootstrap = "org.webjars.npm" % "bootstrap" % "3.3.6"
 val material = "org.webjars.bower" % "bootstrap-material-design" % "0.5.7" excludeAll(
-  ExclusionRule(name = "bootstrap"), ExclusionRule(name = "jquery"))  // fetches bs 4.0 even though pom says [3.0,)
+  ExclusionRule(name = "bootstrap"), ExclusionRule(name = "jquery")) // fetches bs 4.0 even though pom says [3.0,)
 val jqueryUi = "org.webjars" % "jquery-ui" % "1.11.4"
 
 lazy val frontend =
@@ -156,7 +156,7 @@ lazy val api =
     )
 
 
-val servedAssets = Seq (
+val servedAssets = Seq(
   visjs,
   material,
   bootstrap,
@@ -176,7 +176,11 @@ lazy val monitoring =
       libraryDependencies += "org.clapper" %% "classutil" % "1.0.6",
       libraryDependencies += "me.chrons" %%% "boopickle" % boopickleVersion,
       libraryDependencies += "com.lihaoyi" % "ammonite-repl" % "0.5.6" cross CrossVersion.full,
-      libraryDependencies += "com.typesafe.akka" %% "akka-http-experimental" % akkaVersion, // FIXME: shadow that dependency and hide it
+      libraryDependencies ++= Seq(
+        "com.typesafe.akka" %% "akka-http-experimental" % akkaVersion, // FIXME: shadow that dependency and hide it
+        "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % "test",
+        "com.typesafe.akka" %% "akka-http-testkit" % akkaVersion % "test"
+      ),
       libraryDependencies += "org.scalatest" %%% "scalatest" % scalatestVersion % "test",
       libraryDependencies += "io.getquill" %% "quill-cassandra" % "0.4.1",
       libraryDependencies ++= servedAssets,
