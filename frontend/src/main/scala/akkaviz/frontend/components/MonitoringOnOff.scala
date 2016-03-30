@@ -5,7 +5,7 @@ import rx.{Ctx, Var}
 
 import scalatags.JsDom.all._
 
-class MonitoringOnOff(status: Var[MonitoringStatus])(implicit ctx: Ctx.Owner) extends Component with OnOffWithLabel {
+class MonitoringOnOff(status: Var[MonitoringStatus]) extends Component with OnOffWithLabel {
 
   inp.onchange = (d: Event) => {
     status() = Awaiting(Synced(inp.checked))

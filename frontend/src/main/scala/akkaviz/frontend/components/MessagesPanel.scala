@@ -12,7 +12,7 @@ import scala.collection.immutable.Queue
 import scala.scalajs.js.ThisFunction1
 import scalatags.JsDom.all._
 
-class MessagesPanel(selectedActors: Var[Set[String]]) extends Component with PrettyJson {
+class MessagesPanel(selectedActors: Var[Set[String]]) extends Tab with PrettyJson {
   private[this] val ShowMoreLength = 200
 
   private[this] val msgQueue = Var[Queue[Received]](Queue.empty)
@@ -102,33 +102,38 @@ class MessagesPanel(selectedActors: Var[Set[String]]) extends Component with Pre
     msgQueue() = Queue.empty
   }
 
-  override def attach(parent: domElement): Unit = {
-    val elem = div(
-      cls := "panel panel-default",
-      messagePanelHeader,
-      div(cls := "panel-body", id := "messagespanelbody",
-        table(
-          cls := "table table-striped table-hover",
-          thead(
-            tr(th("From"), th("To"), th("Class"))
-          ), messagesTbody, tfoot(showMoreRow)
-        ))
-    ).render
+  val elem = div(
+    cls := "panel panel-default",
+    messagePanelHeader,
+    div(cls := "panel-body", id := "messagespanelbody",
+      table(
+        cls := "table table-striped table-hover",
+        thead(
+          tr(th("From"), th("To"), th("Class"))
+        ), messagesTbody, tfoot(showMoreRow)
+      ))
+  ).render
 
-    msgQueue.foreach { q =>
-      if (q.headOption.exists(_.eventId > lastDisplayed))
-        cell.innerHTML = s"${q.length} messages not shown, click to display more"
-      else cell.innerHTML = ""
+  msgQueue.foreach { q =>
+    if (q.headOption.exists(_.eventId > lastDisplayed))
+      cell.innerHTML = s"${q.length} messages not shown, click to display more"
+    else cell.innerHTML = ""
+  }
+
+  selectedActors.trigger {
+    if (selectedActors.now.isEmpty) {
+      messagePanelTitle.innerHTML = s"Select actor to show its messages"
+    } else {
+      messagePanelTitle.innerHTML = s"Messages"
     }
+  }
 
-    selectedActors.trigger {
-      if (selectedActors.now.isEmpty) {
-        messagePanelTitle.innerHTML = s"Select actor to show its messages"
-      } else {
-        messagePanelTitle.innerHTML = s"Messages"
-      }
-    }
+  override def name: String = "Messages"
 
-    parent.appendChild(elem)
+  override def tabId: String = "messages-list"
+
+  override def onCreate(): Unit = {
+    tabBody.appendChild(elem)
+    console.log(tabBody)
   }
 }
