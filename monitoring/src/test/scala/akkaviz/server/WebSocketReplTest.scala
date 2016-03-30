@@ -43,14 +43,17 @@ class WebSocketReplTest extends FunSuite with ScalaFutures with Matchers {
       out.close()
   }
 
+  private[this] def expectString(string: String)(chunks: Seq[Message]) {
+    chunks.collect {
+      case BinaryMessage.Strict(data) => data.utf8String
+      case _                          => wrongMsg
+    }.mkString should include(string)
+  }
+
   test("It can work in both ways") {
     val wsRepl = createRepl(pingPongAndClose)
-    val res = Source.single(BinaryMessage.Strict(ByteString("ping"))).via(wsRepl.replWebsocketFlow).runWith(Sink.head)
-    whenReady(res) {
-      case BinaryMessage.Strict(data) =>
-        data.utf8String shouldBe "pong"
-      case _ => wrongMsg
-    }
+    val res = Source.single(BinaryMessage.Strict(ByteString("ping"))).via(wsRepl.replWebsocketFlow).runWith(Sink.seq)
+    whenReady(res)(expectString("pong"))
   }
 
   test("It forwards exceptions from the repl") {
@@ -58,22 +61,14 @@ class WebSocketReplTest extends FunSuite with ScalaFutures with Matchers {
       (in, out) =>
         throw new Exception("Failure in REPL")
     }
-    val res = Source.single(BinaryMessage.Strict(ByteString("ping"))).via(wsRepl.replWebsocketFlow).runWith(Sink.head)
-    whenReady(res) {
-      case BinaryMessage.Strict(data) =>
-        data.utf8String should include("Failure in REPL")
-      case _ => wrongMsg
-    }
+    val res = Source.single(BinaryMessage.Strict(ByteString("ping"))).via(wsRepl.replWebsocketFlow).runWith(Sink.seq)
+    whenReady(res)(expectString("Failure in REPL"))
   }
 
   test("Repl accepts TextMessage too") {
     val wsRepl = createRepl(pingPongAndClose)
-    val res = Source.single(TextMessage.Strict("ping")).via(wsRepl.replWebsocketFlow).runWith(Sink.head)
-    whenReady(res) {
-      case BinaryMessage.Strict(data) =>
-        data.utf8String shouldBe "pong"
-      case _ => wrongMsg
-    }
+    val res = Source.single(TextMessage.Strict("ping")).via(wsRepl.replWebsocketFlow).runWith(Sink.seq)
+    whenReady(res)(expectString("pong"))
   }
 
   test("It sends Keep Alive") {
