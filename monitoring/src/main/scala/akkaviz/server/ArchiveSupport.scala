@@ -16,16 +16,22 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 trait ArchiveSupport {
 
+  def isArchiveEnabled: Boolean
+
+  def receivedOf(ref: String): Source[ReceivedRecord, _]
+
+  def receivedBetween(ref: String, ref2: String): Source[ReceivedRecord, _]
+
   def archiveRouting: Route = get {
     pathPrefix("messages") {
-      if (Config.enableArchive) {
+      if (isArchiveEnabled) {
         path("of" / Segment) {
           ref =>
-            AkkaHttpHelpers.completeAsJson(PersistenceSources.of(ref).via(receivedRecordToRestReceived))
+            AkkaHttpHelpers.completeAsJson(receivedOf(ref).via(receivedRecordToRestReceived))
         } ~
           path("between" / Segment / Segment) {
             (ref, ref2) =>
-              AkkaHttpHelpers.completeAsJson(PersistenceSources.between(ref, ref2).via(receivedRecordToRestReceived))
+              AkkaHttpHelpers.completeAsJson(receivedBetween(ref, ref2).via(receivedRecordToRestReceived))
           }
       } else {
         reject
