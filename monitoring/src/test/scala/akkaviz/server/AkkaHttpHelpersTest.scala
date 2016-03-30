@@ -4,16 +4,14 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.marshalling.Marshaller
 import akka.http.scaladsl.marshalling.Marshalling.WithFixedContentType
 import akka.http.scaladsl.model.MediaTypes
+import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl._
 import akka.stream.testkit.scaladsl._
-import org.scalatest.concurrent.{ScalaFutures, Futures}
-import org.scalatest.{AsyncFunSuite, FunSuite, Matchers}
-import scala.concurrent.ExecutionContext.Implicits._
+import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.{FunSuite, Matchers}
 
-import scala.concurrent.{Await, Future}
-
-class AkkaHttpHelpersTest extends FunSuite with Matchers with ScalaFutures {
+class AkkaHttpHelpersTest extends FunSuite with Matchers with ScalaFutures with ScalatestRouteTest {
 
   import AkkaHttpHelpers._
 
@@ -60,6 +58,15 @@ class AkkaHttpHelpersTest extends FunSuite with Matchers with ScalaFutures {
     sub.expectNext(",3")
     sub.expectNext("]")
     sub.expectComplete()
+  }
+
+  test("completeAsJson works properly") {
+    val source = Source(List(1, 2, 3))
+
+    Get() ~> completeAsJson(source) ~> check {
+      chunks should have size (5)
+      responseAs[String] shouldEqual "[1,2,3]"
+    }
   }
 
 }
