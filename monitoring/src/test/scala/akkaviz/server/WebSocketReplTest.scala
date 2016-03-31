@@ -43,7 +43,7 @@ class WebSocketReplTest extends FunSuite with ScalaFutures with Matchers {
       out.close()
   }
 
-  private[this] def expectString(string: String)(chunks: Seq[Message]) {
+  private[this] def expectString(string: String)(chunks: Seq[Message]): Unit = {
     chunks.collect {
       case BinaryMessage.Strict(data) => data.utf8String
       case _                          => wrongMsg

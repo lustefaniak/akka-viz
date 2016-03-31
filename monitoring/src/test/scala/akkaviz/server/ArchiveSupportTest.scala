@@ -18,7 +18,7 @@ class ArchiveSupportTest extends FunSuite with ScalatestRouteTest with Matchers 
     val arch = new ArchiveSupport {
       override def isArchiveEnabled: Boolean = true
 
-      override def receivedBetween(ref: String, ref2: String): Source[ReceivedRecord, _] = ???
+      override def receivedBetween(ref: String, ref2: String): Source[ReceivedRecord, _] = fail("Should not be called")
 
       override def receivedOf(ref: String): Source[ReceivedRecord, _] =
         Source.single(ReceivedRecord(uuid, 100, ref, akkaviz.persistence.To, "second", "{}"))
@@ -37,7 +37,7 @@ class ArchiveSupportTest extends FunSuite with ScalatestRouteTest with Matchers 
       override def receivedBetween(ref: String, ref2: String): Source[ReceivedRecord, _] =
         Source.single(ReceivedRecord(uuid, 200, ref, akkaviz.persistence.To, ref2, "{}"))
 
-      override def receivedOf(ref: String): Source[ReceivedRecord, _] = ???
+      override def receivedOf(ref: String): Source[ReceivedRecord, _] = fail("Should not be called")
     }
 
     betweenGet ~> arch.archiveRouting ~> check {
@@ -50,9 +50,9 @@ class ArchiveSupportTest extends FunSuite with ScalatestRouteTest with Matchers 
     val arch = new ArchiveSupport {
       override def isArchiveEnabled: Boolean = false
 
-      override def receivedBetween(ref: String, ref2: String): Source[ReceivedRecord, _] = ???
+      override def receivedBetween(ref: String, ref2: String): Source[ReceivedRecord, _] = fail("Should not be called")
 
-      override def receivedOf(ref: String): Source[ReceivedRecord, _] = ???
+      override def receivedOf(ref: String): Source[ReceivedRecord, _] = fail("Should not be called")
     }
 
     ofGet ~> arch.archiveRouting ~> check {
