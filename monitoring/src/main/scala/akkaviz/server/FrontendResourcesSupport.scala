@@ -21,3 +21,5 @@ trait FrontendResourcesSupport {
     }
   }
 }
+
+object FrontendResourcesSupport extends FrontendResourcesSupport
