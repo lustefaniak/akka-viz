@@ -58,7 +58,7 @@ package object types {
     cause: Throwable,
     decision: SupervisorStrategy.Directive,
     timestamp: EventTs = System.currentTimeMillis()
-  ) extends InternalEvent with BackendEvent with TimestampedEvent
+  ) extends InternalEvent with BackendEvent with TimestampedEvent with FilteredActorEvent
 
   case class Question(
     id: Long,
@@ -81,6 +81,6 @@ package object types {
     actorRef: ActorRef,
     msgsPerSecond: Double,
     timestamp: Long = System.currentTimeMillis()
-  ) extends InternalEvent with BackendEvent
+  ) extends InternalEvent with BackendEvent with FilteredActorEvent
 
 }
