@@ -84,7 +84,7 @@ class ThroughputGraphViewTab(implicit ctx: Ctx.Owner) extends Tab with FancyColo
     val interval = range.end.valueOf() - range.start.valueOf()
 
     val oldIds = items.getIds(literal(filter = { (item: Item) =>
-      item.x.valueOf() < (range.start.valueOf() - interval)
+      item.x.valueOf() < (Date.now() - interval - 2.seconds.toMillis)
     }))
     items.remove(oldIds)
   }
