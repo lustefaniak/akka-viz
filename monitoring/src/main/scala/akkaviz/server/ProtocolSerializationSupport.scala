@@ -17,3 +17,5 @@ trait ProtocolSerializationSupport {
   }
 
 }
+
+object ProtocolSerializationSupport extends ProtocolSerializationSupport

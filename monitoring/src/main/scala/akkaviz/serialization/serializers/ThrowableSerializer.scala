@@ -3,7 +3,7 @@ package akkaviz.serialization.serializers
 import akkaviz.serialization.{AkkaVizSerializer, SerializationContext}
 import upickle.Js
 
-class ThrowableSerializer extends AkkaVizSerializer {
+case object ThrowableSerializer extends AkkaVizSerializer {
   override def canSerialize(obj: scala.Any): Boolean = obj match {
     case t: Throwable => true
     case _            => false

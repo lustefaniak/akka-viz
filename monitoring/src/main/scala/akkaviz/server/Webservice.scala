@@ -10,6 +10,7 @@ import akka.stream.{Materializer, OverflowStrategy}
 import akkaviz.config.Config
 import akkaviz.events._
 import akkaviz.events.types._
+import akkaviz.persistence.{PersistenceSources, ReceivedRecord}
 import akkaviz.protocol
 import akkaviz.serialization.MessageSerialization
 
@@ -150,5 +151,11 @@ class Webservice(implicit materializer: Materializer, system: ActorSystem)
   private[this] def tsToIsoTs(ts: EventTs): String = {
     java.time.Instant.ofEpochMilli(ts).toString
   }
+
+  override def receivedOf(ref: String): Source[ReceivedRecord, _] = PersistenceSources.of(ref)
+
+  override def receivedBetween(ref: String, ref2: String): Source[ReceivedRecord, _] = PersistenceSources.between(ref, ref2)
+
+  override def isArchiveEnabled: Boolean = Config.enableArchive
 
 }

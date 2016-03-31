@@ -8,7 +8,7 @@ trait ReplSupport extends WebSocketRepl {
 
   def replRouting: Route = {
     path("repl") {
-      replWebSocket
+      replWebSocketRoute
     }
   }
 
