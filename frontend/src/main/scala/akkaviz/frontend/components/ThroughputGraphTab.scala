@@ -31,6 +31,7 @@ class ThroughputGraphViewTab(implicit ctx: Ctx.Owner) extends Tab with FancyColo
     end = js.Date.now() - 1000,
     interpolation = false,
     drawPoints = false,
+    moveable = false,
     dataAxis = literal(
       showMinorLabels = false,
       left = literal(
