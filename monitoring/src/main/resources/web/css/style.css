@@ -7,7 +7,7 @@ body {
     flex-direction: row;
 }
 
-#thebox {
+#left-panel {
     display: flex;
     flex-direction: column;
     min-width: 350px;

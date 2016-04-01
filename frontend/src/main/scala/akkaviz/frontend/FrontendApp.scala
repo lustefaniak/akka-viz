@@ -210,8 +210,8 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
         hierarchyPanel.insert(newActors)
     }
 
-    topMenu.attach(document.getElementById("thebox"))
-    bottomMenu.attach(document.getElementById("thebox"))
+    topMenu.attach(document.getElementById("left-panel"))
+    bottomMenu.attach(document.getElementById("left-panel"))
     connectionAlert.attach(document.body)
     document.getElementById("globalsettings").appendChild(receiveDelayPanel.render) //FIXME: port to component
     graphView.attach(document.getElementById("graphview"))
@@ -223,7 +223,7 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
 
   private[this] def initResizable(): Unit = {
     val $ = js.Dynamic.global.$
-    $("#thebox").resizable(js.Dictionary("handles" -> "e"))
+    $("#left-panel").resizable(js.Dictionary("handles" -> "e"))
     $("#top-menu").resizable(js.Dictionary(
       "handles" -> "s",
       "stop" -> (() => $("#top-menu").css("width", ""))
