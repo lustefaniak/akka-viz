@@ -9,6 +9,15 @@ val boopickleVersion = "1.1.2"
 val akkaVersion = "2.4.2"
 val scalatestVersion = "3.0.0-M15"
 
+lazy val scalaxyStreams:Seq[sbt.Setting[_]] = Seq(
+  //scalacOptions ++= Seq("-optimise", "-Yclosure-elim", "-Yinline"),
+  scalacOptions += "-Xplugin-require:scalaxy-streams",
+  scalacOptions in Test ~= (_ filterNot (_ == "-Xplugin-require:scalaxy-streams")),
+  scalacOptions in Test += "-Xplugin-disable:scalaxy-streams",
+  autoCompilerPlugins := true,
+  addCompilerPlugin("com.nativelibs4java" %% "scalaxy-streams" % "0.3.4")
+)
+
 lazy val commonSettings: Seq[sbt.Setting[_]] = SbtScalariform.defaultScalariformSettings ++ Seq(
   ivyScala := ivyScala.value map {
     _.copy(overrideScalaVersion = true)
@@ -68,7 +77,7 @@ lazy val commonSettings: Seq[sbt.Setting[_]] = SbtScalariform.defaultScalariform
       }).transform(node).head
     }
   }
-) ++ useJGit ++ bintraySettings
+) ++ useJGit ++ bintraySettings ++ scalaxyStreams
 
 
 lazy val bintraySettings: Seq[sbt.Setting[_]] = Seq(
