@@ -6,23 +6,25 @@ import akkaviz.events.types._
 import scala.collection.immutable
 import scala.collection.immutable.Queue
 
-class EventPublisherActor extends Actor with ActorLogging {
+class EventPublisherActor(
+    monitoringEnabled: () => Boolean, maxEventsInSnapshot: Int
+) extends Actor with ActorLogging {
 
-  var subscribers = immutable.Set[ActorRef]()
-  var availableTypes = immutable.Set[Class[_ <: Any]]()
-  var eventCounter = 0L
-  var snapshot: LightSnapshot = LightSnapshot()
-  var snapshotQueue = immutable.Queue.empty[BackendEvent]
+  private[this] var subscribers = immutable.Set[ActorRef]()
+  private[this] var availableTypes = immutable.Set[Class[_ <: Any]]()
+  private[this] var eventCounter = 0L
+  private[this] var snapshot: LightSnapshot = LightSnapshot()
+  private[this] var snapshotQueue = immutable.Queue.empty[BackendEvent]
 
   override def receive = monitoringReceive
 
-  def disabledReceive: Receive = handleSubscribe orElse {
+  private[this] def disabledReceive: Receive = handleSubscribe orElse {
     case re @ ReportingEnabled =>
       broadcast(re)
       context.become(monitoringReceive)
   }
 
-  def monitoringReceive: Receive = handleSubscribe orElse {
+  private[this] def monitoringReceive: Receive = handleSubscribe orElse {
     collectForSnapshot andThen {
       case rd @ ReportingDisabled =>
         broadcast(rd)
@@ -37,7 +39,7 @@ class EventPublisherActor extends Actor with ActorLogging {
     }
   }
 
-  def handleSubscribe: PartialFunction[Any, Unit] = {
+  private[this] def handleSubscribe: PartialFunction[Any, Unit] = {
     case EventPublisherActor.Subscribe =>
       val s = sender()
       addSubscriberAndInit(s)
@@ -52,21 +54,21 @@ class EventPublisherActor extends Actor with ActorLogging {
   def addSubscriberAndInit(s: ActorRef): Unit = {
     subscribers += s
     context.watch(s)
-    s ! (if (EventSystem.isEnabled()) ReportingEnabled else ReportingDisabled)
+    s ! (if (monitoringEnabled()) ReportingEnabled else ReportingDisabled)
     s ! AvailableMessageTypes(availableTypes)
     s ! SnapshotAvailable(snapshot)
     snapshotQueue.foreach(s ! _)
   }
 
-  def broadcast(backendEvent: BackendEvent): Unit = {
+  private[this] def broadcast(backendEvent: BackendEvent): Unit = {
     subscribers.foreach(_ ! backendEvent)
   }
 
-  def collectForSnapshot: PartialFunction[Any, Any] = {
+  private[this] def collectForSnapshot: PartialFunction[Any, Any] = {
     case r: Received =>
       collectForSnapshot(ReceivedWithId(nextEventNumber(), r.sender, r.actorRef, r.message, r.handled))
 
-    case ev: BackendEvent if snapshotQueue.size == EventPublisherActor.EventsForSnaphot =>
+    case ev: BackendEvent if snapshotQueue.size == maxEventsInSnapshot =>
       snapshot = snapshotQueue.enqueue(ev).foldLeft(snapshot) {
         _.update(_)
       }
@@ -102,7 +104,5 @@ object EventPublisherActor {
   case object Subscribe
 
   case object Unsubscribe
-
-  val EventsForSnaphot = 200
 
 }

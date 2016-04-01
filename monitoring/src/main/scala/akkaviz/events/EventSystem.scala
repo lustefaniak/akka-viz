@@ -13,7 +13,8 @@ object EventSystem {
   private[this] implicit val timeout = Timeout(100.millis)
   private[this] implicit val system = ActorSystem(Config.internalSystemName)
 
-  private[this] val publisher = system.actorOf(Props(classOf[EventPublisherActor]).withDispatcher(
+  private[this] val isEnabledChecker: Function0[Boolean] = isEnabled
+  private[this] val publisher = system.actorOf(Props(classOf[EventPublisherActor], isEnabledChecker, Config.maxEventsInSnapshot).withDispatcher(
     "control-aware-dispatcher"
   ), "publisher")
 
@@ -42,7 +43,9 @@ object EventSystem {
 
   @volatile
   private[this] var _receiveDelay: FiniteDuration = 0.millis
+
   def receiveDelay: FiniteDuration = _receiveDelay
+
   def setReceiveDelay(fd: FiniteDuration): Unit = {
     _receiveDelay = fd
     publish(ReceiveDelaySet(fd))
