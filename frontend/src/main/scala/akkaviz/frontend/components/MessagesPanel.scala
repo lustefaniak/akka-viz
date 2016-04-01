@@ -134,6 +134,5 @@ class MessagesPanel(selectedActors: Var[Set[String]]) extends Tab with PrettyJso
 
   override def onCreate(): Unit = {
     tabBody.appendChild(elem)
-    console.log(tabBody)
   }
 }

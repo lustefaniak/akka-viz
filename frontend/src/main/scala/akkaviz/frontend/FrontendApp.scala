@@ -2,8 +2,7 @@ package akkaviz.frontend
 
 import akkaviz.frontend.ActorRepository.FSMState
 import akkaviz.frontend.ApiConnection.Upstream
-import akkaviz.frontend.components._
-import akkaviz.frontend.tabs.TabMenu
+import akkaviz.frontend.components.{TabMenu, _}
 import akkaviz.protocol
 import akkaviz.protocol._
 import org.scalajs.dom.{console, document}
@@ -135,7 +134,6 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
   private[this] val selectedMessages = persistedVar[Set[String]](Set(), "selectedMessages")
   private[this] val thrownExceptions = Var[Seq[ActorFailure]](Seq())
   private[this] val showUnconnected = Var[Boolean](false)
-  private[this] val tabManager = new TabManager(repo, upstreamConnection, thrownExceptions)
   private[this] val throughputTab = new ThroughputGraphViewTab()
   private[this] val actorSelector = new ActorSelector(
     repo.seenActors, selectedActors, thrownExceptions, tabManager.openActorDetails
@@ -150,13 +148,13 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
   )
   private[this] val hierarchyPanel = new HierarchyPanel(tabManager.openActorDetails)
   private[this] val settingsTab = new SettingsTab(monitoringStatus, showUnconnected)
-  private[this] val maxRetries = 10
 
   private[this] val topMenu = new TabMenu("top-menu", actorSelector, messageFilter, replTerminal, settingsTab)
   private[this] val bottomMenu = new TabMenu("bottom-menu", messagesPanel, asksPanel, hierarchyPanel)
+  private[this] val rightMenu = new TabMenu("right-menu")
+  private[this] val tabManager = new TabManager(rightMenu, repo, upstreamConnection, thrownExceptions)
 
   def main(): Unit = {
-
 
     upstreamConnection.status.foreach {
       case ApiConnection.Connecting =>
@@ -210,13 +208,17 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
         hierarchyPanel.insert(newActors)
     }
 
+    setupComponents()
+  }
+
+  def setupComponents(): Unit = {
     topMenu.attach(document.getElementById("left-panel"))
     bottomMenu.attach(document.getElementById("left-panel"))
+    rightMenu.attach(document.getElementById("right-pane"))
     connectionAlert.attach(document.body)
     document.getElementById("globalsettings").appendChild(receiveDelayPanel.render) //FIXME: port to component
-    graphView.attach(document.getElementById("graphview"))
+    tabManager.attachTab(graphView)
     tabManager.attachTab(throughputTab)
-
     js.Dynamic.global.$.material.init()
     initResizable()
   }

@@ -1,14 +1,15 @@
 package akkaviz.frontend
 
-import akkaviz.frontend.components._
+import akkaviz.frontend.components.{TabMenu, _}
 import akkaviz.protocol.ActorFailure
 import org.scalajs.dom._
 import org.scalajs.dom.raw.HTMLElement
-import rx.{Rx, Ctx}
+import rx.{Ctx, Rx}
 
 import scala.scalajs.js
 
 class TabManager(
+    container: TabMenu,
     repo: ActorRepository,
     upstreamConnection: ApiConnection.Upstream,
     failures: Rx[Seq[ActorFailure]]
@@ -25,15 +26,13 @@ class TabManager(
       case _ =>
         tab.tab.querySelector("a[data-toggle]").addEventListener("click", ignoreMiddleClick(tab) _)
     }
-    tab.onCreate()
     tab
   }
 
   def createDetailTab(actorRef: String): ActorStateTab = {
     val stateVar = repo.state(actorRef)
     val actorFailures = failures.map(_.filter(_.actorRef == actorRef))
-    val tab: ActorStateTab = new ActorStateTab(stateVar, upstreamConnection.send, openActorMessages, actorFailures)
-    tab
+    new ActorStateTab(stateVar, upstreamConnection.send, openActorMessages, actorFailures)
   }
 
   def handleClose(tab: ClosableTab): ClosableTab = {
@@ -43,19 +42,16 @@ class TabManager(
   }
 
   private[this] def attachDom(tab: Tab): Tab = {
-    tab.attach(document.querySelector("#right-pane"))
+    container.attachTab(tab)
     tab
   }
 
   private[this] def openTabOrFocus(tabId: String, newTab: => Tab): Unit = {
-    activate(openedTabs.getOrElseUpdate(tabId, attachTab(newTab)))
+    container.activate(openedTabs.getOrElseUpdate(tabId, attachTab(newTab)))
   }
 
   def openActorDetails(actorRef: ActorPath): Unit = {
-    openTabOrFocus(ActorStateTab.stateTabId(actorRef), {
-      val stateVar = repo.state(actorRef)
-      createDetailTab(actorRef)
-    })
+    openTabOrFocus(ActorStateTab.stateTabId(actorRef), createDetailTab(actorRef))
   }
 
   def openLinkDetails(link: ActorLink): Unit = {
@@ -64,10 +60,6 @@ class TabManager(
 
   def openActorMessages(actorRef: ActorPath): Unit = {
     openTabOrFocus(ActorMessagesTab.stateTabId(actorRef), new ActorMessagesTab(actorRef))
-  }
-
-  def activate(tab: Tab): Unit = {
-    document.querySelector(s"""a[href*="${tab.tabId}"]""").asInstanceOf[HTMLElement].click()
   }
 
   def close(target: ClosableTab): Unit = {
@@ -84,7 +76,6 @@ class TabManager(
     }.foreach {
       _.click()
     }
-
   }
 
   private[this] def handleMiddleClick(tab: ClosableTab)(e: MouseEvent): Unit = {

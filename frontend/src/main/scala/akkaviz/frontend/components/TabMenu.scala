@@ -1,34 +1,33 @@
-package akkaviz.frontend.tabs
+package akkaviz.frontend.components
 
-import akkaviz.frontend.components.{ClosableTab, Component, Tab}
 import org.scalajs.dom.Element
 import org.scalajs.dom.raw.HTMLAnchorElement
 
 import scalatags.JsDom.all._
 
-class TabMenu(elemId: String, tabs: Tab*) extends Component {
+class TabMenu(elemId: String, initTabs: Tab*) extends Component {
 
   private[this] val navbar = ul(cls := "nav nav-tabs")
   private[this] val tabContent = div(cls := "tab-content")
   private[this] val rendered: Element = div(id := elemId, cls := "menu tab-container", navbar, tabContent).render
 
-  private[this] def attachTab(tab: Tab): Unit = {
+  private[this] var tabs: Seq[Tab] = Seq()
+
+  def attachTab(tab: Tab): Unit = {
+    tabs :+= tab
     tab.attach(rendered)
     tab.onCreate()
-
-    tab match {
-      case ct: ClosableTab =>
-      case _ =>
-    }
+    if (tabs.size == 1)
+      activate(tab)
   }
 
   override def attach(parent: Element): Unit = {
     parent.appendChild(rendered)
-    tabs.foreach(attachTab)
-    activateFirstTab()
+    initTabs.foreach(attachTab)
+    tabs.headOption.foreach(activate)
   }
 
-  private[this] def activateFirstTab(): Unit = {
-    tabs.headOption.foreach(_.tab.querySelector("a").asInstanceOf[HTMLAnchorElement].click())
+  def activate(tab: Tab): Unit = {
+    tab.tab.querySelector("a").asInstanceOf[HTMLAnchorElement].click()
   }
 }
