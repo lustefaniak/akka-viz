@@ -12,14 +12,13 @@ import akkaviz.events._
 import akkaviz.events.types._
 import akkaviz.persistence.{PersistenceSources, ReceivedRecord}
 import akkaviz.protocol
-import akkaviz.serialization.MessageSerialization
 
-import scala.collection.breakOut
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
 class Webservice(implicit materializer: Materializer, system: ActorSystem)
-    extends Directives with SubscriptionSession with ReplSupport with AkkaHttpHelpers with ArchiveSupport with FrontendResourcesSupport with ProtocolSerializationSupport {
+    extends Directives with SubscriptionSession with ReplSupport with AkkaHttpHelpers with ArchiveSupport
+    with FrontendResourcesSupport with ProtocolSerializationSupport with BackendEventsMarshalling {
 
   def route: Flow[HttpRequest, HttpResponse, Any] = encodeResponseWith(Gzip) {
     get {
@@ -44,7 +43,7 @@ class Webservice(implicit materializer: Materializer, system: ActorSystem)
     val out = wsIn.zipMat(eventSrc)((_, m) => m)
       .collect {
         case (settings, r: BackendEvent) if settings.eventAllowed(r) => r
-      }.via(internalToApi)
+      }.via(backendEventToProtocolFlow)
       .keepAlive(10.seconds, () => protocol.Ping)
       .via(protocolServerMessageToByteString)
       .map(BinaryMessage.Strict(_))
@@ -76,80 +75,6 @@ class Webservice(implicit materializer: Materializer, system: ActorSystem)
     case protocol.KillActor(actor) =>
       ActorSystems.tell(actor, Kill)
       Nil
-  }
-
-  @inline
-  private[this] implicit val actorRefToString: Function1[ActorRef, String] = Helpers.actorRefToString
-
-  private[this] def internalToApi: Flow[BackendEvent, protocol.ApiServerMessage, Any] = Flow[BackendEvent].map {
-    case ReceivedWithId(eventId, sender, receiver, message, handled) =>
-      protocol.Received(eventId, sender, receiver, message.getClass.getName, Some(MessageSerialization.render(message)), handled)
-    case AvailableMessageTypes(types) =>
-      protocol.AvailableClasses(types.map(_.getName))
-    case Spawned(ref) =>
-      protocol.Spawned(ref)
-    case ActorSystemCreated(system) =>
-      protocol.ActorSystemCreated(system.name)
-    case Instantiated(ref, clazz) =>
-      protocol.Instantiated(ref, clazz.getClass.getName)
-    case FSMTransition(ref, currentState, currentData, nextState, nextData) =>
-      protocol.FSMTransition(
-        ref,
-        currentState = MessageSerialization.render(currentState),
-        currentStateClass = currentState.getClass.getName,
-        currentData = MessageSerialization.render(currentData),
-        currentDataClass = currentData.getClass.getName,
-        nextState = MessageSerialization.render(nextState),
-        nextStateClass = nextState.getClass.getName,
-        nextData = MessageSerialization.render(nextData),
-        nextDataClass = nextData.getClass.getName
-      )
-    case CurrentActorState(ref, actor) =>
-      protocol.CurrentActorState(ref, MessageSerialization.render(actor))
-    case MailboxStatus(owner, size) =>
-      protocol.MailboxStatus(owner, size)
-    case ReceiveDelaySet(current) =>
-      protocol.ReceiveDelaySet(current)
-    case Killed(ref) =>
-      protocol.Killed(ref)
-    case ActorFailure(ref, cause, decision, ts) =>
-      protocol.ActorFailure(
-        ref,
-        cause.toString,
-        decision.toString,
-        java.time.Instant.ofEpochMilli(ts).toString
-      )
-
-    case Question(id, senderOpt, ref, msg) =>
-      protocol.Question(
-        id,
-        senderOpt.map(x => actorRefToString(x)),
-        ref,
-        MessageSerialization.render(msg)
-      )
-
-    case Answer(questionId, msg) =>
-      protocol.Answer(questionId, MessageSerialization.render(msg))
-
-    case AnswerFailed(questionId, ex) =>
-      protocol.AnswerFailed(questionId, ex.toString)
-
-    case ReportingDisabled =>
-      protocol.ReportingDisabled
-    case ReportingEnabled =>
-      protocol.ReportingEnabled
-    case SnapshotAvailable(s) =>
-      protocol.SnapshotAvailable(
-        s.liveActors.map(ref => ref -> s.classNameFor(ref))(breakOut),
-        s.dead.map(ref => ref -> s.classNameFor(ref))(breakOut),
-        s.receivedFrom
-      )
-    case ThroughputMeasurement(ref, msgs, ts) =>
-      protocol.ThroughputMeasurement(ref, msgs, tsToIsoTs(ts))
-  }
-
-  private[this] def tsToIsoTs(ts: EventTs): String = {
-    java.time.Instant.ofEpochMilli(ts).toString
   }
 
   override def receivedOf(ref: String): Source[ReceivedRecord, _] = PersistenceSources.of(ref)

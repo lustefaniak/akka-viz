@@ -60,7 +60,7 @@ class ThroughputGraphViewTab(implicit ctx: Ctx.Owner) extends Tab with FancyColo
   tabBody.appendChild(selector)
 
   def addMeasurement(tm: ThroughputMeasurement): Unit = {
-    val date = new Date(js.Date.parse(tm.timestamp))
+    val date = new Date(tm.timestamp)
     val item = new Item(date, tm.msgPerSecond, tm.actorRef)
     removeOldItems()
     if (groups.get(tm.actorRef) == null) {
