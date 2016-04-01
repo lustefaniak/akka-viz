@@ -60,7 +60,7 @@ class Webservice(implicit materializer: Materializer, system: ActorSystem)
       List(SetActorEventFilter(actors))
     case protocol.SetReceiveDelay(duration) =>
       system.log.debug(s"Setting receive delay to $duration")
-      EventSystem.receiveDelay = duration
+      EventSystem.setReceiveDelay(duration)
       Nil
     case protocol.SetEnabled(isEnabled) =>
       system.log.info(s"Setting EventSystem.setEnabled($isEnabled)")

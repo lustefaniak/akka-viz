@@ -1,13 +1,12 @@
 package akkaviz.server
 
 import akka.actor.ActorSystem
-import akkaviz.events.{LightSnapshot, Helpers}
 import akkaviz.events.types._
-import akkaviz.protocol
-import org.scalatest.{Matchers, BeforeAndAfterAll, FunSuite}
+import akkaviz.events.{Helpers, LightSnapshot}
+import org.scalatest.{BeforeAndAfterAll, FunSuite, Matchers}
 
 import scala.concurrent.Await
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration._
 
 class SubscriptionSessionTest extends FunSuite with SubscriptionSession with BeforeAndAfterAll with Matchers {
 
@@ -24,7 +23,7 @@ class SubscriptionSessionTest extends FunSuite with SubscriptionSession with Bef
   test("Non filtered messages are passed through") {
     val nonFilteredMessages = Seq(
       Spawned(actorRef),
-      ReceiveDelaySet(Duration.Inf),
+      ReceiveDelaySet(10.millis),
       ReportingEnabled,
       ReportingDisabled,
       SnapshotAvailable(LightSnapshot())

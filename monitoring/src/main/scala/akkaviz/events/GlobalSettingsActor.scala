@@ -13,20 +13,12 @@ import scala.concurrent.duration._
    but are not concerned with publishing of the events.
   */
 class GlobalSettingsActor extends Actor with ActorLogging {
-  private[this] var rcvDelay: FiniteDuration = 0.millis
   private[this] var eventPublisher: Option[ActorRef] = None
   private[this] var throughputSrcRef: Option[ActorRef] = None
 
   implicit val mat = ActorMaterializer()
 
   override def receive: Receive = {
-    case d: FiniteDuration =>
-      rcvDelay = d
-      eventPublisher.foreach(_ ! ReceiveDelaySet(d))
-
-    case GetDelay =>
-      sender() ! rcvDelay
-
     case publisher: ActorRef =>
       eventPublisher = Some(publisher)
       self ! EnableThroughput // todo get from config (could be on by default)

@@ -1,13 +1,11 @@
 package akkaviz.events
 
 import akka.actor._
-import akka.pattern._
 import akka.util.Timeout
 import akkaviz.config.Config
 import akkaviz.events.types._
 import akkaviz.persistence.EventPersistorActor
 
-import scala.concurrent.Await
 import scala.concurrent.duration._
 
 object EventSystem {
@@ -28,15 +26,6 @@ object EventSystem {
 
   globalSettings ! publisher
 
-  def receiveDelay = {
-    //FIXME: don't ask every time
-    Await.result((globalSettings ? GlobalSettingsActor.GetDelay).mapTo[Duration], timeout.duration)
-  }
-
-  private[akkaviz] def receiveDelay_=(d: Duration): Unit = {
-    globalSettings ! d
-  }
-
   private[this] def publish(event: InternalEvent): Unit = {
     publisher ! event
   }
@@ -49,6 +38,14 @@ object EventSystem {
   def setEnabled(enabled: Boolean) = {
     _isEnabled = enabled
     publish(if (enabled) ReportingEnabled else ReportingDisabled)
+  }
+
+  @volatile
+  private[this] var _receiveDelay: FiniteDuration = 0.millis
+  def receiveDelay: FiniteDuration = _receiveDelay
+  def setReceiveDelay(fd: FiniteDuration): Unit = {
+    _receiveDelay = fd
+    publish(ReceiveDelaySet(fd))
   }
 
   if (autoStartReporting) setEnabled(true)
