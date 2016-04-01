@@ -228,19 +228,13 @@ lazy val plugin = (project in file("plugin"))
     crossScalaVersions := Seq("2.10.6"),
     sbtPlugin := true,
     buildInfoPackage := "akkaviz.sbt",
-
     addSbtPlugin("com.typesafe.sbt" % "sbt-aspectj" % "0.10.4"),
-
     scriptedLaunchOpts := {
       scriptedLaunchOpts.value ++
         Seq(
           "-Dproject.version=" + version.value,
           "-Dscala.version=" + scalaVersion.value
         )
-    },
-    scriptedDependencies := {
-      val a = (publishLocal in monitoring).value
-      val c = publishLocal.value
     }
   )
 
