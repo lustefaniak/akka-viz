@@ -219,10 +219,11 @@ lazy val demo =
 
 lazy val plugin = (project in file("plugin"))
   .enablePlugins(BuildInfoPlugin)
-  .disablePlugins(GitVersioning, SbtScalariform, RevolverPlugin)
+  .disablePlugins(SbtScalariform, RevolverPlugin)
   .settings(commonSettings)
   .settings(scriptedSettings: _*)
   .settings(
+    version := "0.1.6",
     name := "sbt-akka-viz",
     scalaVersion := "2.10.6",
     crossScalaVersions := Seq("2.10.6"),
