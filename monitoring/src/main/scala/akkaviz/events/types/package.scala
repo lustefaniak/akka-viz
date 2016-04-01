@@ -1,9 +1,9 @@
 package akkaviz.events
 
-import akka.actor.{ActorSystem, Actor, ActorRef, SupervisorStrategy}
+import akka.actor.{Actor, ActorRef, ActorSystem, SupervisorStrategy}
 import akka.dispatch.ControlMessage
 
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration.FiniteDuration
 
 package object types {
 
@@ -49,7 +49,7 @@ package object types {
 
   case class CurrentActorState(actorRef: ActorRef, actor: Actor) extends InternalEvent with BackendEvent with FilteredActorEvent
 
-  case class ReceiveDelaySet(duration: Duration) extends InternalEvent with BackendEvent
+  case class ReceiveDelaySet(duration: FiniteDuration) extends InternalEvent with BackendEvent
 
   case class Killed(actorRef: ActorRef) extends InternalEvent with BackendEvent with FilteredActorEvent
 

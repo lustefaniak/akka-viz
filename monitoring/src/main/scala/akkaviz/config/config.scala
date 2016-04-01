@@ -12,6 +12,7 @@ private[akkaviz] trait akkaviz {
   val inspectObjects = false
   val autoStartReporting = true
   val enableArchive = true
+  val maxEventsInSnapshot = 200
 
   val cassandra = new {
     val keyspace = "akkaviz"
