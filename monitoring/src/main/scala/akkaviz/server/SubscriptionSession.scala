@@ -22,7 +22,7 @@ trait SubscriptionSession {
 
   case class SetAllowedClasses(classes: Set[String]) extends ChangeSubscriptionSettings
 
-  protected def defaultSettings: SubscriptionSettings = SubscriptionSettings(_ => false, _ => true)
+  protected def defaultSettings: SubscriptionSettings = SubscriptionSettings(_ => false, _ => false)
 
   protected def updateSettings: (SubscriptionSettings, ChangeSubscriptionSettings) => SubscriptionSettings = {
     case (settings, op) =>
