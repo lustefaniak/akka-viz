@@ -2,9 +2,8 @@ package akkaviz.sbt
 
 import com.typesafe.sbt.SbtAspectj
 import com.typesafe.sbt.SbtAspectj._
-
-import sbt._
 import sbt.Keys._
+import sbt._
 
 object AkkaVizPlugin extends AutoPlugin {
 
@@ -14,15 +13,23 @@ object AkkaVizPlugin extends AutoPlugin {
 
   override def projectConfigurations: Seq[Configuration] = Seq(SbtAspectj.Aspectj)
 
-  object autoImport {
-
+  object Keys {
+    val akkaVizVersion = settingKey[String]("Version of akka-viz to use")
   }
 
-  override def projectSettings: Seq[Def.Setting[_]] = SbtAspectj.aspectjSettings ++ Seq(
-    resolvers += Resolver.bintrayRepo("lustefaniak", "maven"),
-    libraryDependencies += "com.blstream.akkaviz" %% "monitoring" % BuildInfo.version % "runtime",
-    fork := true,
-    javaOptions <++= AspectjKeys.weaverOptions in Aspectj
-  )
+  val autoImport = Keys
 
+  override def projectSettings: Seq[Def.Setting[_]] = {
+    import Keys._
+    SbtAspectj.aspectjSettings ++ Seq(
+      resolvers += Resolver.bintrayRepo("lustefaniak", "maven"),
+      akkaVizVersion := "0.1.5",
+      libraryDependencies <<= (libraryDependencies, akkaVizVersion) {
+        (deps, ver) =>
+          deps :+ "com.blstream.akkaviz" %% "monitoring" % ver % "runtime"
+      },
+      fork := true,
+      javaOptions <++= AspectjKeys.weaverOptions in Aspectj
+    )
+  }
 }
