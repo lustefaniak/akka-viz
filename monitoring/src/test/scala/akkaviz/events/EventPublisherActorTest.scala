@@ -132,5 +132,24 @@ class EventPublisherActorTest extends TestKit(ActorSystem("EventPublisherActorTe
       system.eventStream.unsubscribe(testActor)
     }
 
+    "track message types" in withPublisher() { publisher =>
+
+      val received = Seq(
+        Received(someActorRef, someActorRef, 123, true),
+        Received(someActorRef, someActorRef, "abc", true),
+        Received(someActorRef, someActorRef, Some("xyz"), true)
+      )
+
+      received.foreach(publisher ! _)
+
+      publisher ! Subscribe
+
+      fishForMessage(100.millis, "did not get expected available types") {
+        case AvailableMessageTypes(_) => true
+        case _                        => false
+      }.asInstanceOf[AvailableMessageTypes].classes should contain allElementsOf received.map(_.message.getClass)
+
+    }
+
   }
 }
