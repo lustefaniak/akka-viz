@@ -1,6 +1,7 @@
 package akkaviz.events
 
 import akka.actor.{ActorRef, ActorSystem}
+import akka.pattern
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.{Keep, Sink, Source}
 import akka.testkit.{TestActorRef, TestKit}
@@ -51,12 +52,9 @@ class ThroughputMeasurementFlowTest extends TestKit(ActorSystem("FlowTestSystem"
       val src = Source(List(
         ReceivedWithId(1, ActorRef.noSender, firstRef, "sup", true),
         ReceivedWithId(2, ActorRef.noSender, secondRef, "sup", true)
-      ))
-        .concat(Source.fromFuture(Future {
-          Thread.sleep(2.seconds.toMillis)
-
-          ReceivedWithId(3, ActorRef.noSender, firstRef, "sup", true)
-        }))
+      )).concat(Source.fromFuture(pattern.after(2.seconds, system.scheduler) {
+        Future.successful(ReceivedWithId(3, ActorRef.noSender, firstRef, "sup", true))
+      }))
 
       val mat = src.via(ThroughputMeasurementFlow(1.second))
         .toMat(Sink.fold(List.empty[ThroughputMeasurement]) { (list, ev) => ev :: list })(Keep.right).run()
