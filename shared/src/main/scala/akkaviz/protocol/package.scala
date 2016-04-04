@@ -6,8 +6,6 @@ import scala.collection.immutable.{List, Set}
 import scala.concurrent.duration.{Duration, FiniteDuration}
 
 package object protocol {
-  type IsoTs = String
-
   sealed trait ApiServerMessage
 
   case class Received(eventId: Long, sender: String, receiver: String, payloadClass: String, payload: Option[String], handled: Boolean) extends ApiServerMessage
@@ -44,7 +42,7 @@ package object protocol {
     actorRef: String,
     cause: String,
     decision: String,
-    ts: IsoTs
+    ts: Long
   ) extends ApiServerMessage
 
   case class Question(
@@ -72,7 +70,7 @@ package object protocol {
     receivedFrom: Set[(String, String)]
   ) extends ApiServerMessage
 
-  case class ThroughputMeasurement(actorRef: String, msgPerSecond: Double, timestamp: IsoTs) extends ApiServerMessage
+  case class ThroughputMeasurement(actorRef: String, msgPerSecond: Double, timestamp: Long) extends ApiServerMessage
 
   sealed trait ApiClientMessage
 
