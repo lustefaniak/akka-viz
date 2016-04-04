@@ -18,11 +18,11 @@ class EventPublisherActorTest extends TestKit(ActorSystem("EventPublisherActorTe
   def withPublisher(enabledTest: () => Boolean = () => true)(test: (ActorRef) => Any) = {
     val publisher = system.actorOf(Props(classOf[EventPublisherActor], enabledTest, Config.maxEventsInSnapshot))
     try { test(publisher) }
-    finally system.stop(publisher)
+    finally publisher ! PoisonPill
   }
 
   "EventPublisherActor" should {
-    "not publish any events if monitoring is disabled" in withPublisher() { publisher =>
+    "not publish any events if monitoring is disabled" in withPublisher(() => false) { publisher =>
       publisher ! Subscribe
       expectMsgAllOf(
         ReportingDisabled,
@@ -34,7 +34,7 @@ class EventPublisherActorTest extends TestKit(ActorSystem("EventPublisherActorTe
 
     "publish events and update message types when monitoring is enabled" in withPublisher() { publisher =>
       publisher ! Subscribe
-      val receivedWithId = ReceivedWithId(1, ActorRef.noSender, someActorRef, "\'ello", true)
+      val receivedWithId = ReceivedWithId(1, ActorRef.noSender, someActorRef, "hello", true)
       publisher ! receivedWithId
 
       expectMsgAllOf(
@@ -125,6 +125,7 @@ class EventPublisherActorTest extends TestKit(ActorSystem("EventPublisherActorTe
       )
 
       probe.ref ! PoisonPill
+      probe.expectNoMsg(1.second)
 
       publisher ! Instantiated(someActorRef, someActorRef.underlyingActor)
 
