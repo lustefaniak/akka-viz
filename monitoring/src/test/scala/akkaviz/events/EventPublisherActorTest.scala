@@ -1,9 +1,10 @@
 package akkaviz.events
 
 import akka.actor._
-import akka.testkit.{TestActorRef, ImplicitSender, TestKit}
+import akka.dispatch.sysmsg.DeathWatchNotification
+import akka.testkit.{TestProbe, TestActorRef, ImplicitSender, TestKit}
 import akkaviz.config.Config
-import akkaviz.events.EventPublisherActor.Subscribe
+import akkaviz.events.EventPublisherActor.{Unsubscribe, Subscribe}
 import akkaviz.events.types._
 import org.scalatest.{Matchers, WordSpecLike}
 
@@ -96,6 +97,45 @@ class EventPublisherActorTest extends TestKit(ActorSystem("EventPublisherActorTe
 
       snapshotAvailable.snapshot.liveActors should contain(actorRefToString(someActorRef))
       snapshotAvailable.snapshot.dead should be('empty)
+
+      system.stop(publisher)
+    }
+
+    "send no messages after Unsubscribe" in {
+      val publisher = system.actorOf(Props(classOf[EventPublisherActor], () => true, Config.maxEventsInSnapshot))
+
+      publisher ! Subscribe
+
+      expectMsgAllConformingOf(1.second,
+        classOf[AvailableMessageTypes], classOf[SnapshotAvailable], ReportingEnabled.getClass
+      )
+
+      publisher ! Unsubscribe
+      publisher ! Instantiated(someActorRef, someActorRef.underlyingActor)
+
+      expectNoMsg(1.second)
+      system.stop(publisher)
+    }
+
+    "handle termination of subscriber" in {
+      val publisher = system.actorOf(Props(classOf[EventPublisherActor], () => true, Config.maxEventsInSnapshot))
+
+      val probe = TestProbe("terminationTestProbe")
+
+      publisher.tell(Subscribe, probe.ref)
+      system.eventStream.subscribe(testActor, classOf[DeadLetter])
+
+      probe.expectMsgAllConformingOf(1.second,
+          classOf[AvailableMessageTypes], classOf[SnapshotAvailable], ReportingEnabled.getClass
+      )
+
+      probe.ref ! PoisonPill
+
+      publisher ! Instantiated(someActorRef, someActorRef.underlyingActor)
+
+      expectNoMsg(1.second)
+      system.eventStream.unsubscribe(testActor)
+      system.stop(publisher)
     }
 
   }
