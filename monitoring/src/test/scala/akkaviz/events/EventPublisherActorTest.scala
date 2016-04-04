@@ -10,13 +10,19 @@ import org.scalatest.{Matchers, WordSpecLike}
 
 class EventPublisherActorTest extends TestKit(ActorSystem("EventPublisherActorTestSystem")) with ImplicitSender
     with WordSpecLike with Matchers with akkaviz.events.Helpers {
+
   import scala.concurrent.duration._
 
   val someActorRef = TestActorRef(new Actor { def receive = { case _ => () } }, "someActor")
 
+  def withPublisher(enabledTest: () => Boolean = () => true)(test: (ActorRef) => Any) = {
+    val publisher = system.actorOf(Props(classOf[EventPublisherActor], enabledTest, Config.maxEventsInSnapshot))
+    try { test(publisher) }
+    finally system.stop(publisher)
+  }
+
   "EventPublisherActor" should {
-    "not publish any events if monitoring is disabled" in {
-      val publisher = system.actorOf(Props(classOf[EventPublisherActor], () => false, Config.maxEventsInSnapshot))
+    "not publish any events if monitoring is disabled" in withPublisher() { publisher =>
       publisher ! Subscribe
       expectMsgAllOf(
         ReportingDisabled,
@@ -26,8 +32,7 @@ class EventPublisherActorTest extends TestKit(ActorSystem("EventPublisherActorTe
       system.stop(publisher)
     }
 
-    "publish events and update message types when monitoring is enabled" in {
-      val publisher = system.actorOf(Props(classOf[EventPublisherActor], () => true, Config.maxEventsInSnapshot))
+    "publish events and update message types when monitoring is enabled" in withPublisher() { publisher =>
       publisher ! Subscribe
       val receivedWithId = ReceivedWithId(1, ActorRef.noSender, someActorRef, "\'ello", true)
       publisher ! receivedWithId
@@ -43,8 +48,7 @@ class EventPublisherActorTest extends TestKit(ActorSystem("EventPublisherActorTe
       system.stop(publisher)
     }
 
-    "rewrite Received as ReceivedWithId" in {
-      val publisher = system.actorOf(Props(classOf[EventPublisherActor], () => true, Config.maxEventsInSnapshot))
+    "rewrite Received as ReceivedWithId" in withPublisher() { publisher =>
 
       val originalReceived = Received(ActorRef.noSender, someActorRef, "hello", true)
 
@@ -64,10 +68,8 @@ class EventPublisherActorTest extends TestKit(ActorSystem("EventPublisherActorTe
       system.stop(publisher)
     }
 
-    "handle monitoring status changes" in {
-      var isEnabled = true
-      val publisher = system.actorOf(Props(classOf[EventPublisherActor], () => isEnabled, Config.maxEventsInSnapshot))
-
+    var isEnabled = true
+    "handle monitoring status changes" in withPublisher(() => isEnabled) { publisher =>
       publisher ! Subscribe
       fishForMessage(100.millis, "didn't receive ReportingEnabled") {
         case ReportingEnabled => true
@@ -80,14 +82,10 @@ class EventPublisherActorTest extends TestKit(ActorSystem("EventPublisherActorTe
         case ReportingDisabled => true
         case _                 => false
       }
-
-      system.stop(publisher)
     }
 
-    "build snapshots after collecting configured amount of BackendEvents" in {
-      val snapshotEventsSize = 5
-      val publisher = system.actorOf(Props(classOf[EventPublisherActor], () => true, snapshotEventsSize))
-      for (n <- 1 to snapshotEventsSize) publisher ! Received(ActorRef.noSender, someActorRef, n, true)
+    "build snapshots after collecting configured amount of BackendEvents" in withPublisher() { publisher =>
+      for (n <- 1 to Config.maxEventsInSnapshot) publisher ! Received(ActorRef.noSender, someActorRef, n, true)
 
       publisher ! Subscribe
       val snapshotAvailable = fishForMessage(100.millis, "didn't receive snapshot") {
@@ -98,15 +96,13 @@ class EventPublisherActorTest extends TestKit(ActorSystem("EventPublisherActorTe
       snapshotAvailable.snapshot.liveActors should contain(actorRefToString(someActorRef))
       snapshotAvailable.snapshot.dead should be('empty)
 
-      system.stop(publisher)
     }
 
-    "send no messages after Unsubscribe" in {
-      val publisher = system.actorOf(Props(classOf[EventPublisherActor], () => true, Config.maxEventsInSnapshot))
-
+    "send no messages after Unsubscribe" in withPublisher() { publisher =>
       publisher ! Subscribe
 
-      expectMsgAllConformingOf(1.second,
+      expectMsgAllConformingOf(
+        1.second,
         classOf[AvailableMessageTypes], classOf[SnapshotAvailable], ReportingEnabled.getClass
       )
 
@@ -117,16 +113,15 @@ class EventPublisherActorTest extends TestKit(ActorSystem("EventPublisherActorTe
       system.stop(publisher)
     }
 
-    "handle termination of subscriber" in {
-      val publisher = system.actorOf(Props(classOf[EventPublisherActor], () => true, Config.maxEventsInSnapshot))
-
+    "handle termination of subscriber" in withPublisher() { publisher =>
       val probe = TestProbe("terminationTestProbe")
 
       publisher.tell(Subscribe, probe.ref)
       system.eventStream.subscribe(testActor, classOf[DeadLetter])
 
-      probe.expectMsgAllConformingOf(1.second,
-          classOf[AvailableMessageTypes], classOf[SnapshotAvailable], ReportingEnabled.getClass
+      probe.expectMsgAllConformingOf(
+        1.second,
+        classOf[AvailableMessageTypes], classOf[SnapshotAvailable], ReportingEnabled.getClass
       )
 
       probe.ref ! PoisonPill
@@ -135,7 +130,6 @@ class EventPublisherActorTest extends TestKit(ActorSystem("EventPublisherActorTe
 
       expectNoMsg(1.second)
       system.eventStream.unsubscribe(testActor)
-      system.stop(publisher)
     }
 
   }
