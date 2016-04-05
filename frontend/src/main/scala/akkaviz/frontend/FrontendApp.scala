@@ -114,8 +114,7 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
 
       case Ping => {}
 
-      case tm: ThroughputMeasurement =>
-        throughputTab.addMeasurement(tm)
+      case tm: ThroughputMeasurement => {}
     }
   }
 
@@ -134,7 +133,6 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
   private[this] val selectedMessages = persistedVar[Set[String]](Set(), "selectedMessages")
   private[this] val thrownExceptions = Var[Seq[ActorFailure]](Seq())
   private[this] val showUnconnected = Var[Boolean](false)
-  private[this] val throughputTab = new ThroughputGraphViewTab()
   private[this] val actorSelector = new ActorSelector(
     repo.seenActors, selectedActors, thrownExceptions, tabManager.openActorDetails
   )
@@ -218,7 +216,6 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
     connectionAlert.attach(document.body)
     document.getElementById("globalsettings").appendChild(receiveDelayPanel.render) //FIXME: port to component
     tabManager.attachTab(graphView)
-    tabManager.attachTab(throughputTab)
     js.Dynamic.global.$.material.init()
     initResizable()
   }
