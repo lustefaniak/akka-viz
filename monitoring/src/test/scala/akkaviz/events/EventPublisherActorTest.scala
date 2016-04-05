@@ -22,14 +22,14 @@ class EventPublisherActorTest extends TestKit(ActorSystem("EventPublisherActorTe
   }
 
   "EventPublisherActor" should {
-    "not publish any events if monitoring is disabled" in withPublisher(() => false) { publisher =>
+    "not publish any events other than initial if monitoring is disabled" in withPublisher(() => false) { publisher =>
       publisher ! Subscribe
       expectMsgAllOf(
         ReportingDisabled,
         SnapshotAvailable(LightSnapshot()),
         AvailableMessageTypes(Set())
       )
-      system.stop(publisher)
+      expectNoMsg(1.second)
     }
 
     "publish events and update message types when monitoring is enabled" in withPublisher() { publisher =>
@@ -45,7 +45,6 @@ class EventPublisherActorTest extends TestKit(ActorSystem("EventPublisherActorTe
         AvailableMessageTypes(Set(classOf[String]))
       )
 
-      system.stop(publisher)
     }
 
     "rewrite Received as ReceivedWithId" in withPublisher() { publisher =>
@@ -65,7 +64,6 @@ class EventPublisherActorTest extends TestKit(ActorSystem("EventPublisherActorTe
       rewritten.handled should equal(originalReceived.handled)
       rewritten.message should equal(originalReceived.message)
 
-      system.stop(publisher)
     }
 
     var isEnabled = true
@@ -110,7 +108,6 @@ class EventPublisherActorTest extends TestKit(ActorSystem("EventPublisherActorTe
       publisher ! Instantiated(someActorRef, someActorRef.underlyingActor)
 
       expectNoMsg(1.second)
-      system.stop(publisher)
     }
 
     "handle termination of subscriber" in withPublisher() { publisher =>
