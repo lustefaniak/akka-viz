@@ -1,5 +1,6 @@
 package akkaviz.events
 
+import akka.NotUsed
 import akka.actor.ActorRef
 import akka.stream.scaladsl.Flow
 import akkaviz.events.types.{ThroughputMeasurement, ReceivedWithId, BackendEvent}
@@ -7,7 +8,7 @@ import akkaviz.events.types.{ThroughputMeasurement, ReceivedWithId, BackendEvent
 import scala.concurrent.duration._
 
 object ThroughputMeasurementFlow {
-  def apply(period: FiniteDuration): Flow[BackendEvent, ThroughputMeasurement, Any] = {
+  def apply(period: FiniteDuration): Flow[BackendEvent, ThroughputMeasurement, NotUsed] = {
     Flow[BackendEvent]
       .collect { case r: ReceivedWithId => r.actorRef }
       .groupedWithin(Int.MaxValue, period)
@@ -17,7 +18,7 @@ object ThroughputMeasurementFlow {
       .scan(Map[ActorRef, Int]()) {
         case (previous, current) =>
           // produce zero for actors that have been measured previously but didn't receive any messages during `period`
-          current ++ (for { k <- current.keySet.diff(previous.keySet) } yield k -> 0)
+          current ++ (for { k <- previous.keySet.diff(current.keySet) } yield k -> 0)
       }
       .mapConcat { m =>
         for {

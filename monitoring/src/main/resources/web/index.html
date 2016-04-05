@@ -21,70 +21,12 @@
     <script src="frontend-fastopt.js"></script>
 </head>
 <body>
-<div id="thebox">
-    <div id="top-menu" class="menu">
-        <ul class="nav nav-tabs">
-            <li class="active"><a href="#actorselection" data-toggle="tab">Actor filter</a></li>
-            <li><a href="#messagefiltering" data-toggle="tab">Message filter</a></li>
-            <li><a href="#globalsettings" data-toggle="tab">Global settings</a></li>
-            <li style="float:right"><a href="#repl-tab" data-toggle="tab">REPL</a></li>
-        </ul>
-        <div class="tab-content">
-            <div class="tab-pane fade active in panel panel-default" id="actorselection"></div>
-            <div class="tab-pane fade panel panel-default" id="messagefiltering"></div>
-            <div class="tab-pane fade panel panel-default" id="globalsettings">
-                <div id="onoffsettings" class="panel panel-default"></div>
-                <div class="panel panel-default">
-                    <div id="graphsettings" class="panel-body"></div>
-                </div>
-                <div id="receivedelay" class="panel panel-default"></div>
-                <div id="graphsettings" class="panel panel-defaul"></div>
-            </div>
-            <div id="repl-tab" class="tab-pane fade panel panel-default">
-            </div>
-        </div>
-    </div>
-    <div id="bottom-menu" class="menu">
-        <ul class="nav nav-tabs">
-            <li class="active"><a href="#messagelist" data-toggle="tab">Messages</a></li>
-            <li><a href="#asklist" data-toggle="tab">Asks</a></li>
-            <li><a href="#hierarchy-view" data-toggle="tab">Hierarchy</a></li>
-        </ul>
-        <div class="tab-content">
-            <div id="messagelist" class="tab-pane fade active in panel panel-default"></div>
-            <div id="asklist" class="tab-pane fade panel panel-default"></div>
-            <div id="hierarchy-view" class="tab-pane fade panel panel-default"></div>
-        </div>
-    </div>
-</div>
-</div>
-<div id="right-pane">
-    <ul class="nav nav-tabs">
-        <li class="active"><a href="#graphtab" data-toggle="tab">Message graph</a></li>
-    </ul>
-    <div class="tab-content">
-        <div class="tab-pane active panel panel-default active" id="graphtab">
-            <div id="graphview"></div>
-        </div>
-    </div>
-</div>
+<div id="left-panel"></div>
+<div id="right-pane"></div>
 <div class="modal fade" id="ask-modal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div id="ask-modal-body" class="modal-body">
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
-<div class="modal fade" id="details-modal" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div id="details-modal-body" class="modal-body">
-                <div id="actor-fsm">FSM transitions:</div>
-                <div id="actor-details"></div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>

@@ -12,7 +12,7 @@ class MessageFilter(
     seenMessages: Var[Set[String]],
     selectedMessages: Var[Set[String]],
     selectedActors: Var[Set[String]]
-) extends Component {
+) extends Tab {
   val messagesObs = Rx.unsafe {
     (seenMessages(), selectedMessages())
   }.triggerLater {
@@ -40,24 +40,20 @@ class MessageFilter(
 
   lazy val messagesTbody = tbody().render
 
-  def attach(parent: domElement): Unit = {
-    val elem = div(cls := "panel-body", id := "messagefilter",
-      table(
-        cls := "table table-striped table-hover",
-        thead(
-          tr(th(), th("Class", p(
-            float.right,
-            input(id := "messagefilter-regex", size := 12, tpe := "text", placeholder := "Filter...", marginRight := 1.em, onkeyup := regexMessageFilter),
-            a(href := "#", id := "messagefilter-select-all", "all", onclick := selectAllMessageFilters),
-            " | ",
-            a(href := "#", id := "messagefilter-select-none", "none", onclick := clearMessageFilters)
-          )))
-        ),
-        messagesTbody
-      )).render
-
-    parent.appendChild(elem)
-  }
+  val elem = div(cls := "panel-body", id := "messagefilter",
+    table(
+      cls := "table table-striped table-hover",
+      thead(
+        tr(th(), th("Class", p(
+          float.right,
+          input(id := "messagefilter-regex", size := 12, tpe := "text", placeholder := "Filter...", marginRight := 1.em, onkeyup := regexMessageFilter),
+          a(href := "#", id := "messagefilter-select-all", "all", onclick := selectAllMessageFilters),
+          " | ",
+          a(href := "#", id := "messagefilter-select-none", "none", onclick := clearMessageFilters)
+        )))
+      ),
+      messagesTbody
+    )).render
 
   def clearMessageFilters: ThisFunction0[domElement, Unit] = { _: domElement =>
     selectedMessages() = Set.empty
@@ -74,4 +70,11 @@ class MessageFilter(
     }
   }
 
+  override def name: String = "Message filter"
+
+  override def tabId: String = "message-filter"
+
+  override def onCreate(): Unit = {
+    tabBody.appendChild(elem)
+  }
 }

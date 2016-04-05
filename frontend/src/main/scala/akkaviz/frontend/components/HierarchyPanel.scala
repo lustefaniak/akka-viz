@@ -7,7 +7,7 @@ import org.scalajs.dom._
 import scala.scalajs.js.Dictionary
 import scalatags.JsDom.all._
 
-class HierarchyPanel(detailsOpener: (String) => Unit) extends Component {
+class HierarchyPanel(detailsOpener: (String) => Unit) extends Tab {
 
   private[this] val $ = JQueryStatic
 
@@ -105,5 +105,9 @@ class HierarchyPanel(detailsOpener: (String) => Unit) extends Component {
 
   private[this] def exists(ref: ActorPath) = seenActors.contains(ref)
 
-  override def attach(parent: Element): Unit = parent.appendChild(hierarchy)
+  override def name: String = "Hierarchy"
+
+  override def tabId: String = "hierarchy"
+
+  override def onCreate(): Unit = tabBody.appendChild(hierarchy)
 }

@@ -9,13 +9,9 @@ import rx.Var
 import scala.collection.mutable
 import scalatags.JsDom.all._
 
-class AsksPanel(selectedActors: Var[Set[String]]) extends Component with PrettyJson {
+class AsksPanel(selectedActors: Var[Set[String]]) extends Tab with PrettyJson {
 
   private[this] val asks: mutable.Set[Question] = mutable.Set()
-
-  override def attach(parent: Element): Unit = {
-    parent.appendChild(panelBody.render)
-  }
 
   private[this] lazy val panelBody = div(
     cls := "panel-body",
@@ -123,4 +119,9 @@ class AsksPanel(selectedActors: Var[Set[String]]) extends Component with PrettyJ
     case None    => h3("Question(no sender)")
   }
 
+  override def name: String = "Asks"
+
+  override def tabId: String = "ask-list"
+
+  override def onCreate(): Unit = tabBody.appendChild(panelBody.render)
 }
