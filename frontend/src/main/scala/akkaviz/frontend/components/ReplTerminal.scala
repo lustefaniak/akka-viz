@@ -9,7 +9,7 @@ import scala.scalajs.js
 import scala.scalajs.js.typedarray.ArrayBuffer
 import scalatags.JsDom.all._
 
-class ReplTerminal extends Component {
+class ReplTerminal extends Tab {
 
   private[this] def options = js.Dynamic.literal(
     cols = 64,
@@ -25,7 +25,7 @@ class ReplTerminal extends Component {
   private[this] var isConnected = false
 
   private[this] def connected(): Unit = {
-    isConnected = true;
+    isConnected = true
     connectButton.innerHTML = "Disconnect"
   }
 
@@ -51,7 +51,7 @@ class ReplTerminal extends Component {
     }
 
     def encodeArrayBuffer(str: String): ArrayBuffer = {
-      NativeUtils.str2ab(str)
+      NativeUtils.str2ab(str).buffer
     }
 
     val _ws = new WebSocket(FrontendUtil.webSocketUrl("repl"))
@@ -96,20 +96,23 @@ class ReplTerminal extends Component {
     js.Dynamic.global.terminal = terminal
   }
 
-  override def attach(parent: Element): Unit = {
+  override def name: String = "REPL"
+
+  override def tabId: String = "repl-tab"
+
+  override def onCreate(): Unit = {
     connectButton.onclick = (e: MouseEvent) => {
       if (isConnected) {
         ws.foreach {
           ws =>
-            ws.send(NativeUtils.str2ab("\u0004"))
+            ws.send(NativeUtils.str2ab("\u0004").buffer)
             ws.close()
         }
       } else {
         setupWebsocket()
       }
     }
-
-    parent.appendChild(connectButton)
-    setupReplTerminal(parent)
+    tabBody.appendChild(connectButton)
+    setupReplTerminal(tabBody)
   }
 }

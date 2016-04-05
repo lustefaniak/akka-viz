@@ -22,13 +22,15 @@ case class LightSnapshot(
   }
 
   def dead: Set[String] = {
-    liveActors diff (receivedFrom.flatMap(p => Seq(p._1, p._2))).toSet
+    receivedFrom.flatMap(p => Seq(p._1, p._2)) diff liveActors
   }
 
   def update(ev: BackendEvent): LightSnapshot = ev match {
     case ReceivedWithId(_, from, to, _, _) =>
       val live: Set[String] = liveActors ++ Set[ActorRef](from, to).filter(_.isUserActor).map(actorRefToString)
-      val recv = receivedFrom + (from -> to)
+      val recv =
+        if (from.isUserActor && to.isUserActor) receivedFrom + (from -> to)
+        else receivedFrom
       copy(liveActors = live, receivedFrom = recv)
     case Spawned(ref) =>
       if (ref.isUserActor) {
@@ -38,12 +40,16 @@ case class LightSnapshot(
       }
     case Killed(ref) if ref.isUserActor =>
       copy(liveActors = liveActors - ref)
-    case CurrentActorState(ref, _) if ref.isUserActor =>
-      copy(liveActors = liveActors + ref)
     case Instantiated(ref, actor) if ref.isUserActor =>
-      copy(liveActors = liveActors + ref, classes = classes.updated(ref, actor.getClass.getName))
+      copy(
+        liveActors = liveActors + ref,
+        classes = classes.updated(ref, actor.getClass.getName)
+      )
     case CurrentActorState(ref, actor) if ref.isUserActor =>
-      copy(classes = classes.updated(ref, actor.getClass.getName))
+      copy(
+        liveActors = liveActors + ref,
+        classes = classes.updated(ref, actor.getClass.getName)
+      )
     case other =>
       this
   }

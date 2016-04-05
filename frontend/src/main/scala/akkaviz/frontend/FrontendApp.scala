@@ -2,7 +2,7 @@ package akkaviz.frontend
 
 import akkaviz.frontend.ActorRepository.FSMState
 import akkaviz.frontend.ApiConnection.Upstream
-import akkaviz.frontend.components._
+import akkaviz.frontend.components.{TabMenu, _}
 import akkaviz.protocol
 import akkaviz.protocol._
 import org.scalajs.dom.{console, document}
@@ -134,7 +134,6 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
   private[this] val selectedMessages = persistedVar[Set[String]](Set(), "selectedMessages")
   private[this] val thrownExceptions = Var[Seq[ActorFailure]](Seq())
   private[this] val showUnconnected = Var[Boolean](false)
-  private[this] val tabManager = new TabManager(repo, upstreamConnection, thrownExceptions)
   private[this] val throughputTab = new ThroughputGraphViewTab()
   private[this] val actorSelector = new ActorSelector(
     repo.seenActors, selectedActors, thrownExceptions, tabManager.openActorDetails
@@ -142,15 +141,18 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
   private[this] val messageFilter = new MessageFilter(seenMessages, selectedMessages, selectedActors)
   private[this] val messagesPanel = new MessagesPanel(selectedActors)
   private[this] val asksPanel = new AsksPanel(selectedActors)
-  private[this] val monitoringOnOff = new MonitoringOnOff(monitoringStatus)
   private[this] val connectionAlert = new Alert()
-  private[this] val unconnectedOnOff = new UnconnectedOnOff(showUnconnected)
   private[this] val replTerminal = new ReplTerminal()
   private[this] val graphView = new GraphView(
     showUnconnected, tabManager.openActorDetails, tabManager.openLinkDetails, ActorStateAsNodeRenderer.render
   )
-  private[this] val hierarchyView = new HierarchyPanel(tabManager.openActorDetails)
-  private[this] val maxRetries = 10
+  private[this] val hierarchyPanel = new HierarchyPanel(tabManager.openActorDetails)
+  private[this] val settingsTab = new SettingsTab(monitoringStatus, showUnconnected)
+
+  private[this] val topMenu = new TabMenu("top-menu", actorSelector, messageFilter, replTerminal, settingsTab)
+  private[this] val bottomMenu = new TabMenu("bottom-menu", messagesPanel, asksPanel, hierarchyPanel)
+  private[this] val rightMenu = new TabMenu("right-menu")
+  private[this] val tabManager = new TabManager(rightMenu, repo, upstreamConnection, thrownExceptions)
 
   def main(): Unit = {
 
@@ -203,30 +205,27 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
 
     repo.newActors.foreach {
       newActors =>
-        hierarchyView.insert(newActors)
+        hierarchyPanel.insert(newActors)
     }
 
-    connectionAlert.attach(document.body)
-    actorSelector.attach(document.getElementById("actorselection"))
-    messageFilter.attach(document.getElementById("messagefiltering"))
-    messagesPanel.attach(document.getElementById("messagelist"))
-    asksPanel.attach(document.getElementById("asklist"))
-    document.getElementById("receivedelay").appendChild(receiveDelayPanel.render) //FIXME: port to component
-    monitoringOnOff.attach(document.getElementById("onoffsettings"))
-    unconnectedOnOff.attach(document.getElementById("graphsettings"))
-    replTerminal.attach(document.getElementById("repl-tab"))
-    graphView.attach(document.getElementById("graphview"))
-    hierarchyView.attach(document.getElementById("hierarchy-view"))
-    tabManager.attachTab(throughputTab)
+    setupComponents()
+  }
 
+  def setupComponents(): Unit = {
+    topMenu.attach(document.getElementById("left-panel"))
+    bottomMenu.attach(document.getElementById("left-panel"))
+    rightMenu.attach(document.getElementById("right-pane"))
+    connectionAlert.attach(document.body)
+    document.getElementById("globalsettings").appendChild(receiveDelayPanel.render) //FIXME: port to component
+    tabManager.attachTab(graphView)
+    tabManager.attachTab(throughputTab)
     js.Dynamic.global.$.material.init()
     initResizable()
-
   }
 
   private[this] def initResizable(): Unit = {
     val $ = js.Dynamic.global.$
-    $("#thebox").resizable(js.Dictionary("handles" -> "e"))
+    $("#left-panel").resizable(js.Dictionary("handles" -> "e"))
     $("#top-menu").resizable(js.Dictionary(
       "handles" -> "s",
       "stop" -> (() => $("#top-menu").css("width", ""))

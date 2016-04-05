@@ -68,7 +68,7 @@ class EventPublisherActor(
     case r: Received =>
       collectForSnapshot(ReceivedWithId(nextEventNumber(), r.sender, r.actorRef, r.message, r.handled))
 
-    case ev: BackendEvent if snapshotQueue.size == maxEventsInSnapshot =>
+    case ev: BackendEvent if snapshotQueue.size == maxEventsInSnapshot - 1 =>
       snapshot = snapshotQueue.enqueue(ev).foldLeft(snapshot) {
         _.update(_)
       }

@@ -117,7 +117,8 @@ lazy val frontend =
         bootstrap / "3.3.6/dist/js/bootstrap.js" minified "bootstrap/3.3.6/dist/js/bootstrap.min.js" dependsOn "jquery.js",
         material / "dist/js/material.js" dependsOn "3.3.6/dist/js/bootstrap.js",
         visjs / "vis.js" minified "vis.min.js",
-        jqueryUi / "jquery-ui.js" minified "jquery-ui.min.js" dependsOn "jquery.js"
+        jqueryUi / "jquery-ui.js" minified "jquery-ui.min.js" dependsOn "jquery.js",
+        "org.webjars.npm" % "text-encoding" % "0.5.2" / "encoding.js"
       ),
       unmanagedSourceDirectories in Compile += (baseDirectory in ThisBuild).value / "shared" / "src" / "main" / "scala",
       jsManifestFilter := {

@@ -15,7 +15,7 @@ class GraphView(
     detailOpener: (String) => Unit,
     linkDetailsOpener: (ActorLink) => Unit,
     renderNode: (String, ActorState) => vis.Node
-) extends Component with GraphViewSettings {
+) extends Tab with GraphViewSettings {
 
   private[this] val registeredActors = js.Dictionary[Var[ActorState]]()
   private[this] val connectedActors = js.Dictionary[Unit]()
@@ -29,11 +29,13 @@ class GraphView(
   private[this] val scheduler = new ScheduledQueue[GraphView.GraphOperation](applyGraphOperations)
   private[this] lazy val fitOnce = network.foreach(_.fit()) // do it once
 
-  override def attach(parent: Element): Unit = {
+  override def onCreate(): Unit = {
     network.foreach(_.destroy())
-
+    import scalatags.JsDom.all._
+    val graphDiv = div(id := "graphview").render
+    tabBody.appendChild(graphDiv)
     val data = vis.NetworkData(networkNodes, networkEdges)
-    val n = new vis.Network(parent, data, graphSettings)
+    val n = new vis.Network(graphDiv, data, graphSettings)
     n.onDoubleClick {
       (event: vis.ClickEvent) =>
         event.nodes.foreach(detailOpener)
@@ -142,6 +144,9 @@ class GraphView(
     }
   }
 
+  override def name: String = "Graph"
+
+  override def tabId: String = "graphtab"
 }
 
 case object GraphView {
