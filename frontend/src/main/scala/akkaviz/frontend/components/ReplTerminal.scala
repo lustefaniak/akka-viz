@@ -51,7 +51,7 @@ class ReplTerminal extends Tab {
     }
 
     def encodeArrayBuffer(str: String): ArrayBuffer = {
-      NativeUtils.str2ab(str)
+      NativeUtils.str2ab(str).buffer
     }
 
     val _ws = new WebSocket(FrontendUtil.webSocketUrl("repl"))
@@ -105,7 +105,7 @@ class ReplTerminal extends Tab {
       if (isConnected) {
         ws.foreach {
           ws =>
-            ws.send(NativeUtils.str2ab("\u0004"))
+            ws.send(NativeUtils.str2ab("\u0004").buffer)
             ws.close()
         }
       } else {

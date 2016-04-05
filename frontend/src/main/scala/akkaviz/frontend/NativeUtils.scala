@@ -1,25 +1,29 @@
 package akkaviz.frontend
 
 import scala.scalajs.js
-import scala.scalajs.js.typedarray.{Uint8Array, ArrayBuffer}
+import scala.scalajs.js.typedarray.{ArrayBufferView, Uint8Array, ArrayBuffer}
 
 object NativeUtils {
 
-  val jsString = js.Dynamic.global.String
+  val encoder = new TextEncoder("utf-8")
+  val decoder = new TextDecoder("utf-8")
 
   def ab2str(ab: ArrayBuffer): String = {
-    // hax: we have to call a js method "apply" on the function property here
-    // the apply from scala.dynamic is *not* the method we want
-    jsString.fromCharCode.applyDynamic("apply")(null, new Uint8Array(ab)).asInstanceOf[String]
+    decoder.decode(new Uint8Array(ab))
   }
 
-  def str2ab(str: String): ArrayBuffer = {
-    val buf = new ArrayBuffer(str.length)
-    val bufView = new Uint8Array(buf)
-    for {
-      i <- str.indices
-    } bufView(i) = str.charAt(i).toShort
-    buf
+  def str2ab(str: String): Uint8Array = {
+    encoder.encode(str)
   }
 
+}
+
+@js.native
+class TextEncoder(utfLabel: js.UndefOr[String]) extends js.Object {
+  def encode(buffer: String): Uint8Array = js.native
+}
+
+@js.native
+class TextDecoder(utfLabel: js.UndefOr[String]) extends js.Object {
+  def decode(buffer: Uint8Array): String = js.native
 }
