@@ -15,26 +15,22 @@ class ActorSelector(
     selectedActors: Var[Set[ActorPath]],
     actorFailures: Var[Seq[ActorFailure]],
     detailsOpener: (ActorPath) => Unit
-)(implicit co: Ctx.Owner) extends PrettyJson with Component {
+) extends PrettyJson with Tab {
 
-  def attach(parent: domElement): Unit = {
-    val elem = div(cls := "panel-body", id := "actortree",
-      table(
-        cls := "table table-striped table-hover",
-        thead(
-          tr(th(), th("Actor", p(
-            float.right,
-            input(id := "actorfilter-regex", size := 12, tpe := "text", placeholder := "Filter...", marginRight := 1.em, onkeyup := regexActorFilter),
-            a(href := "#", id := "actorfilter-select-all", "all", onclick := selectAllActorFilters),
-            " | ",
-            a(href := "#", id := "actorfilter-select-none", "none", onclick := clearActorFilters)
-          )))
-        ),
-        actorTreeTbody
-      )).render
-
-    parent.appendChild(elem)
-  }
+  val elem = div(cls := "panel-body", id := "actortree",
+    table(
+      cls := "table table-striped table-hover",
+      thead(
+        tr(th(), th("Actor", p(
+          float.right,
+          input(id := "actorfilter-regex", size := 12, tpe := "text", placeholder := "Filter...", marginRight := 1.em, onkeyup := regexActorFilter),
+          a(href := "#", id := "actorfilter-select-all", "all", onclick := selectAllActorFilters),
+          " | ",
+          a(href := "#", id := "actorfilter-select-none", "none", onclick := clearActorFilters)
+        )))
+      ),
+      actorTreeTbody
+    )).render
 
   private[this] def exceptionsButton(actorRef: ActorPath, failures: Seq[ActorFailure]) =
     span(
@@ -111,4 +107,11 @@ class ActorSelector(
     }
   }
 
+  override def name: String = "Actor filter"
+
+  override def tabId: String = "actor-filter"
+
+  override def onCreate(): Unit = {
+    tabBody.appendChild(elem)
+  }
 }
