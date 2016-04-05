@@ -28,7 +28,9 @@ case class LightSnapshot(
   def update(ev: BackendEvent): LightSnapshot = ev match {
     case ReceivedWithId(_, from, to, _, _) =>
       val live: Set[String] = liveActors ++ Set[ActorRef](from, to).filter(_.isUserActor).map(actorRefToString)
-      val recv = receivedFrom + (from -> to)
+      val recv =
+        if (from.isUserActor && to.isUserActor) receivedFrom + (from -> to)
+        else receivedFrom
       copy(liveActors = live, receivedFrom = recv)
     case Spawned(ref) =>
       if (ref.isUserActor) {
