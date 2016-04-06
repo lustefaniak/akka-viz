@@ -112,9 +112,14 @@ object FrontendApp extends JSApp with Persistence with PrettyJson with Manipulat
       case ReportingDisabled =>
         monitoringStatus() = Off
 
-      case Ping => {}
+      case Ping                      => {}
 
       case tm: ThroughputMeasurement => {}
+
+      case Restarted(ref) =>
+        repo.mutateActor(ref) {
+          _.copy(isDead = false)
+        }
     }
   }
 
