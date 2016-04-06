@@ -21,7 +21,7 @@ class GlobalSettingsActor extends Actor with ActorLogging {
   override def receive: Receive = {
     case publisher: ActorRef =>
       eventPublisher = Some(publisher)
-      self ! EnableThroughput // todo get from config (could be on by default)
+      self ! DisableThroughput // todo get from config (could be on by default)
 
     case EnableThroughput =>
       val src = Source.actorRef[BackendEvent](Config.bufferSize, OverflowStrategy.dropHead)
