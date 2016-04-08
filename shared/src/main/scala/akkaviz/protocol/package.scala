@@ -72,6 +72,8 @@ package object protocol {
 
   case class ThroughputMeasurement(actorRef: String, msgPerSecond: Double, timestamp: Long) extends ApiServerMessage
 
+  case class Restarted(ref: String) extends ApiServerMessage
+
   sealed trait ApiClientMessage
 
   case class SetAllowedMessages(allowedClasses: Set[String]) extends ApiClientMessage

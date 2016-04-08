@@ -84,6 +84,9 @@ trait BackendEventsMarshalling {
       )
     case ThroughputMeasurement(ref, msgs, ts) =>
       protocol.ThroughputMeasurement(ref, msgs, ts)
+
+    case Restarted(ref) =>
+      protocol.Restarted(ref)
   }
 
 }

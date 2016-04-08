@@ -68,6 +68,18 @@ class LightSnapshotTest() extends TestKit(ActorSystem("SnapshotTests")) with Fun
     snapshotOf(events) should equal(LightSnapshot())
   }
 
+  test("should include restarted actors as live") {
+    val events = Seq(
+      Instantiated(firstRef, firstRef.underlyingActor),
+      Killed(firstRef),
+      Restarted(firstRef)
+    )
+
+    val snaphshot = snapshotOf(events)
+    snaphshot.dead should be('empty)
+    snaphshot.liveActors should contain(actorRefToString(firstRef))
+  }
+
   def snapshotOf(events: Seq[BackendEvent]): LightSnapshot = {
     events.foldLeft(LightSnapshot())(_.update(_))
   }
