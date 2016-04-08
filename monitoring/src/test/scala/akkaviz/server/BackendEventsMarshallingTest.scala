@@ -143,6 +143,11 @@ class BackendEventsMarshallingTest extends AsyncFunSuite with Matchers with Befo
       _ shouldBe protocol.ThroughputMeasurement(actorRefString, 42, ts)
     }
   }
+  test("Restarted") {
+    marshal(Restarted(actorRef)).map {
+      _ should equal(protocol.Restarted(actorRefString))
+    }
+  }
 
   override protected def afterAll(): Unit = {
     super.afterAll()
