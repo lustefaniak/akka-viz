@@ -36,9 +36,15 @@ addSbtPlugin("com.blstream.akkaviz" % "sbt-akka-viz" % "0.1.5")
 
 Please check [lustefaniak/akka-viz-demo](https://github.com/lustefaniak/akka-viz-demo) for simple, preconfigured SBT project.
 
-## Screenshot
+## Screenshots
 
-![Screenshot](https://gist.githubusercontent.com/lustefaniak/fae64adc6ad668fe30fc/raw/akka-viz.png)
+![REPL and Actor messaging graph](../screenshots/docs/repl_with_graph.png)
+
+![Actor hierarchy and Actor details tab](../screenshots/docs/details_with_hierarchy.png)
+
+![Message archive](../screenshots/docs/msg_archive.png)
+
+![FSM monitoring](../screenshots/docs/fsm.png)
 
 ## Features
 
