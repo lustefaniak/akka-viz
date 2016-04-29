@@ -14,7 +14,7 @@ To get started you need to add dependencies for "monitoring" jar:
 ```
 resolvers += Resolver.bintrayRepo("lustefaniak", "maven")
 
-libraryDependencies += "com.blstream.akkaviz" %% "monitoring" % "0.1.5"
+libraryDependencies += "com.blstream.akkaviz" %% "monitoring" % "0.1.6"
 ```
 
 After that you must configure your application to run with AspectJ weaver.
@@ -28,7 +28,7 @@ Simpler way is to use sbt plugin, which will preconfigure required bits, in your
 ```
 resolvers += Resolver.url("lustefaniak/sbt-plugins", url("https://dl.bintray.com/lustefaniak/sbt-plugins/"))(Resolver.ivyStylePatterns)
 
-addSbtPlugin("com.blstream.akkaviz" % "sbt-akka-viz" % "0.1.5")
+addSbtPlugin("com.blstream.akkaviz" % "sbt-akka-viz" % "0.1.6")
 ```
 
 
