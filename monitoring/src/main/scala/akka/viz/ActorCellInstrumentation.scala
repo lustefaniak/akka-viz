@@ -102,6 +102,14 @@ class ActorCellInstrumentation {
       EventSystem.report(Received(actor.sender(), actor.self, msg, canHandle))
     }
   }
+
+  @Pointcut("execution(* akka.actor.Actor.aroundPostRestart(..)) && this(actor)")
+  def postRestartPointcut(actor: Actor): Unit = {}
+
+  @Before("postRestartPointcut(actor)")
+  def beforeAroundPostRestart(actor: Actor): Unit = {
+    EventSystem.report(Restarted(actor.self))
+  }
 }
 
 object ActorCellInstrumentation {

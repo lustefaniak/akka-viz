@@ -50,6 +50,8 @@ case class LightSnapshot(
         liveActors = liveActors + ref,
         classes = classes.updated(ref, actor.getClass.getName)
       )
+    case Restarted(ref) =>
+      copy(liveActors = liveActors + ref)
     case other =>
       this
   }
