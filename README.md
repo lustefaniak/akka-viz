@@ -5,6 +5,8 @@ _a visual debugger for Akka actor systems (experimental)_
 [![Build Status](https://travis-ci.org/blstream/akka-viz.svg?branch=master)](https://travis-ci.org/blstream/akka-viz)
 [![Codacy Badge](https://api.codacy.com/project/badge/grade/f5f10352c6e74aa99d0f996cf0a77124)](https://www.codacy.com/app/lustefaniak/akka-viz)
 
+Current version is built agains akka 2.4.10.
+
 ## Download
 
 Latest version is: [ ![Download](https://api.bintray.com/packages/lustefaniak/maven/monitoring/images/download.svg) ](https://bintray.com/lustefaniak/maven/monitoring/_latestVersion)

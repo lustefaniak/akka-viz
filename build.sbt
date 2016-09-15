@@ -6,8 +6,8 @@ cancelable in Global := true
 
 val upickleVersion = "0.3.8"
 val boopickleVersion = "1.1.2"
-val akkaVersion = "2.4.2"
-val scalatestVersion = "3.0.0-M15"
+val akkaVersion = "2.4.10"
+val scalatestVersion = "3.0.0"
 
 lazy val commonSettings: Seq[sbt.Setting[_]] = SbtScalariform.defaultScalariformSettings ++ Seq(
   ivyScala := ivyScala.value map {
